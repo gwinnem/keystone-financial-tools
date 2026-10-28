@@ -301,7 +301,8 @@
                 "Nested `batch` calls join the outer batch.",
                 "An empty batch does not notify."
               ],
-              "tasks": ["Add a pending-change buffer to the store.", "Implement rollback on error.", "Tests for nesting, errors and empty batches."]
+              "tasks": ["Add a pending-change buffer to the store.", "Implement rollback on error.", "Tests for nesting, errors and empty batches."],
+              "status": "done"
             },
             {
               "id": "E01-F03-S03",
@@ -313,7 +314,8 @@
                 "A batch reports all its operations in order; an update of a drawing added in the same batch reports one `add` with the final value.",
                 "Existing listeners that only read the list keep working (the list is still the first value)."
               ],
-              "tasks": ["Introduce `StoreChange` and operation types.", "Collapse operations within a batch.", "Tests for collapsing rules."]
+              "tasks": ["Introduce `StoreChange` and operation types.", "Collapse operations within a batch.", "Tests for collapsing rules."],
+              "status": "done"
             },
             {
               "id": "E01-F03-S04",
@@ -325,7 +327,8 @@
                 "`bringToFront`, `sendToBack`, `bringForward` and `sendBackward` change `zIndex` minimally and keep other drawings' relative order.",
                 "Each command is one change (one notification, one history entry)."
               ],
-              "tasks": ["Implement z-order helpers on the store.", "Tests with ties, multi-selection and edges (already front/back)."]
+              "tasks": ["Implement z-order helpers on the store.", "Tests with ties, multi-selection and edges (already front/back)."],
+              "status": "done"
             }
           ]
         },

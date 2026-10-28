@@ -135,7 +135,35 @@ export interface DrawingIssue {
   readonly message: string;
 }
 
-export type DrawingListener = (drawings: readonly Drawing[]) => void;
+/**
+ * One change to one drawing. Within a batch, changes to the same drawing are folded into one
+ * operation: add + update is an add of the final value, add + remove is nothing, update + update is
+ * one update from the first `before` to the last `after`, update + remove is a remove of the
+ * original, remove + add is an update.
+ */
+export type StoreOperation =
+  | { readonly type: 'add'; readonly id: string; readonly after: Drawing }
+  | { readonly type: 'update'; readonly id: string; readonly before: Drawing; readonly after: Drawing }
+  | { readonly type: 'remove'; readonly id: string; readonly before: Drawing };
+
+/** What a store notification carries: the new list and the operations, in the order they first happened. */
+export interface StoreChange {
+  readonly drawings: readonly Drawing[];
+  readonly operations: readonly StoreOperation[];
+}
+
+/**
+ * Called after every store change (once per batch). The list is the first argument, so a listener
+ * that only needs the drawings can ignore `change`.
+ *
+ * @example
+ * ```ts
+ * store.subscribe((drawings, change) => {
+ *   for (const op of change.operations) console.log(op.type, op.id);
+ * });
+ * ```
+ */
+export type DrawingListener = (drawings: readonly Drawing[], change: StoreChange) => void;
 
 export interface Ohlc {
   readonly open: number;

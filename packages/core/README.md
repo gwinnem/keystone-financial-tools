@@ -16,12 +16,43 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `DEFAULT_RETRACEMENT_LEVELS`, `DEFAULT_ARC_FAN_LEVELS`, `DEFAULT_TIME_ZONE_SEQUENCE` | Fibonacci defaults |
 | `DrawingError` | Thrown for invalid drawings or documents; `issues` says what is wrong |
 | `createId`, `createIdGenerator`, `IdSource` | Collision-safe drawing ids (`crypto.randomUUID`, or time + counter + random suffix) |
-| `DrawingStore` | `add`, `update`, `remove`, `clear`, `get`, `list`, `subscribe`, `toJSON`, `fromJSON` |
+| `DrawingStore` | `add`, `update`, `remove`, `clear`, `batch`, `get`, `list`, `ordered`, `bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `subscribe`, `toJSON`, `fromJSON` |
+| `StoreChange`, `StoreOperation`, `DrawingListener` | What listeners receive: the new list and the `add`/`update`/`remove` operations |
 | `DOCUMENT_VERSION`, `DrawingDocument` | The saved document format (version 1) |
 | `DrawingHost`, `HostPointerEvent`, `Ohlc` | What a chart supplies for the drawing tools |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
-listeners.
+listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
+
+## Store changes
+
+Listeners are called as `(drawings, change)`. `change.operations` lists what changed, each with
+`before` and/or `after`, in the order each drawing first changed:
+
+```ts
+store.subscribe((drawings, { operations }) => {
+  for (const op of operations) {
+    if (op.type === 'add') save(op.after);
+    else if (op.type === 'update') save(op.after);
+    else erase(op.before);
+  }
+});
+```
+
+`store.batch(fn)` makes the changes inside `fn` one change: one notification after `fn` returns,
+with one operation per drawing (add + update reports one add of the final value, add + remove
+reports nothing, update + remove reports a remove of the original, remove + add reports an update).
+If `fn` throws, everything it changed is rolled back, nobody is notified and the error is rethrown.
+A batch inside a batch joins the outer one; an empty batch does not notify. `clear()` is one batch.
+
+## Paint order
+
+`ordered()` returns the drawings bottom to top: by `zIndex` (default 0), ties in insertion order.
+`bringToFront`, `sendToBack`, `bringForward` and `sendBackward` take one id or a list. Each is one
+change (one notification): the moved drawings keep their relative order, and only the zIndex values
+that must change to produce the new order are written, so the rest keep theirs. They return false
+when nothing moves (for example a drawing already at the front) and throw `KFT-E-MISSING` for an
+unknown id. Locked and hidden drawings can be reordered through the API.
 
 ## Drawing fields
 
@@ -92,7 +123,7 @@ options, locked, hidden, zIndex, meta) and never throws.
 | `KFT-E-STYLE` | Style that is not a plain object, a value out of range, an unknown line style or an unknown key |
 | `KFT-E-OPTIONS` | Options that are not a plain object, a key the kind does not use, a flag that is not a boolean, bad levels or a bad sequence |
 | `KFT-E-META` | `meta` is not a plain object, or holds a value that is not JSON-safe (the message names its path, e.g. `meta.a.b[3]`) |
-| `KFT-E-MISSING` | Update of a drawing that is not in the store |
+| `KFT-E-MISSING` | Update or reorder of a drawing that is not in the store |
 | `KFT-E-JSON` | Not a version 1 document |
 
 ```ts

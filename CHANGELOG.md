@@ -19,6 +19,11 @@
   `DARK_THEME` presets and `resolveStyle` (drawing over kind over global defaults, at scene time);
   kind `options` (`KindOptions`: Fibonacci levels, time-zone sequence, extension and label flags)
   with defaults, `resolveOptions` and `validateOptions` (`KFT-E-OPTIONS`).
+- Core (E01-F03): store listeners receive `(drawings, change)`; `StoreChange` carries the
+  `add`/`update`/`remove` operations with `before`/`after`. `batch(fn)` notifies once with folded
+  operations and rolls back when `fn` throws; `clear()` is one change. `ordered()` and the z-order
+  commands `bringToFront`, `sendToBack`, `bringForward` and `sendBackward` (minimal zIndex writes,
+  one change each).
 
 ### Specification and backlog
 

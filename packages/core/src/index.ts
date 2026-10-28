@@ -16,6 +16,8 @@ export type {
   LineStyle,
   Ohlc,
   PointerPhase,
+  StoreChange,
+  StoreOperation,
 } from './types';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
