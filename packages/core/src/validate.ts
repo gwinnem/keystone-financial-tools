@@ -1,4 +1,7 @@
 import { ANCHOR_COUNT, isDrawingKind } from './kinds';
+import { isPlainObject } from './object';
+import { validateOptions } from './options';
+import { validateStyle } from './style';
 import type { Anchor, DrawingIssue, DrawingIssueCode } from './types';
 
 function issue(code: DrawingIssueCode, message: string): DrawingIssue {
@@ -21,25 +24,16 @@ export function isValidAnchor(value: unknown): value is Anchor {
 }
 
 /**
- * True for an object literal (or `Object.create(null)`), false for primitives, arrays, dates, maps,
- * functions and class instances (their prototype is not `Object.prototype`). Never called with
- * `undefined`.
- */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (value === null) return false;
-  const proto: unknown = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
-}
-
-/**
  * The path of the first value under `value` that does not survive a JSON round trip unchanged, or
- * null when everything does. `ancestors` holds the objects on the current path, so a cycle is found
- * while a value shared by two siblings is not mistaken for one.
+ * null when everything does. `ancestors` holds the values on the current path, so a cycle is found
+ * while a value shared by two siblings is not mistaken for one. Anything that is not null, a string,
+ * a boolean, a finite number, an array or a plain object (`undefined`, functions, symbols, bigints,
+ * dates, class instances) is unsafe: it ends in the `isPlainObject` check below.
  */
-function unsafeJsonPath(value: unknown, path: string, ancestors: Set<object>): string | null {
+function unsafeJsonPath(value: unknown, path: string, ancestors: Set<unknown>): string | null {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return null;
   if (typeof value === 'number') return Number.isFinite(value) ? null : path;
-  if (typeof value !== 'object' || ancestors.has(value)) return path;
+  if (ancestors.has(value)) return path;
   ancestors.add(value);
   try {
     if (Array.isArray(value)) {
@@ -68,7 +62,8 @@ function validateMeta(meta: unknown): DrawingIssue | null {
 
 /**
  * Lists what is wrong with a drawing; an empty list means it is valid. Never throws. Issues come
- * in a stable order: id, kind, anchors, axis, text, locked, hidden, zIndex, meta.
+ * in a stable order: id, kind, anchors, axis, text, style, options, locked, hidden, zIndex, meta.
+ * Options are checked only when the kind is known.
  *
  * @example
  * ```ts
@@ -103,6 +98,8 @@ export function validateDrawing(value: unknown): DrawingIssue[] {
   if (d.text !== undefined && typeof d.text !== 'string') {
     issues.push(issue('KFT-E-TEXT', 'The text must be a string.'));
   }
+  if (d.style !== undefined) issues.push(...validateStyle(d.style));
+  if (d.options !== undefined && isDrawingKind(d.kind)) issues.push(...validateOptions(d.kind, d.options));
   if (d.locked !== undefined && typeof d.locked !== 'boolean') {
     issues.push(issue('KFT-E-SHAPE', 'The locked flag must be a boolean.'));
   }

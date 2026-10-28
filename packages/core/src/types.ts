@@ -13,9 +13,69 @@ export interface Anchor {
 /** The drawing tools. The anchor count of each kind is in `ANCHOR_COUNT`. */
 export type DrawingKind = 'trend-line' | 'horizontal-line' | 'rectangle' | 'fibonacci-retracement' | 'fibonacci-arcs' | 'fibonacci-fans' | 'fibonacci-time-zones' | 'text-note';
 
+export type LineStyle = 'solid' | 'dashed' | 'dotted';
+
+/**
+ * Per-drawing style overrides. Every field is optional: a missing value comes from the active
+ * `DrawingTheme` at scene time (`resolveStyle`), so switching the theme restyles drawings that do
+ * not override it. Colors are CSS color strings; the host validates their syntax.
+ *
+ * @example
+ * ```ts
+ * const style: DrawingStyle = { color: '#e91e63', lineWidth: 2, lineStyle: 'dashed' };
+ * ```
+ */
 export interface DrawingStyle {
   readonly color?: string;
+  /** CSS px, 1 to 10. */
   readonly lineWidth?: number;
+  readonly lineStyle?: LineStyle;
+  readonly fillColor?: string;
+  /** 0 (no fill) to 1. A rectangle body only hits when this is above 0. */
+  readonly fillOpacity?: number;
+  readonly textColor?: string;
+  /** CSS px, 8 to 72. */
+  readonly fontSize?: number;
+}
+
+/** One Fibonacci level. `ratio` is unique within a drawing. */
+export interface FibonacciLevel {
+  readonly ratio: number;
+  readonly visible: boolean;
+  /** Overrides the drawing color for this level. */
+  readonly color?: string;
+}
+
+/**
+ * Kind-specific options. Each kind accepts only its own keys (`KIND_OPTION_KEYS`); missing values
+ * come from `defaultOptions(kind)`.
+ *
+ * | Kind | Keys |
+ * |---|---|
+ * | `trend-line` | `extendLeft`, `extendRight` |
+ * | `fibonacci-retracement` | `levels`, `reverse`, `extendLeft`, `extendRight`, `showLabels`, `showPrices` |
+ * | `fibonacci-arcs` | `levels`, `fullCircles`, `showLabels` |
+ * | `fibonacci-fans` | `levels`, `showLabels` |
+ * | `fibonacci-time-zones` | `sequence`, `showLabels` |
+ *
+ * @example
+ * ```ts
+ * const options: KindOptions = { extendRight: true, levels: [{ ratio: 0.618, visible: true, color: '#f7525f' }] };
+ * ```
+ */
+export interface KindOptions {
+  /** Fibonacci levels, at most 24, unique ratios. */
+  readonly levels?: readonly FibonacciLevel[];
+  /** Time-zone bar multiples: non-negative integers, strictly ascending, at most 32. */
+  readonly sequence?: readonly number[];
+  readonly extendLeft?: boolean;
+  readonly extendRight?: boolean;
+  /** Retracement: measure from anchor 2 back to anchor 1. */
+  readonly reverse?: boolean;
+  readonly showLabels?: boolean;
+  readonly showPrices?: boolean;
+  /** Arcs: full circles instead of half circles. */
+  readonly fullCircles?: boolean;
 }
 
 /** A value that survives `JSON.stringify` / `JSON.parse` unchanged. */
@@ -46,6 +106,8 @@ export interface Drawing {
   readonly style?: DrawingStyle;
   /** Label text, for example the body of a text note. */
   readonly text?: string;
+  /** Kind-specific options, see `KindOptions`. */
+  readonly options?: KindOptions;
   /** Selectable but not movable, resizable, editable or deletable by interaction. Default `false`. */
   readonly locked?: boolean;
   /** Left out of the scene and of hit-testing. Default `false`. */
@@ -65,7 +127,8 @@ export interface DrawingDocument {
   readonly drawings: readonly Drawing[];
 }
 
-export type DrawingIssueCode = 'KFT-E-SHAPE' | 'KFT-E-ID' | 'KFT-E-KIND' | 'KFT-E-ANCHORS' | 'KFT-E-ANCHOR' | 'KFT-E-AXIS' | 'KFT-E-TEXT' | 'KFT-E-META' | 'KFT-E-MISSING' | 'KFT-E-JSON';
+export type DrawingIssueCode =
+  'KFT-E-SHAPE' | 'KFT-E-ID' | 'KFT-E-KIND' | 'KFT-E-ANCHORS' | 'KFT-E-ANCHOR' | 'KFT-E-AXIS' | 'KFT-E-TEXT' | 'KFT-E-STYLE' | 'KFT-E-OPTIONS' | 'KFT-E-META' | 'KFT-E-MISSING' | 'KFT-E-JSON';
 
 export interface DrawingIssue {
   readonly code: DrawingIssueCode;

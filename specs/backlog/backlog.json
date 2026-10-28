@@ -223,7 +223,8 @@
                 "Colors are accepted as non-empty strings (the host validates CSS syntax); empty strings are rejected.",
                 "`DrawingStore.update` can patch `style` and the result is validated."
               ],
-              "tasks": ["Add `DrawingStyle` fields and `validateStyle`.", "Hook style validation into `validateDrawing`.", "Boundary tests for every numeric field."]
+              "tasks": ["Add `DrawingStyle` fields and `validateStyle`.", "Hook style validation into `validateDrawing`.", "Boundary tests for every numeric field."],
+              "status": "done"
             },
             {
               "id": "E01-F02-S02",
@@ -236,7 +237,8 @@
                 "`resolveStyle(drawing, theme)` merges drawing style over kind defaults over global defaults; stored drawings are not modified.",
                 "Changing the theme on the controller restyles drawings that do not override a value on the next scene."
               ],
-              "tasks": ["Implement `theme.ts` with presets and `resolveStyle`.", "Tests for merge order and theme switching."]
+              "tasks": ["Implement `theme.ts` with presets and `resolveStyle`.", "Tests for merge order and theme switching."],
+              "status": "done"
             },
             {
               "id": "E01-F02-S03",
@@ -250,6 +252,7 @@
                 "Options are only allowed on kinds that use them (`KFT-E-OPTIONS` for e.g. `levels` on a rectangle)."
               ],
               "tasks": ["Define `KindOptions` per kind and defaults in `options.ts`.", "Add `validateOptions` and hook it into `validateDrawing`.", "Tests for defaults, limits and kind mismatch."],
+              "status": "done",
               "labels": ["tool:fibonacci"]
             },
             {
@@ -262,7 +265,8 @@
                 "`reverse`, `showLabels`, `showPrices` and `fullCircles` are booleans allowed on the kinds listed in SDS §5.2.",
                 "Invalid types or flags on other kinds fail with `KFT-E-OPTIONS`."
               ],
-              "tasks": ["Extend `KindOptions` and validation.", "Tests per flag and kind."]
+              "tasks": ["Extend `KindOptions` and validation.", "Tests per flag and kind."],
+              "status": "done"
             }
           ]
         },

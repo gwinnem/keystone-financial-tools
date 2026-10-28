@@ -200,3 +200,35 @@ describe('validateDrawing: meta (FR-DM-007)', () => {
     expect(validateDrawing({ ...trendLine(), meta: { list } })).toEqual(unsafe('meta.list[0]'));
   });
 });
+
+describe('validateDrawing: style and options (FR-DM-010, FR-DM-023)', () => {
+  it('accepts a valid style and valid options', () => {
+    expect(validateDrawing({ ...trendLine(), style: { color: '#f00', lineStyle: 'dashed' }, options: { extendRight: true } })).toEqual([]);
+  });
+
+  it('reports style issues', () => {
+    expect(validateDrawing({ ...trendLine(), style: { lineWidth: 0, glow: true } })).toEqual([
+      { code: 'KFT-E-STYLE', message: 'The style.lineWidth must be a number from 1 to 10.' },
+      { code: 'KFT-E-STYLE', message: 'Unknown style key: glow.' },
+    ]);
+    expect(validateDrawing({ ...trendLine(), style: null })).toEqual([{ code: 'KFT-E-STYLE', message: 'The style must be a plain object.' }]);
+  });
+
+  it('reports options issues for the drawing kind', () => {
+    expect(validateDrawing({ ...horizontalLine(), options: { extendLeft: true } })).toEqual([{ code: 'KFT-E-OPTIONS', message: 'The option extendLeft is not allowed on a horizontal-line.' }]);
+    expect(validateDrawing({ ...trendLine(), options: 'none' })).toEqual([{ code: 'KFT-E-OPTIONS', message: 'The options must be a plain object.' }]);
+  });
+
+  it('skips the options check when the kind is unknown', () => {
+    expect(validateDrawing({ id: 'x', kind: 'circle', options: { levels: [] } })).toEqual([{ code: 'KFT-E-KIND', message: 'Unknown drawing kind: circle.' }]);
+  });
+
+  it('reports style and options after text and before the flags', () => {
+    expect(validateDrawing({ ...trendLine(), locked: 1, options: { reverse: true }, style: { fontSize: 100 }, text: 2 })).toEqual([
+      { code: 'KFT-E-TEXT', message: 'The text must be a string.' },
+      { code: 'KFT-E-STYLE', message: 'The style.fontSize must be a number from 8 to 72.' },
+      { code: 'KFT-E-OPTIONS', message: 'The option reverse is not allowed on a trend-line.' },
+      LOCKED,
+    ]);
+  });
+});

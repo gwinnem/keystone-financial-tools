@@ -43,7 +43,9 @@ Invalid drawings throw a `DrawingError` whose `issues` list what is wrong (`KFT-
 same list without throwing. All anchors of a drawing must be on one y-axis.
 
 Drawings can also be `locked` (selectable but not editable by interaction), `hidden`, ordered with
-`zIndex`, and carry JSON-safe application data in `meta`. `createId()` returns collision-safe ids
+`zIndex`, and carry JSON-safe application data in `meta`. Each drawing can override the theme's
+style (`LIGHT_THEME`, `DARK_THEME`, applied at scene time) and set kind options such as Fibonacci
+levels, the time-zone sequence or trend-line extensions. `createId()` returns collision-safe ids
 (`crypto.randomUUID` when available). See the [core README](packages/core/README.md) for the field
 rules and every issue code.
 

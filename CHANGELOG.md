@@ -14,6 +14,11 @@
   optional `locked`, `hidden`, `zIndex` and JSON-safe `meta` (`KFT-E-META`, with the path of the
   first unsafe value; flag type errors are `KFT-E-SHAPE`); `createId` and `createIdGenerator` for
   collision-safe ids; `JsonValue` type.
+- Core (E01-F02): full `DrawingStyle` (`lineStyle`, `fillColor`, `fillOpacity`, `textColor`,
+  `fontSize`) validated by `validateStyle` (`KFT-E-STYLE`); `DrawingTheme` with `LIGHT_THEME` and
+  `DARK_THEME` presets and `resolveStyle` (drawing over kind over global defaults, at scene time);
+  kind `options` (`KindOptions`: Fibonacci levels, time-zone sequence, extension and label flags)
+  with defaults, `resolveOptions` and `validateOptions` (`KFT-E-OPTIONS`).
 
 ### Specification and backlog
 

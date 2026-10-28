@@ -159,6 +159,27 @@ describe('DrawingStore', () => {
     expect(store.list()).toEqual([trendLine('a')]);
   });
 
+  it('patches style and options and validates the result', () => {
+    const store = new DrawingStore([trendLine('a')]);
+    const next = store.update('a', { style: { color: '#e91e63', lineStyle: 'dotted' }, options: { extendRight: true } });
+    expect(next).toEqual({ ...trendLine('a'), style: { color: '#e91e63', lineStyle: 'dotted' }, options: { extendRight: true } });
+    expect(issuesOf(() => store.update('a', { style: { lineWidth: 11 } }))).toEqual([{ code: 'KFT-E-STYLE', message: 'The style.lineWidth must be a number from 1 to 10.' }]);
+    expect(issuesOf(() => store.update('a', { options: { levels: [] } }))).toEqual([{ code: 'KFT-E-OPTIONS', message: 'The option levels is not allowed on a trend-line.' }]);
+    expect(store.list()).toEqual([next]);
+  });
+
+  it('round-trips style and options unchanged', () => {
+    const fib = {
+      id: 'f',
+      kind: 'fibonacci-retracement' as const,
+      anchors: [anchor(1), anchor(2, 120)],
+      style: { color: '#787b86', fillOpacity: 0.1 },
+      options: { levels: [{ ratio: 0.5, visible: true, color: '#f00' }], reverse: true, showPrices: false },
+    };
+    const copy = DrawingStore.fromJSON(JSON.parse(JSON.stringify(new DrawingStore([fib]))));
+    expect(copy.list()).toEqual([fib]);
+  });
+
   it('rejects anything that is not a version 1 document', () => {
     const json = [{ code: 'KFT-E-JSON', message: 'Expected a drawing document of version 1.' }];
     expect(issuesOf(() => DrawingStore.fromJSON(null))).toEqual(json);
