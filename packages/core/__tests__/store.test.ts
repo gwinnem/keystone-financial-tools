@@ -576,3 +576,189 @@ describe('DrawingStore z-order (FR-ST-004)', () => {
     expect(ids(store)).toEqual(['b', 'a']);
   });
 });
+
+describe('DrawingStore history flag (FR-HI-005)', () => {
+  function historyFlags(store: DrawingStore, actions: (() => void)[]): boolean[] {
+    const flags: boolean[] = [];
+    const stop = store.subscribe((_drawings, change) => flags.push(change.history));
+    for (const action of actions) action();
+    stop();
+    return flags;
+  }
+
+  it('marks changes as recorded by default', () => {
+    const store = new DrawingStore([trendLine('a')]);
+    expect(historyFlags(store, [() => store.add(trendLine('b')), () => store.update('a', { text: 'x' }), () => store.remove('b'), () => store.clear()])).toEqual([true, true, true, true]);
+  });
+
+  it('marks changes made with { history: false } as not recorded, one call at a time', () => {
+    const store = new DrawingStore([trendLine('a')]);
+    const off = { history: false };
+    expect(
+      historyFlags(store, [
+        () => store.add(trendLine('b'), off),
+        () => store.add(trendLine('c')),
+        () => store.update('a', { text: 'x' }, off),
+        () => store.update('a', { text: 'y' }, { history: true }),
+        () => store.remove('b', off),
+        () => store.remove('c'),
+        () => store.clear(off),
+      ])
+    ).toEqual([false, true, false, true, false, true, false]);
+  });
+
+  it('marks a whole batch as not recorded when the batch or any call in it says so', () => {
+    const store = new DrawingStore();
+    expect(
+      historyFlags(store, [
+        () => store.batch(() => store.add(trendLine('a')), { history: false }),
+        () => store.batch(() => store.add(trendLine('b'))),
+        () =>
+          store.batch(() => {
+            store.add(trendLine('c'));
+            store.update('c', { text: 'x' }, { history: false });
+          }),
+        () =>
+          store.batch(() => {
+            store.add(trendLine('d'));
+            store.batch(() => store.add(trendLine('e')), { history: false });
+          }),
+        () => store.add(trendLine('f')),
+      ])
+    ).toEqual([false, true, false, false, true]);
+  });
+
+  it('does not carry the flag over from a failed or empty batch', () => {
+    const store = new DrawingStore();
+    expect(() =>
+      store.batch(
+        () => {
+          store.add(trendLine('a'));
+          throw new Error('boom');
+        },
+        { history: false }
+      )
+    ).toThrow('boom');
+    store.batch(() => undefined, { history: false });
+    store.batch(
+      () => {
+        store.add(trendLine('a'));
+        store.remove('a');
+      },
+      { history: false }
+    );
+    expect(historyFlags(store, [() => store.add(trendLine('b'))])).toEqual([true]);
+  });
+
+  it('marks the first change after a failed batch as recorded', () => {
+    const store = new DrawingStore();
+    expect(() =>
+      store.batch(() => {
+        store.add(trendLine('a'));
+        throw new Error('boom');
+      })
+    ).toThrow('boom');
+    expect(historyFlags(store, [() => store.add(trendLine('b'))])).toEqual([true]);
+  });
+
+  it('does not mark anything for a call that changes nothing', () => {
+    const store = new DrawingStore();
+    store.remove('missing', { history: false });
+    expect(historyFlags(store, [() => store.add(trendLine('a'))])).toEqual([true]);
+  });
+});
+
+describe('DrawingStore.restore', () => {
+  function changeOf(store: DrawingStore, action: () => void): StoreChange {
+    const listener = vi.fn();
+    const stop = store.subscribe(listener);
+    action();
+    stop();
+    return onlyCall(listener, store);
+  }
+
+  it('replaces the list, reporting removes, adds and changed drawings', () => {
+    const a = trendLine('a');
+    const b = trendLine('b');
+    const store = new DrawingStore([a, b, horizontalLine('c')]);
+    const b2 = { ...b, text: 'new' };
+    const change = changeOf(store, () => store.restore([a, b2, horizontalLine('d')]));
+    expect(store.list()).toEqual([a, b2, horizontalLine('d')]);
+    expect(change.operations).toEqual([
+      { type: 'remove', id: 'c', before: horizontalLine('c') },
+      { type: 'update', id: 'b', before: b, after: b2 },
+      { type: 'add', id: 'd', after: horizontalLine('d') },
+    ]);
+    expect(change.history).toBe(true);
+  });
+
+  it('reports drawings whose order changed as updates, even when the objects are the same', () => {
+    const [a, b, c, d] = [trendLine('a'), trendLine('b'), trendLine('c'), trendLine('d')];
+    const store = new DrawingStore([a, b, c, d]);
+    const change = changeOf(store, () => store.restore([a, c, b, d]));
+    expect(store.list()).toEqual([a, c, b, d]);
+    expect(change.operations).toEqual([
+      { type: 'update', id: 'c', before: c, after: c },
+      { type: 'update', id: 'b', before: b, after: b },
+    ]);
+  });
+
+  it('does not treat drawings after an added one as moved', () => {
+    const [a, b] = [trendLine('a'), trendLine('b')];
+    const store = new DrawingStore([a, b]);
+    const change = changeOf(store, () => store.restore([a, horizontalLine('d'), b]));
+    expect(change.operations).toEqual([{ type: 'add', id: 'd', after: horizontalLine('d') }]);
+  });
+
+  it('does not treat drawings after a removed one as moved', () => {
+    const [a, b, c] = [trendLine('a'), trendLine('b'), trendLine('c')];
+    const store = new DrawingStore([a, b, c]);
+    const change = changeOf(store, () => store.restore([a, c]));
+    expect(change.operations).toEqual([{ type: 'remove', id: 'b', before: b }]);
+  });
+
+  it('does nothing when the list would not change', () => {
+    const store = new DrawingStore([trendLine('a'), trendLine('b')]);
+    const before = store.list();
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.restore([...before]);
+    expect(store.list()).toBe(before);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('copies the given list', () => {
+    const store = new DrawingStore();
+    const next = [trendLine('a')];
+    store.restore(next);
+    expect(store.list()).not.toBe(next);
+    next.push(trendLine('b'));
+    expect(store.list()).toEqual([trendLine('a')]);
+  });
+
+  it('changes nothing for an invalid drawing or a repeated id', () => {
+    const store = new DrawingStore([trendLine('a')]);
+    const listener = vi.fn();
+    store.subscribe(listener);
+    expect(issuesOf(() => store.restore([trendLine('b'), { ...trendLine('c'), anchors: [] }]))).toEqual([{ code: 'KFT-E-ANCHORS', message: 'A trend-line needs 2 anchor(s).' }]);
+    expect(issuesOf(() => store.restore([trendLine('b'), horizontalLine('b')]))).toEqual([{ code: 'KFT-E-ID', message: 'Duplicate drawing id b.' }]);
+    expect(store.list()).toEqual([trendLine('a')]);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('can be kept out of the history', () => {
+    const store = new DrawingStore();
+    expect(changeOf(store, () => store.restore([trendLine('a')], { history: false })).history).toBe(false);
+  });
+
+  it('joins an open batch', () => {
+    const store = new DrawingStore([trendLine('a')]);
+    const change = changeOf(store, () =>
+      store.batch(() => {
+        store.add(trendLine('b'));
+        store.restore([trendLine('b')]);
+      })
+    );
+    expect(change.operations.map((op) => `${op.type}:${op.id}`)).toEqual(['add:b', 'remove:a']);
+  });
+});

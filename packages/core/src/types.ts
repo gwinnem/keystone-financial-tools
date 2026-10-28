@@ -170,6 +170,24 @@ export type StoreOperation =
 export interface StoreChange {
   readonly drawings: readonly Drawing[];
   readonly operations: readonly StoreOperation[];
+  /**
+   * False when the change was made with `{ history: false }` (in a batch: when any part of it was),
+   * for example applying a remote document. `History` does not record such changes.
+   */
+  readonly history: boolean;
+}
+
+/**
+ * Options of a store change.
+ *
+ * @example
+ * ```ts
+ * store.batch(() => applyRemote(store), { history: false });
+ * ```
+ */
+export interface ChangeOptions {
+  /** False keeps the change out of the undo history. Default true. */
+  readonly history?: boolean;
 }
 
 /**

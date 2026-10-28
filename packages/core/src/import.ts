@@ -13,6 +13,8 @@ export interface ImportOptions {
   readonly mode?: ImportMode;
   /** Id source for renamed drawings in `merge` mode. Default `createId`. */
   readonly createId?: () => string;
+  /** False keeps the import out of the undo history (for example a document from another user). Default true. */
+  readonly history?: boolean;
 }
 
 /** What an import did. Ids are the ids the drawings have in the store after the import. */
@@ -89,9 +91,12 @@ export function importDocument(store: DrawingStore, json: unknown, options: Impo
     accepted.push(drawing);
   });
 
-  store.batch(() => {
-    if (mode === 'replace') store.clear();
-    for (const drawing of accepted) store.add(drawing);
-  });
+  store.batch(
+    () => {
+      if (mode === 'replace') store.clear();
+      for (const drawing of accepted) store.add(drawing);
+    },
+    { history: options.history }
+  );
   return { added: accepted.map((d) => d.id), renamed, skipped };
 }

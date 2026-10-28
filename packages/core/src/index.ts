@@ -1,5 +1,6 @@
 export type {
   Anchor,
+  ChangeOptions,
   DocumentScope,
   Drawing,
   DrawingDocument,
@@ -31,6 +32,10 @@ export { DrawingStore } from './store';
 export { DOCUMENT_VERSION, migrateV1ToV2, readDocument, SUPPORTED_DOCUMENT_VERSIONS } from './migrations';
 export type { ImportMode, ImportOptions, ImportReport } from './import';
 export { importDocument } from './import';
+export type { DrawingCommand } from './commands';
+export { applyCommand, composeCommands, createCommand, invertCommand } from './commands';
+export type { HistoryOptions, HistoryState, HistoryTransaction } from './history';
+export { History } from './history';
 export { LINE_STYLES, STYLE_LIMITS, validateStyle } from './style';
 export type { DrawingTheme, HandleStyle, ResolvedStyle, StateStyle } from './theme';
 export { DARK_THEME, LIGHT_THEME, resolveStyle } from './theme';

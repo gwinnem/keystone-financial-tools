@@ -260,7 +260,10 @@ interface DrawingDocument {
 
 - FR-ST-010: Listeners receive a `StoreChange` with the new list and the operations
   (`{ type: 'add' | 'update' | 'remove', id, before?, after? }[]`) so persistence and sync can work
-  incrementally.
+  incrementally, plus `history: boolean` (false for changes made with `{ history: false }`).
+- FR-ST-011: `restore(drawings)` replaces the whole list as one change; drawings whose relative
+  position changed are reported as `update`, so a pure reorder still notifies. History applies undo
+  and redo through it.
 
 ### 6.3 Selection
 
@@ -269,7 +272,11 @@ interface DrawingDocument {
 
 ### 6.4 History
 
-- FR-HI-001: `History` records commands (`add`, `update`, `remove`, `batch`) with their inverse.
+- FR-HI-001: `History` records commands with their inverse. A command is plain data
+  `{ operations, before, after }`: the store operations of one change (one operation is an add,
+  update or remove; several are a batch) and the drawing ids in list order before and after it, so
+  applying the inverse restores the exact list including order (`createCommand`, `invertCommand`,
+  `composeCommands`, `applyCommand`).
 - FR-HI-002: `undo()` and `redo()` apply the inverse or the command again through the store;
   `canUndo` and `canRedo` are observable.
 - FR-HI-003: A continuous drag (pointer down to up) is one history entry (coalescing).

@@ -16,8 +16,10 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `DEFAULT_RETRACEMENT_LEVELS`, `DEFAULT_ARC_FAN_LEVELS`, `DEFAULT_TIME_ZONE_SEQUENCE` | Fibonacci defaults |
 | `DrawingError` | Thrown for invalid drawings or documents; `issues` says what is wrong |
 | `createId`, `createIdGenerator`, `IdSource` | Collision-safe drawing ids (`crypto.randomUUID`, or time + counter + random suffix) |
-| `DrawingStore` | `add`, `update`, `remove`, `clear`, `batch`, `get`, `list`, `ordered`, `bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `subscribe`, `toJSON`, `fromJSON` |
-| `StoreChange`, `StoreOperation`, `DrawingListener` | What listeners receive: the new list and the `add`/`update`/`remove` operations |
+| `DrawingStore` | `add`, `update`, `remove`, `clear`, `batch`, `restore`, `get`, `list`, `ordered`, `bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `subscribe`, `toJSON`, `fromJSON` |
+| `StoreChange`, `StoreOperation`, `DrawingListener`, `ChangeOptions` | What listeners receive: the new list, the `add`/`update`/`remove` operations and whether history records the change |
+| `History`, `HistoryOptions`, `HistoryState`, `HistoryTransaction` | Undo and redo with a depth limit, transactions and coalescing |
+| `DrawingCommand`, `createCommand`, `invertCommand`, `composeCommands`, `applyCommand` | Changes as plain-data commands with inverses |
 | `DOCUMENT_VERSION`, `SUPPORTED_DOCUMENT_VERSIONS`, `DrawingDocument`, `DrawingDocumentV1`, `DocumentScope` | The saved document format (version 2; version 1 is read and migrated) |
 | `readDocument`, `migrateV1ToV2` | Reading and migrating saved documents |
 | `importDocument`, `ImportMode`, `ImportOptions`, `ImportReport` | Importing a document in `merge` or `replace` mode, keeping the valid drawings |
@@ -47,6 +49,50 @@ with one operation per drawing (add + update reports one add of the final value,
 reports nothing, update + remove reports a remove of the original, remove + add reports an update).
 If `fn` throws, everything it changed is rolled back, nobody is notified and the error is rethrown.
 A batch inside a batch joins the outer one; an empty batch does not notify. `clear()` is one batch.
+
+`store.restore(drawings)` replaces the whole list as one change (removes, adds and updates; a
+drawing whose position changed is reported as updated). It does nothing when the list would not
+change.
+
+## Undo and redo
+
+```ts
+import { History } from 'keystone-financial-tools-core';
+
+const history = new History(store); // { limit: 100, coalesceKeys: ['nudge'], coalesceMs: 500 }
+history.subscribe(({ canUndo, canRedo }) => updateButtons(canUndo, canRedo));
+history.onError((issue) => console.warn(issue.message));
+
+store.add(line);
+history.undo(); // the line is gone
+history.redo(); // it is back
+
+const drag = history.transaction('drag');
+store.update(line.id, { anchors: step1 });
+store.update(line.id, { anchors: step2 });
+drag.commit(); // one undo step; drag.cancel() would revert both
+
+store.add(remoteDrawing, { history: false }); // not recorded; clears the redo stack
+```
+
+- Every store change is one entry: a batch, a z-order command and an import each undo as one step.
+- Changes made with `{ history: false }` (on `add`, `update`, `remove`, `clear`, `restore`, `batch`,
+  or `importDocument(..., { history: false })`) are not recorded and clear the redo stack.
+- The depth limit (1 to 1000, default 100) drops the oldest entries.
+- `transaction(key)` groups changes until `commit()`; `cancel()` reverts them. One transaction can be
+  open at a time; undo and redo return false while it is. Transactions with a key in `coalesceKeys`
+  (default `nudge`) merge into the previous entry with the same key when committed within
+  `coalesceMs` (default 500 ms).
+- Undo and redo restore the exact list (values and order). An entry that no longer fits the store,
+  because a drawing it touches was removed or re-added outside the history, is dropped and reported
+  through `onError` (`KFT-E-MISSING` or `KFT-E-ID`) instead of throwing.
+- `getState()` returns `{ canUndo, canRedo, undoDepth, redoDepth }`, a new object only when it
+  changes; `subscribe` is called with each new state. `destroy()` stops following the store.
+
+Commands are plain data: `{ operations, before, after }` (the operations of a change and the drawing
+ids in list order around it). `invertCommand` gives the inverse, `composeCommands` joins two, and
+`applyCommand(store, command)` applies one to the current store, returning an issue instead of
+throwing when it no longer fits.
 
 ## Paint order
 

@@ -29,6 +29,12 @@
   the pure `migrateV1ToV2`. `importDocument(store, json, { mode })` imports in `merge` or `replace`
   mode as one change and returns an `ImportReport` (`added`, `renamed`, `skipped`) instead of failing
   on individual bad drawings.
+- Core (E01-F05): `History` with undo, redo, a depth limit (default 100), transactions
+  (`commit`/`cancel`) and time-based coalescing of `nudge` transactions; changes made with
+  `{ history: false }` (`ChangeOptions` on store calls, `batch`, `importDocument`) are not recorded and
+  clear the redo stack, stale entries are dropped with an error event. Plain-data commands
+  (`DrawingCommand`, `createCommand`, `invertCommand`, `composeCommands`, `applyCommand`) restore the
+  exact list. `StoreChange.history` and `store.restore(drawings)`.
 
 ### Specification and backlog
 

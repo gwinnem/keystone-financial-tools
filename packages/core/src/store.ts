@@ -1,6 +1,7 @@
 import { DrawingError } from './errors';
 import { DOCUMENT_VERSION, readDocument } from './migrations';
-import type { DocumentScope, Drawing, DrawingDocument, DrawingListener, DrawingPatch, StoreChange, StoreOperation } from './types';
+import { addOperation } from './operations';
+import type { ChangeOptions, DocumentScope, Drawing, DrawingDocument, DrawingListener, DrawingPatch, StoreChange, StoreOperation } from './types';
 import { validateDrawing } from './validate';
 
 /** Options of a new `DrawingStore`. */
@@ -18,17 +19,8 @@ function missing(id: string): DrawingError {
   return new DrawingError([{ code: 'KFT-E-MISSING', message: `No drawing with id ${id}.` }]);
 }
 
-/**
- * Folds `next` into `previous` (both for the same drawing) so a batch reports one operation per
- * drawing. Returns null when they cancel out (add, then remove). The other pairs cannot happen:
- * the store rejects a second add of an id and an update or remove of a missing one.
- */
-function fold(previous: StoreOperation, next: StoreOperation): StoreOperation | null {
-  if (next.type === 'remove') {
-    return previous.type === 'add' ? null : { type: 'remove', id: next.id, before: previous.before };
-  }
-  if (previous.type === 'add') return { type: 'add', id: next.id, after: next.after };
-  return { type: 'update', id: next.id, before: previous.before, after: next.after };
+function duplicate(id: string): DrawingError {
+  return new DrawingError([{ code: 'KFT-E-ID', message: `Duplicate drawing id ${id}.` }]);
 }
 
 function zIndexOf(drawing: Drawing): number {
@@ -115,6 +107,8 @@ export class DrawingStore {
   private readonly listeners = new Set<DrawingListener>();
   private batching = false;
   private pending = new Map<string, StoreOperation>();
+  /** Set by a change made with `{ history: false }`; cleared when the change is reported or rolled back. */
+  private untracked = false;
 
   constructor(initial: readonly Drawing[] = [], options: DrawingStoreOptions = {}) {
     this.scope = options.scope;
@@ -150,43 +144,92 @@ export class DrawingStore {
     return this.items.find((d) => d.id === id);
   }
 
-  add(drawing: Drawing): void {
+  add(drawing: Drawing, options?: ChangeOptions): void {
     this.insert(drawing);
-    this.record({ type: 'add', id: drawing.id, after: drawing });
+    this.record({ type: 'add', id: drawing.id, after: drawing }, options);
   }
 
-  update(id: string, patch: DrawingPatch): Drawing {
+  update(id: string, patch: DrawingPatch, options?: ChangeOptions): Drawing {
     const current = this.get(id);
     if (current === undefined) throw missing(id);
     const next: Drawing = { ...current, ...patch, id };
     assertValid(next);
     this.items = this.items.map((d) => (d.id === id ? next : d));
-    this.record({ type: 'update', id, before: current, after: next });
+    this.record({ type: 'update', id, before: current, after: next }, options);
     return next;
   }
 
-  remove(id: string): boolean {
+  remove(id: string, options?: ChangeOptions): boolean {
     const current = this.get(id);
     if (current === undefined) return false;
     this.items = this.items.filter((d) => d.id !== id);
-    this.record({ type: 'remove', id, before: current });
+    this.record({ type: 'remove', id, before: current }, options);
     return true;
   }
 
   /** Removes every drawing: one notification with one `remove` per drawing, none when already empty. */
-  clear(): void {
+  clear(options?: ChangeOptions): void {
     this.batch(() => {
       for (const drawing of this.items) this.remove(drawing.id);
-    });
+    }, options);
+  }
+
+  /**
+   * Replaces the whole list with `drawings`, in that order, as one change: drawings no longer listed
+   * are removed, new ones added, and listed ones whose object or relative position changed are
+   * reported as updated. Nothing happens (no notification, same list) when the result equals the
+   * current list. Every drawing is validated first; on an invalid drawing or a repeated id nothing
+   * changes. `History` uses this to undo and redo.
+   *
+   * @example
+   * ```ts
+   * const saved = store.list();
+   * // ... edits ...
+   * store.restore(saved); // back to the saved list, one notification
+   * ```
+   */
+  restore(drawings: readonly Drawing[], options?: ChangeOptions): void {
+    const ids = new Set<string>();
+    for (const drawing of drawings) {
+      assertValid(drawing);
+      if (ids.has(drawing.id)) throw duplicate(drawing.id);
+      ids.add(drawing.id);
+    }
+    const previous = new Map(this.items.map((d): [string, Drawing] => [d.id, d]));
+    // Drawings in both lists whose order among each other changed are reported as updates, so a
+    // pure reorder still notifies.
+    const kept = this.items.map((d) => d.id).filter((id) => ids.has(id));
+    const moved = new Set(
+      drawings
+        .map((d) => d.id)
+        .filter((id) => previous.has(id))
+        .filter((id, index) => kept[index] !== id)
+    );
+    const operations: StoreOperation[] = [];
+    for (const drawing of previous.values()) {
+      if (!ids.has(drawing.id)) operations.push({ type: 'remove', id: drawing.id, before: drawing });
+    }
+    for (const drawing of drawings) {
+      const before = previous.get(drawing.id);
+      if (before === undefined) operations.push({ type: 'add', id: drawing.id, after: drawing });
+      else if (before !== drawing || moved.has(drawing.id)) operations.push({ type: 'update', id: drawing.id, before, after: drawing });
+    }
+    if (operations.length === 0) return;
+    this.batch(() => {
+      this.items = [...drawings];
+      for (const operation of operations) this.record(operation);
+    }, options);
   }
 
   /**
    * Runs `fn` as one change: listeners are notified once, after `fn` returns, with the folded
    * operations (none when nothing changed). When `fn` throws, every change it made is rolled back,
    * nobody is notified and the error is rethrown. A `batch` inside a batch joins the outer one.
-   * Returns what `fn` returns.
+   * With `{ history: false }` the whole change is kept out of the undo history. Returns what `fn`
+   * returns.
    */
-  batch<T>(fn: () => T): T {
+  batch<T>(fn: () => T, options?: ChangeOptions): T {
+    this.track(options);
     if (this.batching) return fn();
     const snapshot = this.items;
     this.batching = true;
@@ -196,6 +239,7 @@ export class DrawingStore {
     } catch (error) {
       this.items = snapshot;
       this.pending = new Map();
+      this.untracked = false;
       throw error;
     } finally {
       this.batching = false;
@@ -239,23 +283,25 @@ export class DrawingStore {
 
   private insert(drawing: Drawing): void {
     assertValid(drawing);
-    if (this.get(drawing.id) !== undefined) {
-      throw new DrawingError([{ code: 'KFT-E-ID', message: `Duplicate drawing id ${drawing.id}.` }]);
-    }
+    if (this.get(drawing.id) !== undefined) throw duplicate(drawing.id);
     this.items = [...this.items, drawing];
   }
 
-  private record(operation: StoreOperation): void {
-    const previous = this.pending.get(operation.id);
-    const folded = previous === undefined ? operation : fold(previous, operation);
-    if (folded === null) this.pending.delete(operation.id);
-    else this.pending.set(operation.id, folded);
+  private track(options: ChangeOptions | undefined): void {
+    if (options?.history === false) this.untracked = true;
+  }
+
+  private record(operation: StoreOperation, options?: ChangeOptions): void {
+    this.track(options);
+    addOperation(this.pending, operation);
     if (!this.batching) this.flush();
   }
 
   private flush(): void {
+    const history = !this.untracked;
+    this.untracked = false;
     if (this.pending.size === 0) return;
-    const change: StoreChange = { drawings: this.items, operations: [...this.pending.values()] };
+    const change: StoreChange = { drawings: this.items, operations: [...this.pending.values()], history };
     this.pending = new Map();
     // A copy, so a listener that unsubscribes during the call does not change the iteration.
     for (const listener of [...this.listeners]) listener(change.drawings, change);

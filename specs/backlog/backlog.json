@@ -395,7 +395,8 @@
                 "Applying a command then its inverse leaves the store deep-equal to the start (property test over random command sequences, QA-004).",
                 "Commands are plain data (serialisable for later sync)."
               ],
-              "tasks": ["Implement `commands.ts`.", "Property test with a seeded generator."]
+              "tasks": ["Implement `commands.ts`.", "Property test with a seeded generator."],
+              "status": "done"
             },
             {
               "id": "E01-F05-S02",
@@ -408,7 +409,8 @@
                 "Depth defaults to 100, accepts 1..1000 and drops the oldest entries beyond the limit.",
                 "Undo of a command whose drawing no longer exists (removed through the API without history) is skipped with an `error` event, not a throw."
               ],
-              "tasks": ["Implement `history.ts` on top of the store change stream.", "Tests for limits, redo clearing and stale commands."]
+              "tasks": ["Implement `history.ts` on top of the store change stream.", "Tests for limits, redo clearing and stale commands."],
+              "status": "done"
             },
             {
               "id": "E01-F05-S03",
@@ -420,7 +422,8 @@
                 "Changes made with `{ history: false }` are not recorded and clear the redo stack.",
                 "Coalescing key `nudge` merges entries made within 500 ms (configurable)."
               ],
-              "tasks": ["Add transactions and time-based coalescing with an injectable clock.", "Tests with a fake clock."]
+              "tasks": ["Add transactions and time-based coalescing with an injectable clock.", "Tests with a fake clock."],
+              "status": "done"
             }
           ]
         }

@@ -41,6 +41,10 @@ const restored = DrawingStore.fromJSON(JSON.parse(saved)); // also reads version
 `importDocument(store, text, { mode: 'merge' | 'replace' })` imports a saved document and keeps the
 valid drawings when some are broken; it returns which were added, renamed or skipped.
 
+`new History(store)` adds undo and redo: every store change (a batch counts as one) is one step,
+`history.transaction('drag')` groups a gesture into one step, and changes made with
+`{ history: false }` are not recorded.
+
 Invalid drawings throw a `DrawingError` whose `issues` list what is wrong (`KFT-E-ID`,
 `KFT-E-KIND`, `KFT-E-ANCHORS`, `KFT-E-AXIS`, `KFT-E-META`, ...). `validateDrawing` returns the
 same list without throwing. All anchors of a drawing must be on one y-axis.
