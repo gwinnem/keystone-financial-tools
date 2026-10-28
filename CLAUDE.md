@@ -12,13 +12,13 @@ and persistence. Framework-neutral core with thin TypeScript, Vue, React and Ang
   time zones, levels from a selected data range) and owns the range selector.
 - This repo owns the interactive layer only: placing anchors with the pointer, snapping, selecting,
   editing and saving drawings. It reuses the chart's renderers instead of drawing its own.
-- The chart supplies the host contract (`DrawingHost` in `packages/core/src/types.ts`): time/price
-  to pixel transforms per y-axis, the y-axis under a point, OHLC lookup for magnet snapping,
-  pointer events with modifier keys, and a redraw request. This repo never depends on the chart
-  package itself.
+- The chart supplies the host contract (`DrawingHost` version 2 in `packages/core/src/host.ts`,
+  SDS §7): time/price to pixel transforms per y-axis, pane rectangles, the y-axis under a point,
+  nearest bar for magnet snapping, bar interval, pointer, key and viewport events, cursor, a redraw
+  request and an optional text editor. This repo never depends on the chart package itself.
 
 The design is specified in [specs/SDS.md](specs/SDS.md) (requirement ids such as FR-INT-010,
-decisions D-1..D-6, open decisions OD-n). Work items live in
+decisions D-1..D-7, open decisions OD-n). Work items live in
 [specs/backlog/backlog.json](specs/backlog/backlog.json) (epics E01-E10 > features > stories) and
 are created as linked GitHub issues (sub-issues plus Parent/Children links in the bodies, labels,
 milestones M1-M5) by `scripts/create-backlog.ps1`, which is idempotent. Changes to scope update the

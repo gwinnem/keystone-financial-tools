@@ -5,7 +5,6 @@ export type {
   Drawing,
   DrawingDocument,
   DrawingDocumentV1,
-  DrawingHost,
   DrawingIssue,
   DrawingIssueCode,
   DrawingKind,
@@ -13,15 +12,18 @@ export type {
   DrawingPatch,
   DrawingStyle,
   FibonacciLevel,
-  HostPointerEvent,
   JsonValue,
   KindOptions,
   LineStyle,
-  Ohlc,
-  PointerPhase,
   StoreChange,
   StoreOperation,
 } from './types';
+export type { DrawingCursor, DrawingHost, HostKeyEvent, HostPointerEvent, Modifiers, NearestBar, Ohlc, Point, PointerPhase, PointerType, Rect, TextEditRequest } from './host';
+export { HOST_API_VERSION } from './host';
+export { assertHost, REQUIRED_HOST_MEMBERS, validateHost } from './host-check';
+export { Disposables } from './disposables';
+export type { HostHandlers } from './host-connection';
+export { connectHost } from './host-connection';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';

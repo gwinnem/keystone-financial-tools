@@ -35,6 +35,12 @@
   clear the redo stack, stale entries are dropped with an error event. Plain-data commands
   (`DrawingCommand`, `createCommand`, `invertCommand`, `composeCommands`, `applyCommand`) restore the
   exact list. `StoreChange.history` and `store.restore(drawings)`.
+- Core (E02-F01), **breaking**: `DrawingHost` is now contract version 2 (`apiVersion: 2`) in
+  `host.ts`: adds `paneRect`, `nearestBar` (replaces `ohlcAt`), `barInterval`, `onKey`,
+  `onViewportChange`, `setCursor` and optional `editText`; `HostPointerEvent` gains `pointerType`,
+  `button` and the `cancel`/`leave` phases; new `HostKeyEvent`, `DrawingCursor`, `Rect`, `Point`,
+  `NearestBar`, `TextEditRequest`. The 0.1 interface is removed without a shim (FR-HOST-007; no host
+  implemented it). `validateHost`/`assertHost` (`KFT-E-HOST`), `Disposables` and `connectHost`.
 
 ### Specification and backlog
 

@@ -24,7 +24,9 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `readDocument`, `migrateV1ToV2` | Reading and migrating saved documents |
 | `importDocument`, `ImportMode`, `ImportOptions`, `ImportReport` | Importing a document in `merge` or `replace` mode, keeping the valid drawings |
 | `DrawingStoreOptions` | `new DrawingStore(drawings, { scope })` |
-| `DrawingHost`, `HostPointerEvent`, `Ohlc` | What a chart supplies for the drawing tools |
+| `DrawingHost`, `HOST_API_VERSION`, `HostPointerEvent`, `HostKeyEvent`, `DrawingCursor`, `Rect`, `Point`, `NearestBar`, `Ohlc`, `Modifiers`, `PointerPhase`, `PointerType`, `TextEditRequest` | What a chart supplies for the drawing tools (host contract version 2) |
+| `validateHost`, `assertHost`, `REQUIRED_HOST_MEMBERS` | Checks a host against the contract (`KFT-E-HOST`) |
+| `connectHost`, `HostHandlers`, `Disposables` | Subscribes to the host's events once and unsubscribes every one exactly once |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -102,6 +104,34 @@ change (one notification): the moved drawings keep their relative order, and onl
 that must change to produce the new order are written, so the rest keep theirs. They return false
 when nothing moves (for example a drawing already at the front) and throw `KFT-E-MISSING` for an
 unknown id. Locked and hidden drawings can be reordered through the API.
+
+## Host contract (version 2)
+
+A chart hosts the tools by implementing `DrawingHost`. Times are epoch milliseconds; x, y and
+rectangles are CSS px in plot coordinates.
+
+| Member | Purpose |
+|---|---|
+| `apiVersion` | Always `2` |
+| `timeToX`, `xToTime` | Time and x, both ways; extrapolated beyond the data (future space) |
+| `priceToY`, `yToPrice` | Price and y on a y-axis, both ways |
+| `yAxisAt(x, y)` | The y-axis of the pane under a point, or null |
+| `paneRect(yAxisId)` | The plot area of a pane, or null |
+| `nearestBar(time)` | `{ time, ohlc }` of the nearest bar (magnet snapping), or null |
+| `barInterval()` | Milliseconds between bars |
+| `onPointer`, `onKey`, `onViewportChange` | Event subscriptions; each returns its unsubscribe function. A key listener returns true when it handled the key |
+| `setCursor(cursor)` | Shows a `DrawingCursor` |
+| `requestRender()` | Asks for an overlay redraw |
+| `editText(request)` | Optional in-place text editor; resolves with the text or null |
+
+`validateHost(host)` lists what is missing (`KFT-E-HOST`: wrong `apiVersion`, then one issue naming
+every missing function; `editText` is optional but must be a function when present).
+`assertHost(host)` throws `DrawingError` with those issues.
+
+`connectHost(host, { pointer, key, viewport })` subscribes once to each event and returns a
+`Disposables`: `dispose()` unsubscribes every listener exactly once, even when one unsubscribe
+throws, and returns the errors instead of throwing. A key handler's result reaches the host as a
+strict boolean. A subscribe method that returns no function is `KFT-E-HOST`.
 
 ## Saved documents
 
@@ -199,6 +229,7 @@ options, locked, hidden, zIndex, meta) and never throws.
 | `KFT-E-META` | `meta` is not a plain object, or holds a value that is not JSON-safe (the message names its path, e.g. `meta.a.b[3]`) |
 | `KFT-E-MISSING` | Update or reorder of a drawing that is not in the store |
 | `KFT-E-JSON` | Not valid JSON, or not a document of version 1 or 2, or an invalid scope |
+| `KFT-E-HOST` | The host does not satisfy contract version 2 |
 
 ```ts
 import { createId, DrawingStore } from 'keystone-financial-tools-core';

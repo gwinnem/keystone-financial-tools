@@ -148,7 +148,19 @@ export interface DrawingDocumentV1 {
 }
 
 export type DrawingIssueCode =
-  'KFT-E-SHAPE' | 'KFT-E-ID' | 'KFT-E-KIND' | 'KFT-E-ANCHORS' | 'KFT-E-ANCHOR' | 'KFT-E-AXIS' | 'KFT-E-TEXT' | 'KFT-E-STYLE' | 'KFT-E-OPTIONS' | 'KFT-E-META' | 'KFT-E-MISSING' | 'KFT-E-JSON';
+  | 'KFT-E-SHAPE'
+  | 'KFT-E-ID'
+  | 'KFT-E-KIND'
+  | 'KFT-E-ANCHORS'
+  | 'KFT-E-ANCHOR'
+  | 'KFT-E-AXIS'
+  | 'KFT-E-TEXT'
+  | 'KFT-E-STYLE'
+  | 'KFT-E-OPTIONS'
+  | 'KFT-E-META'
+  | 'KFT-E-MISSING'
+  | 'KFT-E-JSON'
+  | 'KFT-E-HOST';
 
 export interface DrawingIssue {
   readonly code: DrawingIssueCode;
@@ -202,42 +214,3 @@ export interface ChangeOptions {
  * ```
  */
 export type DrawingListener = (drawings: readonly Drawing[], change: StoreChange) => void;
-
-export interface Ohlc {
-  readonly open: number;
-  readonly high: number;
-  readonly low: number;
-  readonly close: number;
-}
-
-export type PointerPhase = 'down' | 'move' | 'up';
-
-/** A pointer event in the chart's plot coordinates (CSS pixels). */
-export interface HostPointerEvent {
-  readonly phase: PointerPhase;
-  readonly x: number;
-  readonly y: number;
-  readonly shiftKey: boolean;
-  readonly ctrlKey: boolean;
-  readonly altKey: boolean;
-  readonly metaKey: boolean;
-}
-
-/**
- * What a chart must supply for drawing tools to work on it. keystone-charts-financial implements
- * this contract; the drawing tools never depend on the chart package itself.
- */
-export interface DrawingHost {
-  timeToX(time: number): number;
-  xToTime(x: number): number;
-  priceToY(price: number, yAxisId: string): number;
-  yToPrice(y: number, yAxisId: string): number;
-  /** The y-axis under a plot point, or null outside every pane. */
-  yAxisAt(x: number, y: number): string | null;
-  /** The bar at a time, for magnet snapping, or null when there is none. */
-  ohlcAt(time: number): Ohlc | null;
-  /** Subscribes to pointer events; returns the unsubscribe function. */
-  onPointer(listener: (event: HostPointerEvent) => void): () => void;
-  /** Asks the chart to redraw its overlay layer. */
-  requestRender(): void;
-}
