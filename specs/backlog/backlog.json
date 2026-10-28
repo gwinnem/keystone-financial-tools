@@ -1,0 +1,2031 @@
+{
+  "version": 1,
+  "repository": "gwinnem/keystone-financial-tools",
+  "assignee": "gwinnem",
+  "sds": "specs/SDS.md",
+  "labels": [
+    {
+      "name": "epic",
+      "color": "5319e7",
+      "description": "Epic"
+    },
+    {
+      "name": "feature",
+      "color": "1d76db",
+      "description": "Feature"
+    },
+    {
+      "name": "story",
+      "color": "0e8a16",
+      "description": "User story"
+    },
+    {
+      "name": "area:core",
+      "color": "bfdadc",
+      "description": "packages/core"
+    },
+    {
+      "name": "area:typescript",
+      "color": "bfdadc",
+      "description": "packages/typescript"
+    },
+    {
+      "name": "area:vue",
+      "color": "bfdadc",
+      "description": "packages/vue"
+    },
+    {
+      "name": "area:react",
+      "color": "bfdadc",
+      "description": "packages/react"
+    },
+    {
+      "name": "area:angular",
+      "color": "bfdadc",
+      "description": "packages/angular"
+    },
+    {
+      "name": "area:playground",
+      "color": "bfdadc",
+      "description": "apps/playground and e2e"
+    },
+    {
+      "name": "area:docs",
+      "color": "bfdadc",
+      "description": "Documentation"
+    },
+    {
+      "name": "area:ci",
+      "color": "bfdadc",
+      "description": "CI, tooling and release"
+    },
+    {
+      "name": "tool:fibonacci",
+      "color": "fbca04",
+      "description": "Fibonacci drawing tools"
+    },
+    {
+      "name": "a11y",
+      "color": "f9d0c4",
+      "description": "Accessibility"
+    },
+    {
+      "name": "licensing",
+      "color": "d93f0b",
+      "description": "License tiers and gating"
+    },
+    {
+      "name": "decision",
+      "color": "e4e669",
+      "description": "Needs a decision recorded in the SDS"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "M1 Foundation",
+      "description": "Model v2, store, history, host contract v2, geometry, scene (E01, E02, E03)"
+    },
+    {
+      "title": "M2 Interaction",
+      "description": "Interaction engine and primitive tools (E04, E05 F01-F04)"
+    },
+    {
+      "title": "M3 Fibonacci and persistence",
+      "description": "Fibonacci tools, repositories, import and export (E05 F05-F08, E06)"
+    },
+    {
+      "title": "M4 Adapters and integration",
+      "description": "Framework adapters, toolbar model, playground, e2e, chart integration (E07, E08)"
+    },
+    {
+      "title": "M5 Release",
+      "description": "Docs site, performance, accessibility, release pipeline, licensing (E09, E10)"
+    }
+  ],
+  "standards": {
+    "epicAcceptance": [
+      "All features of the epic are closed.",
+      "The referenced SDS sections are fully satisfied; any deviation is recorded in the SDS first.",
+      "Package READMEs, CHANGELOG and docs reflect the delivered scope (DOC-001, DOC-004)."
+    ],
+    "featureAcceptance": [
+      "All stories of the feature are closed.",
+      "Stryker on the feature's touched files: 0 survived mutants (QA-002).",
+      "Coverage stays at or above 90% in every touched package (QA-001).",
+      "README, CHANGELOG and TSDoc updated for the feature's public changes (DOC-001, DOC-002)."
+    ],
+    "storyAcceptance": [
+      "Unit tests cover every acceptance criterion above; coverage of the touched files is at least 90% (QA-001).",
+      "Public exports have TSDoc with an example (NFR-DOC-001).",
+      "Type-check, lint and format pass in the pre-commit hook."
+    ]
+  },
+  "epics": [
+    {
+      "id": "E01",
+      "title": "Drawing model, store and history",
+      "milestone": "M1 Foundation",
+      "labels": ["area:core"],
+      "sds": ["§5", "§6"],
+      "description": "The persisted data model (anchors, drawings, style, kind options, document), validation with coded issues, the immutable store and the undo/redo history that every interaction builds on.",
+      "features": [
+        {
+          "id": "E01-F01",
+          "title": "Model and validation",
+          "sds": ["FR-DM-001..007", "FR-DM-040"],
+          "description": "Anchor and drawing types, flags (locked, hidden, zIndex), application meta and validation that reports every issue with a stable code.",
+          "why": "every drawing is checked against one strict, documented contract before it reaches the store",
+          "stories": [
+            {
+              "id": "E01-F01-S01",
+              "title": "Anchor and drawing types",
+              "userStory": "As a chart application developer, I want typed anchors and drawings in data space so that drawings survive zoom, scroll and layout changes.",
+              "sds": ["FR-DM-001", "D-1"],
+              "acceptance": [
+                "`Anchor`, `Drawing`, `DrawingKind` and `ANCHOR_COUNT` are exported from core.",
+                "Anchors hold `time`, `price` and `yAxisId`; no pixel values are stored.",
+                "`DRAWING_KINDS` lists the eight kinds in catalog order."
+              ],
+              "tasks": ["Define types in `src/types.ts`.", "Add `kinds.ts` with `ANCHOR_COUNT`, `DRAWING_KINDS`, `isDrawingKind`.", "Unit tests for the kind helpers."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F01-S02",
+              "title": "Validation with coded issues",
+              "userStory": "As a chart application developer, I want every invalid drawing reported with a stable code and message so that I can show precise errors and never store bad data.",
+              "sds": ["FR-DM-004", "FR-DM-040"],
+              "acceptance": [
+                "`validateDrawing` returns all issues in a stable order: `KFT-E-SHAPE`, `KFT-E-ID`, `KFT-E-KIND`, `KFT-E-ANCHORS`, `KFT-E-ANCHOR`, `KFT-E-TEXT`.",
+                "`isValidAnchor` rejects missing, non-finite and non-number values and empty y-axis ids.",
+                "`DrawingError` carries the issues and joins them in its message."
+              ],
+              "tasks": ["Implement `validate.ts` and `errors.ts`.", "Unit tests for every issue code and the combined order."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F01-S03",
+              "title": "One y-axis per drawing",
+              "userStory": "As a chart application developer, I want a drawing's anchors to belong to one pane so that a drawing never spans two y-axes with different scales.",
+              "sds": ["FR-DM-002"],
+              "acceptance": [
+                "A drawing whose anchors have different `yAxisId` values fails with `KFT-E-AXIS`.",
+                "The issue is reported once per drawing (not once per anchor) and after the anchor checks.",
+                "Existing valid drawings (single axis) are unaffected."
+              ],
+              "tasks": ["Add `KFT-E-AXIS` to `DrawingIssueCode`.", "Extend `validateDrawing` with the axis check.", "Tests: mixed axes, single anchor, two anchors same axis."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F01-S04",
+              "title": "Locked, hidden, zIndex and meta fields",
+              "userStory": "As a trader, I want to lock and hide drawings and control which one is on top so that important markup stays put and the chart stays readable.",
+              "sds": ["FR-DM-005", "FR-DM-006", "FR-DM-007"],
+              "acceptance": [
+                "`Drawing` gains optional `locked`, `hidden`, `zIndex` and `meta`; defaults are false, false, 0 and none.",
+                "`locked` and `hidden` must be booleans, `zIndex` a finite integer (`KFT-E-SHAPE` with a field-specific message otherwise).",
+                "`meta` must be JSON-safe (no functions, `undefined`, cycles, non-finite numbers); otherwise `KFT-E-META`.",
+                "`meta` round-trips through `toJSON`/`fromJSON` unchanged."
+              ],
+              "tasks": ["Extend the `Drawing` type and validation.", "Add a JSON-safety check for `meta` with cycle detection.", "Round-trip tests for all new fields."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F01-S05",
+              "title": "Collision-safe ids",
+              "userStory": "As a chart application developer, I want `createId()` to give unique ids so that drawings created on different devices or sessions never collide.",
+              "sds": ["FR-DM-003"],
+              "acceptance": [
+                "`createId()` uses `crypto.randomUUID` when available.",
+                "Without `crypto.randomUUID` it falls back to a time-based id plus a per-process counter and a random suffix.",
+                "10,000 generated ids in a tight loop are unique in both modes.",
+                "Ids are strings accepted by `validateDrawing`."
+              ],
+              "tasks": ["Implement `ids.ts` with injectable random source for tests.", "Tests for both modes and uniqueness."],
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E01-F02",
+          "title": "Style, theme and kind options",
+          "sds": ["FR-DM-010", "FR-DM-011", "FR-DM-020..023"],
+          "description": "Validated style values, a theme that supplies defaults at scene time, and per-kind options such as Fibonacci levels and trend-line extensions.",
+          "why": "drawings look consistent by default, follow the light or dark theme, and can still be styled one by one",
+          "stories": [
+            {
+              "id": "E01-F02-S01",
+              "title": "Style schema and validation",
+              "userStory": "As a trader, I want to set color, width, line style, fill and text style on a drawing so that I can tell my markup apart.",
+              "sds": ["FR-DM-010"],
+              "acceptance": [
+                "`DrawingStyle` supports `color`, `lineWidth` (1..10), `lineStyle` (solid, dashed, dotted), `fillColor`, `fillOpacity` (0..1), `textColor`, `fontSize` (8..72).",
+                "Out-of-range numbers, unknown line styles and unknown keys fail with `KFT-E-STYLE` naming the field.",
+                "Colors are accepted as non-empty strings (the host validates CSS syntax); empty strings are rejected.",
+                "`DrawingStore.update` can patch `style` and the result is validated."
+              ],
+              "tasks": ["Add `DrawingStyle` fields and `validateStyle`.", "Hook style validation into `validateDrawing`.", "Boundary tests for every numeric field."]
+            },
+            {
+              "id": "E01-F02-S02",
+              "title": "Drawing theme with light and dark presets",
+              "userStory": "As a chart application developer, I want a theme to supply default styles so that drawings match my chart and switch with dark mode without rewriting stored drawings.",
+              "sds": ["FR-DM-011"],
+              "acceptance": [
+                "`DrawingTheme` has global defaults, per-kind overrides and state styles (hover, selected, locked, handles).",
+                "`LIGHT_THEME` and `DARK_THEME` presets are exported.",
+                "`resolveStyle(drawing, theme)` merges drawing style over kind defaults over global defaults; stored drawings are not modified.",
+                "Changing the theme on the controller restyles drawings that do not override a value on the next scene."
+              ],
+              "tasks": ["Implement `theme.ts` with presets and `resolveStyle`.", "Tests for merge order and theme switching."]
+            },
+            {
+              "id": "E01-F02-S03",
+              "title": "Fibonacci levels and time-zone sequence options",
+              "userStory": "As a trader, I want to choose which Fibonacci levels are shown and in which colors so that I see the ratios I trade.",
+              "sds": ["FR-DM-020", "FR-DM-021", "FR-DM-022", "FR-DM-023"],
+              "acceptance": [
+                "Default retracement levels 0, 0.236, 0.382, 0.5, 0.618, 0.786, 1 visible; 1.272, 1.618, 2.618, 4.236 present but hidden.",
+                "Default arcs and fans levels 0.382, 0.5, 0.618; default time-zone sequence 0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89.",
+                "Ratios must be finite and unique, at most 24 per drawing; sequence values must be non-negative integers, ascending, at most 32; otherwise `KFT-E-OPTIONS`.",
+                "Options are only allowed on kinds that use them (`KFT-E-OPTIONS` for e.g. `levels` on a rectangle)."
+              ],
+              "tasks": ["Define `KindOptions` per kind and defaults in `options.ts`.", "Add `validateOptions` and hook it into `validateDrawing`.", "Tests for defaults, limits and kind mismatch."],
+              "labels": ["tool:fibonacci"]
+            },
+            {
+              "id": "E01-F02-S04",
+              "title": "Trend-line and Fibonacci extension flags",
+              "userStory": "As a trader, I want to extend a trend line or retracement to the left or right so that I can project it into the future.",
+              "sds": ["FR-DM-020", "§5.2"],
+              "acceptance": [
+                "`extendLeft` and `extendRight` are booleans allowed on `trend-line` and `fibonacci-retracement`.",
+                "`reverse`, `showLabels`, `showPrices` and `fullCircles` are booleans allowed on the kinds listed in SDS §5.2.",
+                "Invalid types or flags on other kinds fail with `KFT-E-OPTIONS`."
+              ],
+              "tasks": ["Extend `KindOptions` and validation.", "Tests per flag and kind."]
+            }
+          ]
+        },
+        {
+          "id": "E01-F03",
+          "title": "Store",
+          "sds": ["FR-ST-001..020", "FR-DM-041"],
+          "description": "The immutable drawing store with atomic changes, batched notifications, change operations for incremental consumers and z-order commands.",
+          "why": "adapters, persistence and history all see the same consistent, atomic changes",
+          "stories": [
+            {
+              "id": "E01-F03-S01",
+              "title": "Drawing store with immutable lists",
+              "userStory": "As a chart application developer, I want a store with add, update, remove, clear and subscribe so that the drawings of a chart live in one place.",
+              "sds": ["FR-ST-001", "FR-ST-002"],
+              "acceptance": [
+                "Every change replaces the list; the previous list is never mutated.",
+                "Invalid or duplicate drawings throw `DrawingError` and leave the store and listeners untouched.",
+                "Listeners can unsubscribe during a notification without affecting the other listeners."
+              ],
+              "tasks": ["Implement `store.ts`.", "Tests for every method, atomicity and listener edge cases."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F03-S02",
+              "title": "Batch changes",
+              "userStory": "As a chart application developer, I want to group several changes so that listeners and history see them as one change.",
+              "sds": ["FR-ST-003", "FR-DM-041"],
+              "acceptance": [
+                "`store.batch(fn)` applies all changes made in `fn` and notifies once.",
+                "If `fn` throws, every change made inside it is rolled back and nobody is notified.",
+                "Nested `batch` calls join the outer batch.",
+                "An empty batch does not notify."
+              ],
+              "tasks": ["Add a pending-change buffer to the store.", "Implement rollback on error.", "Tests for nesting, errors and empty batches."]
+            },
+            {
+              "id": "E01-F03-S03",
+              "title": "Change operations in notifications",
+              "userStory": "As a chart application developer, I want listeners to receive what changed so that persistence and sync can save incrementally.",
+              "sds": ["FR-ST-010"],
+              "acceptance": [
+                "Listeners receive `StoreChange { drawings, operations }` with `add`, `update` and `remove` operations carrying `before` and `after`.",
+                "A batch reports all its operations in order; an update of a drawing added in the same batch reports one `add` with the final value.",
+                "Existing listeners that only read the list keep working (the list is still the first value)."
+              ],
+              "tasks": ["Introduce `StoreChange` and operation types.", "Collapse operations within a batch.", "Tests for collapsing rules."]
+            },
+            {
+              "id": "E01-F03-S04",
+              "title": "Z-order commands",
+              "userStory": "As a trader, I want to bring a drawing to the front or send it to the back so that overlapping drawings are drawn and picked in the order I want.",
+              "sds": ["FR-ST-004"],
+              "acceptance": [
+                "`ordered()` sorts by `zIndex`, ties by insertion order.",
+                "`bringToFront`, `sendToBack`, `bringForward` and `sendBackward` change `zIndex` minimally and keep other drawings' relative order.",
+                "Each command is one change (one notification, one history entry)."
+              ],
+              "tasks": ["Implement z-order helpers on the store.", "Tests with ties, multi-selection and edges (already front/back)."]
+            }
+          ]
+        },
+        {
+          "id": "E01-F04",
+          "title": "Document format and migration",
+          "sds": ["FR-DM-030..032"],
+          "description": "The versioned saved document, migration from version 1 and import in replace or merge mode with a report instead of all-or-nothing failure.",
+          "why": "saved drawings from any earlier version load safely, and one bad drawing never loses the rest",
+          "stories": [
+            {
+              "id": "E01-F04-S01",
+              "title": "Version 1 saved document",
+              "userStory": "As a chart application developer, I want to save and load a store as JSON so that drawings persist between sessions.",
+              "sds": ["FR-DM-030"],
+              "acceptance": ["`toJSON` writes `{ version: 1, drawings }`.", "`fromJSON` rejects anything that is not a version 1 document with `KFT-E-JSON`."],
+              "tasks": ["Implement `toJSON`/`fromJSON`.", "Round-trip tests."],
+              "status": "done"
+            },
+            {
+              "id": "E01-F04-S02",
+              "title": "Version 2 document with scope and migration",
+              "userStory": "As a chart application developer, I want documents to carry their symbol and timeframe scope and old documents to upgrade automatically so that stored drawings are never lost on upgrade.",
+              "sds": ["FR-DM-030", "FR-DM-031"],
+              "acceptance": [
+                "`toJSON` writes `{ version: 2, scope?, drawings }`.",
+                "`fromJSON` accepts version 1 and 2; version 1 is migrated in memory by a pure `migrateV1ToV2`.",
+                "Versions above 2 and non-objects fail with `KFT-E-JSON` stating the supported versions.",
+                "A fixture of a real version 1 document migrates to the expected version 2 document."
+              ],
+              "tasks": ["Add `migrations.ts` with a chain runner.", "Update `DOCUMENT_VERSION` to 2.", "Fixtures under `__fixtures__/documents/`."]
+            },
+            {
+              "id": "E01-F04-S03",
+              "title": "Import with replace and merge modes",
+              "userStory": "As a trader, I want to import drawings from a file and keep the valid ones even if some are broken so that one bad entry never wipes out my markup.",
+              "sds": ["FR-DM-032"],
+              "acceptance": [
+                "`importDocument(store, json, { mode })` supports `replace` and `merge` and returns `ImportReport { added, renamed, skipped }`.",
+                "`skipped` lists the index and issues of every invalid drawing; valid drawings are still imported.",
+                "In `merge` mode id collisions get a new id and are listed in `renamed` (old -> new).",
+                "`replace` swaps the store contents in one change; nothing changes if the document itself is not readable (`KFT-E-JSON`)."
+              ],
+              "tasks": ["Implement `import.ts`.", "Tests for both modes, collisions and partial validity."]
+            }
+          ]
+        },
+        {
+          "id": "E01-F05",
+          "title": "Undo and redo history",
+          "sds": ["FR-HI-001..005", "D-6"],
+          "description": "A command model with inverses and a bounded history with coalescing for continuous gestures.",
+          "why": "every user change can be undone and redone exactly",
+          "stories": [
+            {
+              "id": "E01-F05-S01",
+              "title": "Command model with inverses",
+              "userStory": "As a chart application developer, I want every change expressed as a command with an inverse so that undo restores the exact previous state.",
+              "sds": ["FR-HI-001", "D-6"],
+              "acceptance": [
+                "Commands `add`, `update`, `remove` and `batch` are created from store operations and carry their inverse.",
+                "Applying a command then its inverse leaves the store deep-equal to the start (property test over random command sequences, QA-004).",
+                "Commands are plain data (serialisable for later sync)."
+              ],
+              "tasks": ["Implement `commands.ts`.", "Property test with a seeded generator."]
+            },
+            {
+              "id": "E01-F05-S02",
+              "title": "History with undo, redo and depth limit",
+              "userStory": "As a trader, I want Ctrl+Z and Ctrl+Shift+Z to undo and redo my last changes so that mistakes are cheap.",
+              "sds": ["FR-HI-002", "FR-HI-004"],
+              "acceptance": [
+                "`History` exposes `undo`, `redo`, `canUndo`, `canRedo` and notifies on change.",
+                "A new command after an undo clears the redo stack.",
+                "Depth defaults to 100, accepts 1..1000 and drops the oldest entries beyond the limit.",
+                "Undo of a command whose drawing no longer exists (removed through the API without history) is skipped with an `error` event, not a throw."
+              ],
+              "tasks": ["Implement `history.ts` on top of the store change stream.", "Tests for limits, redo clearing and stale commands."]
+            },
+            {
+              "id": "E01-F05-S03",
+              "title": "Coalescing and untracked changes",
+              "userStory": "As a trader, I want one drag or one burst of nudges to be one undo step so that undo feels natural.",
+              "sds": ["FR-HI-003", "FR-HI-005"],
+              "acceptance": [
+                "`history.transaction(key)` groups commands until `commit()`; `cancel()` reverts them without an entry.",
+                "Changes made with `{ history: false }` are not recorded and clear the redo stack.",
+                "Coalescing key `nudge` merges entries made within 500 ms (configurable)."
+              ],
+              "tasks": ["Add transactions and time-based coalescing with an injectable clock.", "Tests with a fake clock."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "Host contract",
+      "milestone": "M1 Foundation",
+      "labels": ["area:core"],
+      "sds": ["§7", "D-2", "D-4"],
+      "description": "Version 2 of the `DrawingHost` contract that a chart implements, projection helpers on top of it, and a conformance kit with a mock host so hosts can prove they implement it correctly.",
+      "features": [
+        {
+          "id": "E02-F01",
+          "title": "Host contract version 2",
+          "sds": ["FR-HOST-001..007"],
+          "description": "The full host interface: transforms, pane rectangles, bar lookup, bar interval, pointer, key and viewport events, cursor control, render requests and the optional text editor.",
+          "why": "any chart can host the tools through one small, explicit contract",
+          "stories": [
+            {
+              "id": "E02-F01-S01",
+              "title": "DrawingHost v2 types",
+              "userStory": "As a chart (host) implementer, I want one documented interface that lists everything the drawing tools need so that I know exactly what to implement.",
+              "sds": ["§7.1", "FR-HOST-007"],
+              "acceptance": [
+                "`DrawingHost` declares `apiVersion: 2` and the members in SDS §7.1, with TSDoc on each member stating units (CSS px, epoch ms).",
+                "`HostPointerEvent` adds `pointerType`, `button` and the `cancel`/`leave` phases; `HostKeyEvent` and `DrawingCursor` are exported.",
+                "The 0.1 interface is removed (no shim, FR-HOST-007); the CHANGELOG notes the breaking change."
+              ],
+              "tasks": ["Rewrite the host types in `src/host.ts` (move out of `types.ts`).", "Update exports and README host section."]
+            },
+            {
+              "id": "E02-F01-S02",
+              "title": "Host validation",
+              "userStory": "As a chart (host) implementer, I want a clear error when my host is incomplete so that I find integration mistakes immediately.",
+              "sds": ["FR-HOST-001"],
+              "acceptance": [
+                "`createDrawingTools` throws `DrawingError` with `KFT-E-HOST` when `apiVersion` is not 2.",
+                "Missing required members are listed by name in one issue; optional `editText` is not required.",
+                "Validation runs once at creation, not per event."
+              ],
+              "tasks": ["Implement `assertHost`.", "Tests with hosts missing each member."]
+            },
+            {
+              "id": "E02-F01-S03",
+              "title": "Event subscription lifecycle",
+              "userStory": "As a chart (host) implementer, I want the tools to subscribe to my events on creation and unsubscribe on destroy so that no listeners leak.",
+              "sds": ["FR-HOST-004", "FR-HOST-005", "FR-INT-060"],
+              "acceptance": [
+                "The controller subscribes to pointer, key and viewport events once on creation.",
+                "`destroy()` calls every returned unsubscribe function exactly once, even if one of them throws.",
+                "Key listeners return `true` only for keys the tools handled (FR-HOST-004)."
+              ],
+              "tasks": ["Add a disposables helper.", "Mock-host tests counting subscriptions."]
+            }
+          ]
+        },
+        {
+          "id": "E02-F02",
+          "title": "Projection",
+          "sds": ["FR-HOST-002", "FR-HOST-003"],
+          "description": "Helpers that turn anchors into plot points and back on top of the host transforms, including future space beyond the last bar.",
+          "why": "geometry and interaction share one correct way to convert between data and pixels",
+          "stories": [
+            {
+              "id": "E02-F02-S01",
+              "title": "Anchor and point projection helpers",
+              "userStory": "As a chart application developer, I want anchors converted to plot points and back consistently so that drawings appear exactly where they were placed.",
+              "sds": ["FR-HOST-002", "FR-HOST-003"],
+              "acceptance": [
+                "`anchorToPoint(anchor, host)` and `pointToAnchor(point, yAxisId, host)` are exported.",
+                "Anchors beyond the last bar keep their position after scrolling (uses host extrapolation).",
+                "`pointToAnchor` returns `null` when the y-axis has no pane (`paneRect` null)."
+              ],
+              "tasks": ["Implement `projection.ts`.", "Tests on the mock host with offset and scaled axes."]
+            },
+            {
+              "id": "E02-F02-S02",
+              "title": "Projection property tests",
+              "userStory": "As a chart application developer, I want projection round-trips proven for many scales so that drawings never drift after zooming.",
+              "sds": ["FR-HOST-002", "QA-004"],
+              "acceptance": [
+                "Property test: for random linear scales and anchors, `pointToAnchor(anchorToPoint(a))` equals `a` within 1e-9 relative error.",
+                "Property test: zooming the mock host and back restores identical pixel geometry."
+              ],
+              "tasks": ["Add a seeded random helper.", "Write the property tests."]
+            }
+          ]
+        },
+        {
+          "id": "E02-F03",
+          "title": "Conformance kit and mock host",
+          "sds": ["FR-HOST-010", "FR-HOST-011", "QA-008"],
+          "description": "A deterministic mock host and a reusable conformance suite exported from `keystone-financial-tools-core/testing`.",
+          "why": "hosts such as keystone-charts-financial can prove their implementation with the same tests this repo uses",
+          "stories": [
+            {
+              "id": "E02-F03-S01",
+              "title": "Mock host",
+              "userStory": "As a chart application developer, I want a deterministic in-memory host so that interaction and geometry tests run without a chart or a browser.",
+              "sds": ["FR-HOST-011"],
+              "acceptance": [
+                "`createMockHost({ panes, barInterval, bars })` implements the full v2 contract with linear scales.",
+                "Scripted input helpers: `pointer(phase, x, y, modifiers)`, `key(key, modifiers)`, `zoom(factor)`, `scroll(px)`.",
+                "Records cursor changes and render requests for assertions."
+              ],
+              "tasks": ["Implement `testing/mock-host.ts`.", "Self-tests of the mock host."]
+            },
+            {
+              "id": "E02-F03-S02",
+              "title": "Host conformance suite",
+              "userStory": "As a chart (host) implementer, I want to run one conformance suite against my host so that I know it satisfies the contract.",
+              "sds": ["FR-HOST-010"],
+              "acceptance": [
+                "`runHostConformance(factory, { describe, it, expect })` checks api version, transform round-trips (0.5 px), future-space extrapolation, `yAxisAt`/`paneRect` agreement, event unsubscribe and viewport notifications.",
+                "Works with Vitest and Jest (runner functions are passed in).",
+                "Passes against the mock host in this repo's CI (QA-008)."
+              ],
+              "tasks": ["Implement `testing/conformance.ts`.", "Run it against the mock host in core tests."]
+            },
+            {
+              "id": "E02-F03-S03",
+              "title": "Testing sub-path entry",
+              "userStory": "As a chart (host) implementer, I want to import the kit from `keystone-financial-tools-core/testing` so that test helpers never end up in production bundles.",
+              "sds": ["FR-HOST-010", "NFR-SIZE-001"],
+              "acceptance": [
+                "`package.json` `exports` has `./testing` with types, ESM and CJS builds.",
+                "The main entry does not include any testing module (bundle test asserts it).",
+                "README documents the entry."
+              ],
+              "tasks": ["Add a second Vite entry and exports map.", "Bundle content test."],
+              "labels": ["area:ci"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "Geometry, hit-testing and scene",
+      "milestone": "M1 Foundation",
+      "labels": ["area:core"],
+      "sds": ["§8", "D-3", "D-4"],
+      "description": "Pure pixel geometry for every kind, hit-testing with parts and priorities, and the render scene the host draws (shape items, Fibonacci items for the host's own renderer, handles and previews).",
+      "features": [
+        {
+          "id": "E03-F01",
+          "title": "Geometry per kind",
+          "sds": ["FR-GEO-001..007"],
+          "description": "Deterministic geometry functions per drawing kind, used for hit-testing, handles and shape rendering.",
+          "why": "drawings render and pick consistently at every zoom level",
+          "stories": [
+            {
+              "id": "E03-F01-S01",
+              "title": "Line geometry",
+              "userStory": "As a trader, I want trend lines and horizontal lines drawn exactly through their anchors and extended to the pane edge when I ask so that I can project levels.",
+              "sds": ["FR-GEO-001", "FR-GEO-002"],
+              "acceptance": [
+                "Trend line: segment between anchors; `extendLeft`/`extendRight` produce rays clipped to `paneRect`.",
+                "Horizontal line: spans the full pane width at the anchor price.",
+                "Vertical trend lines (same time) and zero-length lines produce valid geometry without NaN.",
+                "Golden fixtures cover all extension combinations (QA-003)."
+              ],
+              "tasks": ["Implement `geometry/lines.ts` with Liang-Barsky clipping.", "Golden fixtures and tests."]
+            },
+            {
+              "id": "E03-F01-S02",
+              "title": "Rectangle and text note geometry",
+              "userStory": "As a trader, I want rectangles and notes positioned exactly so that boxes frame the range I marked.",
+              "sds": ["FR-GEO-001", "FR-GEO-007"],
+              "acceptance": [
+                "Rectangle geometry is normalised (any anchor order) to left, top, width, height.",
+                "Text note box uses the estimate in FR-GEO-007 or a host `measureText` when provided; multi-line text splits on `\\n`.",
+                "Empty text produces a minimum-size box so the note stays clickable."
+              ],
+              "tasks": ["Implement `geometry/boxes.ts`.", "Golden fixtures."]
+            },
+            {
+              "id": "E03-F01-S03",
+              "title": "Fibonacci retracement geometry",
+              "userStory": "As a trader, I want retracement levels at the exact ratio prices so that I can trust the levels I trade.",
+              "sds": ["FR-GEO-003"],
+              "acceptance": [
+                "Level price = `p1 + (p2 - p1) * ratio`; `reverse` swaps p1 and p2.",
+                "Only visible levels produce lines; lines span the anchors' time range or the pane edge when extended.",
+                "Label positions are computed for `showLabels`/`showPrices`.",
+                "Golden fixtures for up and down moves, reverse and extension (QA-003)."
+              ],
+              "tasks": ["Implement `geometry/fibonacci-retracement.ts`.", "Fixtures."],
+              "labels": ["tool:fibonacci"]
+            },
+            {
+              "id": "E03-F01-S04",
+              "title": "Fibonacci fans and arcs geometry",
+              "userStory": "As a trader, I want fans and arcs that keep their shape on screen so that they read the way traders expect.",
+              "sds": ["FR-GEO-004", "FR-GEO-005"],
+              "acceptance": [
+                "Fans: rays from anchor 1 through `(t2, p2 + (p1 - p2) * ratio)`, clipped to the pane.",
+                "Arcs: centre anchor 2, radius `ratio` x pixel distance between anchors, recomputed per frame; half circles open away from anchor 1, full circles with `fullCircles`.",
+                "Test proves arcs stay circular in pixels after a vertical zoom (and change in data space).",
+                "Degenerate cases (anchors on one point) produce no geometry and no errors."
+              ],
+              "tasks": ["Implement `geometry/fibonacci-fans.ts` and `geometry/fibonacci-arcs.ts`.", "Fixtures including zoom."],
+              "labels": ["tool:fibonacci"]
+            },
+            {
+              "id": "E03-F01-S05",
+              "title": "Fibonacci time zones geometry",
+              "userStory": "As a trader, I want time zones at Fibonacci bar counts so that I can spot potential turning dates.",
+              "sds": ["FR-GEO-006", "D-5"],
+              "acceptance": [
+                "Unit `u = t2 - t1`; vertical lines at `t1 + n * u` for each `n` in the sequence across the pane height.",
+                "Lines beyond the right edge are omitted; a negative unit (anchor 2 before anchor 1) mirrors to the left.",
+                "Anchor prices do not affect the geometry (D-5)."
+              ],
+              "tasks": ["Implement `geometry/fibonacci-time-zones.ts`.", "Fixtures."],
+              "labels": ["tool:fibonacci"]
+            },
+            {
+              "id": "E03-F01-S06",
+              "title": "Handle points per kind",
+              "userStory": "As a trader, I want grab handles where I expect them so that I can resize any drawing.",
+              "sds": ["FR-GEO-001", "FR-INT-032"],
+              "acceptance": [
+                "One handle per anchor for all kinds; rectangles add the two other corners and four edge midpoints (8 total).",
+                "Horizontal line handle sits at the pane's horizontal centre; time-zone handles sit at the anchor times, vertically centred.",
+                "Handles are returned with ids (`handle:<n>`) stable across frames."
+              ],
+              "tasks": ["Implement `geometry/handles.ts`.", "Tests per kind."]
+            }
+          ]
+        },
+        {
+          "id": "E03-F02",
+          "title": "Hit-testing",
+          "sds": ["FR-HIT-001..004"],
+          "description": "Finding the drawing and part under the pointer with tolerances per pointer type, priority rules and a cached geometry.",
+          "why": "clicks and hovers always pick the drawing the user meant, fast enough for every pointer move",
+          "stories": [
+            {
+              "id": "E03-F02-S01",
+              "title": "Hit tests with tolerance and parts",
+              "userStory": "As a trader, I want lines easy to grab with mouse and finger so that I do not need pixel-perfect aim.",
+              "sds": ["FR-HIT-001", "FR-HIT-003"],
+              "acceptance": [
+                "Tolerance 6 CSS px for mouse and pen, 12 for touch.",
+                "Result parts: `body`, `handle:<n>`, `level:<ratio>`, `label`.",
+                "Rectangle fills hit only when `fillOpacity > 0`; otherwise only the border.",
+                "Hidden drawings never hit."
+              ],
+              "tasks": ["Implement distance functions (segment, ray, arc, box).", "Implement `hitTest`.", "Tests per kind and pointer type."]
+            },
+            {
+              "id": "E03-F02-S02",
+              "title": "Hit priority",
+              "userStory": "As a trader, I want the drawing on top and the handle under my pointer to win so that I never move the wrong thing.",
+              "sds": ["FR-HIT-002"],
+              "acceptance": [
+                "Handles of selected drawings win over any body.",
+                "Among bodies the highest `zIndex` wins, then the most recently added.",
+                "Locked drawings are hit (so they can be selected) and reported with `locked: true`."
+              ],
+              "tasks": ["Implement ordering in `hitTest`.", "Tests with overlapping drawings."]
+            },
+            {
+              "id": "E03-F02-S03",
+              "title": "Geometry cache",
+              "userStory": "As a chart application developer, I want hit-testing to reuse geometry between pointer moves so that it stays under budget with hundreds of drawings.",
+              "sds": ["FR-HIT-004", "NFR-PERF-002"],
+              "acceptance": [
+                "Geometry is cached per drawing and invalidated on store changes (that drawing only) and viewport changes (all).",
+                "Benchmark: 500 drawings, warm cache, `hitTest` ≤ 0.5 ms on CI baseline.",
+                "Tests prove stale geometry is never used after a change."
+              ],
+              "tasks": ["Implement `GeometryCache`.", "Add a Vitest bench."]
+            }
+          ]
+        },
+        {
+          "id": "E03-F03",
+          "title": "Scene",
+          "sds": ["FR-SC-001..004", "D-3", "D-4"],
+          "description": "The render scene the host pulls each frame: shape items, Fibonacci items for the host's renderer, handles, previews and snap indicators with resolved styles and states.",
+          "why": "the host can draw everything with no knowledge of drawing kinds beyond the Fibonacci overlay it already has",
+          "stories": [
+            {
+              "id": "E03-F03-S01",
+              "title": "Scene items and paint order",
+              "userStory": "As a chart (host) implementer, I want a simple list of items in paint order so that rendering the tools is a single loop.",
+              "sds": ["FR-SC-001", "D-4"],
+              "acceptance": [
+                "`getScene()` returns `SceneItem[]` sorted by `zIndex`, then insertion; handles come last.",
+                "Primitive kinds produce `shape` items (line, polyline, rect, arc, text shapes in pixels).",
+                "Hidden drawings are absent; the scene is recomputed only after store, viewport, state or theme changes (cached otherwise)."
+              ],
+              "tasks": ["Define scene types in `scene/types.ts`.", "Implement `buildScene`.", "Tests on the mock host."]
+            },
+            {
+              "id": "E03-F03-S02",
+              "title": "Item states and resolved styles",
+              "userStory": "As a trader, I want hovered, selected and locked drawings to look different so that I always know what I am about to change.",
+              "sds": ["FR-SC-003", "FR-DM-011"],
+              "acceptance": [
+                "Every item carries `state` (`normal`, `hover`, `selected`, `locked`) and a fully resolved style (no undefined values).",
+                "Theme state styles apply: hover lineWidth + 1, selected handles 8 px squares, locked handles drawn as lock markers."
+              ],
+              "tasks": ["Apply `resolveStyle` and state styles in `buildScene`.", "Tests per state."]
+            },
+            {
+              "id": "E03-F03-S03",
+              "title": "Preview and snap indicator items",
+              "userStory": "As a trader, I want to see the drawing while I place it and where it will snap so that placement is predictable.",
+              "sds": ["FR-SC-002", "FR-INT-043"],
+              "acceptance": [
+                "During placement a `preview` item shows the drawing with the pointer as the missing anchor.",
+                "When magnet snapping applies, a snap indicator shape marks the snapped OHLC point.",
+                "Preview and indicator disappear after placement or cancel."
+              ],
+              "tasks": ["Add preview and indicator building.", "Interaction tests asserting scene contents."]
+            },
+            {
+              "id": "E03-F03-S04",
+              "title": "Fibonacci scene items for the host renderer",
+              "userStory": "As a chart (host) implementer, I want Fibonacci drawings as data-space items with fully resolved options so that my Fibonacci overlay renders them identically to programmatic ones.",
+              "sds": ["FR-SC-004", "D-3"],
+              "acceptance": [
+                "Fibonacci kinds produce `fibonacci` items with `kind`, anchors, resolved levels/sequence/flags and resolved style.",
+                "No option is left for the host to default.",
+                "Handles for Fibonacci drawings still come from the core as `handles` items."
+              ],
+              "tasks": ["Implement Fibonacci item building.", "Tests for each Fibonacci kind."],
+              "labels": ["tool:fibonacci"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "Interaction engine",
+      "milestone": "M2 Interaction",
+      "labels": ["area:core"],
+      "sds": ["§9"],
+      "description": "The pointer and keyboard state machine that places, selects, moves, resizes, deletes, snaps and edits drawings, and the controller API that applications and adapters use.",
+      "features": [
+        {
+          "id": "E04-F01",
+          "title": "State machine core",
+          "sds": ["FR-INT-001", "FR-INT-002", "§9.1"],
+          "description": "A pure, test-driven state machine for the interaction states in SDS §9.1, with click and drag detection.",
+          "why": "interaction behaves the same on every host and every state transition is testable without a browser",
+          "stories": [
+            {
+              "id": "E04-F01-S01",
+              "title": "Interaction states and transitions",
+              "userStory": "As a chart application developer, I want an explicit state machine so that interaction never ends up in an undefined state.",
+              "sds": ["FR-INT-001", "§9.1"],
+              "acceptance": [
+                "States `idle`, `placing`, `selected`, `dragging-handle`, `moving`, `editing-text` with the transitions in SDS §9.1.",
+                "Every transition is covered by a scenario test on the mock host (QA-005).",
+                "Unexpected events in a state are ignored (no throw) and logged at debug level only.",
+                "`pointer cancel` and `leave` during a drag revert like Escape."
+              ],
+              "tasks": ["Implement `interaction/machine.ts` as a reducer plus effects.", "Scenario test table."]
+            },
+            {
+              "id": "E04-F01-S02",
+              "title": "Click and drag detection",
+              "userStory": "As a trader, I want a tiny hand tremor not to turn my click into a drag so that clicking is reliable.",
+              "sds": ["FR-INT-002"],
+              "acceptance": [
+                "Down and up within 3 px and 300 ms is a click; moving beyond 3 px starts a drag.",
+                "Double-click is two clicks within 400 ms and 6 px.",
+                "Thresholds are configurable and use an injectable clock for tests."
+              ],
+              "tasks": ["Implement a gesture recogniser.", "Tests with a fake clock."]
+            }
+          ]
+        },
+        {
+          "id": "E04-F02",
+          "title": "Placement",
+          "sds": ["FR-INT-010..014"],
+          "description": "Creating drawings with the pointer: one-anchor tools, click-click and drag for two-anchor tools, previews, cancel and stay-in-tool.",
+          "why": "placing a drawing feels like in the trading platforms traders already know",
+          "stories": [
+            {
+              "id": "E04-F02-S01",
+              "title": "One-anchor placement",
+              "userStory": "As a trader, I want to place a horizontal line or a note with one click so that marking a level is instant.",
+              "sds": ["FR-INT-010", "FR-INT-014"],
+              "acceptance": [
+                "With a one-anchor tool active, a click inside a pane creates the drawing at the pointer anchor.",
+                "The creation is one history entry and one store change.",
+                "A text note opens the text editor right after placement (FR-INT-050)."
+              ],
+              "tasks": ["Implement placement for one-anchor kinds.", "Scenario tests."]
+            },
+            {
+              "id": "E04-F02-S02",
+              "title": "Two-anchor click-click and drag placement",
+              "userStory": "As a trader, I want to place a trend line either by clicking twice or by dragging so that I can use the style I am used to.",
+              "sds": ["FR-INT-010", "FR-INT-011"],
+              "acceptance": [
+                "Click anchor 1, move (preview follows), click anchor 2 creates the drawing.",
+                "Pointer down at anchor 1, drag, up at anchor 2 creates the drawing.",
+                "Anchor 2 is projected onto anchor 1's y-axis even when the pointer is over another pane (FR-INT-012).",
+                "Zero-length drawings (anchor 2 equal to anchor 1 within 1 px) are not created."
+              ],
+              "tasks": ["Implement two-anchor placement modes.", "Scenario tests for both modes and pane crossing."]
+            },
+            {
+              "id": "E04-F02-S03",
+              "title": "Cancel placement and pane rules",
+              "userStory": "As a trader, I want Escape or a right click to cancel a half-placed drawing so that I can back out without undo.",
+              "sds": ["FR-INT-011", "FR-INT-012"],
+              "acceptance": [
+                "Escape or right button during placement removes the preview and changes nothing in the store or history.",
+                "A click outside every pane does nothing and keeps the tool active.",
+                "Deactivating the tool via the API cancels the placement the same way."
+              ],
+              "tasks": ["Implement cancel paths.", "Scenario tests."]
+            },
+            {
+              "id": "E04-F02-S04",
+              "title": "Stay in tool",
+              "userStory": "As a trader, I want to keep drawing horizontal lines one after another so that marking many levels is fast.",
+              "sds": ["FR-INT-013"],
+              "acceptance": [
+                "With `stayInTool: true` the tool stays active after placement and the new drawing is not selected.",
+                "With `stayInTool: false` (default) the tool deactivates and the new drawing is selected.",
+                "`stayInTool` can be changed at runtime via `setOptions`."
+              ],
+              "tasks": ["Implement option and runtime change.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E04-F03",
+          "title": "Selection, hover and delete",
+          "sds": ["FR-INT-020..024"],
+          "description": "Hover feedback, single and multi-selection, deletion that respects locks, select-all and duplicate.",
+          "why": "users can pick and manage their drawings precisely with mouse and keyboard",
+          "stories": [
+            {
+              "id": "E04-F03-S01",
+              "title": "Hover and cursor feedback",
+              "userStory": "As a trader, I want the cursor and highlight to show what I would grab so that I know what a click will do.",
+              "sds": ["FR-INT-020"],
+              "acceptance": [
+                "Over a body the cursor is `pointer` and the item state is `hover`; over handles the cursor matches the handle (resize cursors, `move` for single-anchor handles).",
+                "With a tool active the cursor is `crosshair`; over a locked drawing's handle it is `not-allowed`.",
+                "`setCursor` is called only when the cursor changes."
+              ],
+              "tasks": ["Implement hover tracking and cursor mapping.", "Tests asserting recorded cursors."]
+            },
+            {
+              "id": "E04-F03-S02",
+              "title": "Click and Shift multi-selection",
+              "userStory": "As a trader, I want to select several drawings with Shift-click so that I can move or delete them together.",
+              "sds": ["FR-INT-021", "FR-ST-020"],
+              "acceptance": [
+                "Click selects the hit drawing only; Shift-click toggles it in the selection; click on empty space clears.",
+                "The selection drops ids of drawings removed from the store.",
+                "A `selection` event fires once per actual change."
+              ],
+              "tasks": ["Implement selection state.", "Tests."]
+            },
+            {
+              "id": "E04-F03-S03",
+              "title": "Delete with lock respect",
+              "userStory": "As a trader, I want Delete to remove my selected drawings but never locked ones so that protected markup stays.",
+              "sds": ["FR-INT-022", "FR-DM-005"],
+              "acceptance": [
+                "Delete and Backspace remove all selected unlocked drawings in one history entry.",
+                "Locked drawings stay selected and a `blocked` event with `KFT-E-LOCKED` lists them.",
+                "Keys are only handled (listener returns true) when something was selected."
+              ],
+              "tasks": ["Implement delete action and key handling.", "Tests with mixed locked selections."]
+            },
+            {
+              "id": "E04-F03-S04",
+              "title": "Select all and duplicate",
+              "userStory": "As a trader, I want Ctrl+A and Ctrl+D so that I can manage many drawings quickly.",
+              "sds": ["FR-INT-024"],
+              "acceptance": [
+                "Ctrl/Cmd+A selects all visible drawings.",
+                "Ctrl/Cmd+D duplicates the selection shifted by one bar and 10 px in price; the copies get new ids and become the selection; one history entry.",
+                "Duplicating locked drawings creates unlocked copies."
+              ],
+              "tasks": ["Implement both actions.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E04-F04",
+          "title": "Move, resize and nudge",
+          "sds": ["FR-INT-030..034", "NFR-A11Y-001"],
+          "description": "Handle dragging, moving whole selections, Shift constraints, revert with Escape, keyboard nudging and keyboard-only placement.",
+          "why": "adjusting drawings is precise with the pointer and fully possible with the keyboard",
+          "stories": [
+            {
+              "id": "E04-F04-S01",
+              "title": "Handle drag",
+              "userStory": "As a trader, I want to drag an end point to adjust a trend line so that I can refine it as price develops.",
+              "sds": ["FR-INT-030", "FR-INT-032"],
+              "acceptance": [
+                "Dragging a handle moves that anchor; rectangle edge handles change one coordinate only.",
+                "Locked drawings do not move and the cursor shows `not-allowed`.",
+                "The whole drag is one history entry (FR-HI-003)."
+              ],
+              "tasks": ["Implement handle drag per kind.", "Scenario tests."]
+            },
+            {
+              "id": "E04-F04-S02",
+              "title": "Move the selection",
+              "userStory": "As a trader, I want to drag a drawing (or several selected ones) to a new place so that I can reuse a pattern elsewhere.",
+              "sds": ["FR-INT-030"],
+              "acceptance": [
+                "Dragging a selected body moves all selected unlocked drawings by the same time and price delta in data space.",
+                "Drawings on other panes move by the same time delta and their own pane's price delta.",
+                "Locked drawings in the selection stay and a `blocked` event is emitted once per drag."
+              ],
+              "tasks": ["Implement move in data space.", "Tests across panes."]
+            },
+            {
+              "id": "E04-F04-S03",
+              "title": "Shift constraints",
+              "userStory": "As a trader, I want Shift to keep lines at clean angles and moves straight so that markup is tidy.",
+              "sds": ["FR-INT-031"],
+              "acceptance": [
+                "Shift while dragging a trend-line or fan anchor snaps the angle to multiples of 45° in pixel space.",
+                "Shift while moving locks to horizontal or vertical (whichever delta is larger).",
+                "Releasing Shift mid-drag removes the constraint on the next move."
+              ],
+              "tasks": ["Implement constraints.", "Tests."]
+            },
+            {
+              "id": "E04-F04-S04",
+              "title": "Escape reverts a drag",
+              "userStory": "As a trader, I want Escape to put a drawing back while I am still dragging so that I can abort a mistake.",
+              "sds": ["FR-INT-033"],
+              "acceptance": [
+                "Escape during a drag restores the anchors from pointer down and records no history entry.",
+                "Listeners see the restore as the final state (no intermediate store states are persisted)."
+              ],
+              "tasks": ["Use a history transaction cancel.", "Tests."]
+            },
+            {
+              "id": "E04-F04-S05",
+              "title": "Keyboard nudge and keyboard placement",
+              "userStory": "As a trader who uses the keyboard, I want to move and place drawings with arrow keys so that I can work without a mouse.",
+              "sds": ["FR-INT-034", "NFR-A11Y-001"],
+              "acceptance": [
+                "Arrows nudge the selection by one bar or one price step (1 px equivalent); Shift multiplies by 10; nudges within 500 ms are one history entry.",
+                "With a tool active, a keyboard cursor appears at the pane centre; arrows move it; Enter places an anchor; Escape cancels.",
+                "Keys are only reported as handled when they changed something."
+              ],
+              "tasks": ["Implement nudge and keyboard cursor.", "Tests."],
+              "labels": ["a11y"]
+            }
+          ]
+        },
+        {
+          "id": "E04-F05",
+          "title": "Magnet snapping",
+          "sds": ["FR-INT-040..043"],
+          "description": "Snapping anchors to bar OHLC values with weak and strong modes, a temporary modifier and a visible indicator.",
+          "why": "drawings attach exactly to highs, lows, opens and closes",
+          "stories": [
+            {
+              "id": "E04-F05-S01",
+              "title": "Weak and strong magnet",
+              "userStory": "As a trader, I want anchors to snap to highs and lows so that my lines touch the exact swing points.",
+              "sds": ["FR-INT-040", "FR-INT-041"],
+              "acceptance": [
+                "`weak`: snap price to the nearest of O/H/L/C of the nearest bar when within 12 px; `strong`: always snap.",
+                "Anchor time snaps to the nearest bar time; no snapping in future space.",
+                "Snapping applies to placement, handle drags and keyboard placement."
+              ],
+              "tasks": ["Implement `snap.ts` using `host.nearestBar`.", "Tests per mode."]
+            },
+            {
+              "id": "E04-F05-S02",
+              "title": "Temporary inversion with Ctrl/Cmd",
+              "userStory": "As a trader, I want to hold Ctrl to toggle the magnet for one move so that I can place a free anchor without changing settings.",
+              "sds": ["FR-INT-042"],
+              "acceptance": ["Holding Ctrl/Cmd turns `off` into `strong` and `weak`/`strong` into `off` while held.", "The stored magnet mode does not change."],
+              "tasks": ["Read modifiers per pointer event.", "Tests."]
+            },
+            {
+              "id": "E04-F05-S03",
+              "title": "Snap indicator",
+              "userStory": "As a trader, I want to see where the anchor will snap so that there are no surprises.",
+              "sds": ["FR-INT-043", "FR-SC-002"],
+              "acceptance": ["When snapping applies, the scene contains a snap indicator at the snapped point.", "No indicator when snapping is off or not applicable."],
+              "tasks": ["Feed snap results to the scene builder.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E04-F06",
+          "title": "Controller API",
+          "sds": ["§9.7", "FR-INT-060", "FR-INT-061", "NFR-REL-001"],
+          "description": "`createDrawingTools` with actions, immutable state snapshots, typed events, error isolation and an idempotent destroy.",
+          "why": "applications and adapters drive everything through one small, stable API",
+          "stories": [
+            {
+              "id": "E04-F06-S01",
+              "title": "createDrawingTools and actions",
+              "userStory": "As a chart application developer, I want one function that wires host, store, history and tools so that integration is a few lines.",
+              "sds": ["§9.7"],
+              "acceptance": [
+                "`createDrawingTools(host, options)` validates the host and options and returns the controller.",
+                "Actions: `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions`, `getScene`, `hitTest`.",
+                "Uses the provided store or creates one; `tools` option restricts the available kinds."
+              ],
+              "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."]
+            },
+            {
+              "id": "E04-F06-S02",
+              "title": "State snapshot and events",
+              "userStory": "As a chart application developer, I want an immutable state snapshot and typed events so that UI frameworks can render toolbar and selection state efficiently.",
+              "sds": ["FR-INT-061"],
+              "acceptance": [
+                "`getState()` returns `{ activeTool, interaction, selection, hover, canUndo, canRedo, magnet }`; the reference changes only when a value changes.",
+                "`on(event, listener)` for `change`, `selection`, `tool`, `interaction`, `blocked`, `error` returns an unsubscribe function.",
+                "Event payloads are typed per event name."
+              ],
+              "tasks": ["Implement state store and typed emitter.", "Tests for reference stability."]
+            },
+            {
+              "id": "E04-F06-S03",
+              "title": "Destroy and error isolation",
+              "userStory": "As a chart (host) implementer, I want the tools never to throw into my render or event loop so that a bug in a drawing cannot crash the chart.",
+              "sds": ["FR-INT-060", "NFR-REL-001"],
+              "acceptance": [
+                "Exceptions inside event handling are caught, emitted as `error` events, and leave the store unchanged.",
+                "`destroy()` is idempotent, unsubscribes everything, clears listeners and makes further calls no-ops that emit nothing.",
+                "`getScene()` after destroy returns an empty scene."
+              ],
+              "tasks": ["Wrap host callbacks.", "Fault-injection tests."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "Drawing tools",
+      "milestone": "M2 Interaction",
+      "labels": ["area:core"],
+      "sds": ["§5.2", "§8.1", "§9"],
+      "description": "The eight tools of release 1.0. Each tool combines the model, geometry, hit-testing and interaction for one kind, with fixtures, docs and an example.",
+      "features": [
+        {
+          "id": "E05-F01",
+          "title": "Trend line",
+          "sds": ["§5.2", "FR-GEO-002"],
+          "description": "Trend lines between two anchors with optional left and right extensions.",
+          "why": "trend lines are the most used drawing on financial charts",
+          "stories": [
+            {
+              "id": "E05-F01-S01",
+              "title": "Trend line tool",
+              "userStory": "As a trader, I want to draw a trend line between two swing points so that I can see the trend and its breaks.",
+              "sds": ["§5.2", "FR-GEO-002", "FR-INT-010"],
+              "acceptance": [
+                "Placement by click-click and drag; two endpoint handles; body drag moves the line.",
+                "Shift locks the angle to 45° steps while placing or dragging an endpoint.",
+                "Golden geometry fixture and scenario test cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool in the tool registry.", "Fixtures and scenario tests.", "Docs page and example."]
+            },
+            {
+              "id": "E05-F01-S02",
+              "title": "Trend line extensions",
+              "userStory": "As a trader, I want to extend a trend line left or right so that I can project it into future bars.",
+              "sds": ["FR-DM-020", "FR-GEO-002"],
+              "acceptance": [
+                "`extendLeft`/`extendRight` render rays to the pane edge and stay correct in future space.",
+                "Hit-testing works along the extension.",
+                "Toggling an extension is one history entry."
+              ],
+              "tasks": ["Wire options into geometry and hit-testing.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E05-F02",
+          "title": "Horizontal line",
+          "sds": ["§5.2"],
+          "description": "A one-click price level across the pane.",
+          "why": "price levels are the simplest and most frequent markup",
+          "stories": [
+            {
+              "id": "E05-F02-S01",
+              "title": "Horizontal line tool",
+              "userStory": "As a trader, I want to mark a price level with one click so that I can watch support and resistance.",
+              "sds": ["§5.2", "FR-INT-010"],
+              "acceptance": [
+                "One click places the line across the full pane width.",
+                "Dragging the line or its handle changes only the price (cursor `ns-resize`).",
+                "Fixture and scenario tests cover place, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F02-S02",
+              "title": "Price label",
+              "userStory": "As a trader, I want the line's price shown at the axis so that I can read the exact level.",
+              "sds": ["FR-SC-001"],
+              "acceptance": [
+                "The scene contains a `label` text shape with the price formatted by `options.priceFormatter` (default: 2 decimals, host may supply one).",
+                "The label follows the line during drags."
+              ],
+              "tasks": ["Add label shape and formatter option.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E05-F03",
+          "title": "Rectangle",
+          "sds": ["§5.2", "FR-HIT-003"],
+          "description": "Price/time boxes with eight handles and fill-aware hit-testing.",
+          "why": "zones and ranges are a core part of chart markup",
+          "stories": [
+            {
+              "id": "E05-F03-S01",
+              "title": "Rectangle tool",
+              "userStory": "As a trader, I want to box a price range over a period so that I can mark consolidations and zones.",
+              "sds": ["§5.2", "FR-INT-032"],
+              "acceptance": [
+                "Placement by two opposite corners in any direction.",
+                "Eight handles (corners and edge midpoints); edge handles change one coordinate.",
+                "Fixture and scenario tests cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F03-S02",
+              "title": "Fill and border hit rules",
+              "userStory": "As a trader, I want filled zones clickable anywhere but empty boxes only on the border so that boxes do not block clicks on drawings inside them.",
+              "sds": ["FR-HIT-003"],
+              "acceptance": ["With `fillOpacity > 0` any point inside hits; otherwise only the border within tolerance.", "Default theme fill opacity for rectangles is 0.15."],
+              "tasks": ["Implement rule in hit-testing.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E05-F04",
+          "title": "Text note",
+          "sds": ["§5.2", "FR-INT-050"],
+          "description": "Plain-text notes pinned to a bar and price.",
+          "why": "annotations explain the markup to the trader and to others",
+          "stories": [
+            {
+              "id": "E05-F04-S01",
+              "title": "Text note tool and editing",
+              "userStory": "As a trader, I want to pin a note to a bar and price so that I remember why I marked something.",
+              "sds": ["§5.2", "FR-INT-050", "FR-INT-051"],
+              "acceptance": [
+                "One click places the note and requests text via `host.editText` or the adapter editor; cancel on a new note removes it without a history entry.",
+                "Double-click or Enter on a selected note edits it; the change is one history entry.",
+                "Text is plain text only; `<b>` stays literal text in the scene (NFR-SEC-002)."
+              ],
+              "tasks": ["Implement edit requests and cancellation.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F04-S02",
+              "title": "Multi-line text box",
+              "userStory": "As a trader, I want multi-line notes with a readable box so that longer notes fit.",
+              "sds": ["FR-GEO-007"],
+              "acceptance": [
+                "Text splits on line breaks; the box grows with the longest line and the line count.",
+                "Font size and text color follow the style; long words are not cut.",
+                "Hit-testing uses the box."
+              ],
+              "tasks": ["Implement box layout.", "Fixtures."]
+            }
+          ]
+        },
+        {
+          "id": "E05-F05",
+          "title": "Fibonacci retracement",
+          "sds": ["§5.2", "FR-GEO-003"],
+          "description": "Interactive retracements rendered by the host's Fibonacci overlay.",
+          "why": "retracements are the most used Fibonacci tool",
+          "stories": [
+            {
+              "id": "E05-F05-S01",
+              "title": "Fibonacci retracement tool",
+              "userStory": "As a trader, I want to drag a retracement from swing low to swing high so that I see the retracement levels.",
+              "sds": ["§5.2", "FR-GEO-003", "FR-SC-004"],
+              "acceptance": [
+                "Placement by two anchors; the scene has a `fibonacci` item for the host renderer plus core handles.",
+                "Clicking a level line selects the drawing (part `level:<ratio>`).",
+                "Fixture and scenario tests cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F05-S02",
+              "title": "Levels, reverse and extensions",
+              "userStory": "As a trader, I want to choose levels, reverse the direction and extend the lines so that the tool matches my method.",
+              "sds": ["FR-DM-020", "FR-GEO-003"],
+              "acceptance": ["Updating `levels`, `reverse`, `extendLeft`, `extendRight` re-renders immediately and is one history entry each.", "Hidden levels are neither rendered nor hit."],
+              "tasks": ["Wire options.", "Tests."]
+            },
+            {
+              "id": "E05-F05-S03",
+              "title": "Level labels and prices",
+              "userStory": "As a trader, I want each level labelled with its ratio and price so that I can read levels at a glance.",
+              "sds": ["§5.2"],
+              "acceptance": ["`showLabels` adds ratio text, `showPrices` adds the price (formatted like E05-F02-S02).", "Labels are part of the resolved Fibonacci item options for the host."],
+              "tasks": ["Add label options to the item.", "Tests."]
+            }
+          ],
+          "labels": ["tool:fibonacci"],
+          "milestone": "M3 Fibonacci and persistence"
+        },
+        {
+          "id": "E05-F06",
+          "title": "Fibonacci arcs",
+          "sds": ["§5.2", "FR-GEO-005"],
+          "description": "Interactive Fibonacci arcs with a documented zoom rule.",
+          "why": "arcs complete the classic Fibonacci tool set",
+          "stories": [
+            {
+              "id": "E05-F06-S01",
+              "title": "Fibonacci arcs tool",
+              "userStory": "As a trader, I want arcs from a swing point so that I see time-and-price support curves.",
+              "sds": ["§5.2", "FR-GEO-005"],
+              "acceptance": [
+                "Placement by two anchors; half circles by default, `fullCircles` option.",
+                "Arc lines are hittable; fixture and scenario tests cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F06-S02",
+              "title": "Arc behaviour on zoom documented and tested",
+              "userStory": "As a trader, I want arcs to behave predictably when I zoom so that I understand what they show.",
+              "sds": ["FR-GEO-005"],
+              "acceptance": [
+                "Docs explain that arcs keep their on-screen shape (pixel radius) and therefore change in data space with the aspect ratio.",
+                "A regression test zooms vertically and horizontally and asserts the documented behaviour."
+              ],
+              "tasks": ["Write docs section.", "Regression test."]
+            }
+          ],
+          "labels": ["tool:fibonacci"],
+          "milestone": "M3 Fibonacci and persistence"
+        },
+        {
+          "id": "E05-F07",
+          "title": "Fibonacci fans",
+          "sds": ["§5.2", "FR-GEO-004"],
+          "description": "Interactive Fibonacci fan lines.",
+          "why": "fans complete the classic Fibonacci tool set",
+          "stories": [
+            {
+              "id": "E05-F07-S01",
+              "title": "Fibonacci fans tool",
+              "userStory": "As a trader, I want fan lines from a swing point so that I see diagonal support and resistance.",
+              "sds": ["§5.2", "FR-GEO-004"],
+              "acceptance": [
+                "Placement by two anchors; rays clipped to the pane; level rays hittable.",
+                "Shift locks anchor 2 angle to 45° steps like the trend line.",
+                "Fixture and scenario tests cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            }
+          ],
+          "labels": ["tool:fibonacci"],
+          "milestone": "M3 Fibonacci and persistence"
+        },
+        {
+          "id": "E05-F08",
+          "title": "Fibonacci time zones",
+          "sds": ["§5.2", "FR-GEO-006"],
+          "description": "Interactive Fibonacci time zones.",
+          "why": "time zones add the time dimension to Fibonacci analysis",
+          "stories": [
+            {
+              "id": "E05-F08-S01",
+              "title": "Fibonacci time zones tool",
+              "userStory": "As a trader, I want vertical lines at Fibonacci bar counts so that I can anticipate turning points in time.",
+              "sds": ["§5.2", "FR-GEO-006", "D-5"],
+              "acceptance": [
+                "Placement by two anchors; the second sets the unit; lines span the pane height.",
+                "Dragging handles changes only time (cursor `ew-resize`); prices are stored but ignored (D-5).",
+                "Fixture and scenario tests cover place, resize, move, delete and undo."
+              ],
+              "tasks": ["Register the tool.", "Tests and docs."]
+            },
+            {
+              "id": "E05-F08-S02",
+              "title": "Custom sequence",
+              "userStory": "As a trader, I want to edit the time-zone sequence so that I can use my own counts.",
+              "sds": ["FR-DM-022", "FR-DM-023"],
+              "acceptance": ["`sequence` updates re-render immediately and are one history entry.", "Invalid sequences are rejected with `KFT-E-OPTIONS` and the drawing is unchanged."],
+              "tasks": ["Wire options.", "Tests."]
+            }
+          ],
+          "labels": ["tool:fibonacci"],
+          "milestone": "M3 Fibonacci and persistence"
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "Persistence",
+      "milestone": "M3 Fibonacci and persistence",
+      "labels": ["area:typescript"],
+      "sds": ["§10.7", "§5.5"],
+      "description": "Async repositories (Web Storage, IndexedDB, memory), debounced auto-save with error reporting, scope keys, and safe import and export helpers.",
+      "features": [
+        {
+          "id": "E06-F01",
+          "title": "Web Storage helpers",
+          "sds": ["FR-PER-001", "FR-PER-002"],
+          "description": "The 0.1 synchronous Web Storage helpers and their move onto the repository interface.",
+          "why": "existing users keep working while persistence moves to the async repository model",
+          "stories": [
+            {
+              "id": "E06-F01-S01",
+              "title": "saveDrawings, loadDrawings and autoSave for Web Storage",
+              "userStory": "As a chart application developer, I want to save and load drawings in localStorage so that markup survives a page reload.",
+              "sds": ["FR-PER-001"],
+              "acceptance": ["`saveDrawings`, `loadDrawings` and `autoSave` work with any `getItem`/`setItem` storage.", "Invalid JSON raises `KFT-E-JSON`."],
+              "tasks": ["Implement `persistence.ts`.", "Tests with an in-memory storage."],
+              "status": "done"
+            },
+            {
+              "id": "E06-F01-S02",
+              "title": "Deprecate the synchronous helpers",
+              "userStory": "As a chart application developer, I want the old helpers to keep working but point me to repositories so that I can migrate at my own pace.",
+              "sds": ["FR-PER-001"],
+              "acceptance": [
+                "The 0.1 helpers delegate to `WebStorageRepository` and are marked `@deprecated` in TSDoc with the replacement.",
+                "Behaviour and signatures are unchanged; existing tests still pass."
+              ],
+              "tasks": ["Reimplement on top of the repository.", "Docs migration note."]
+            }
+          ]
+        },
+        {
+          "id": "E06-F02",
+          "title": "Repositories",
+          "sds": ["FR-PER-001", "FR-PER-004", "AR-4"],
+          "description": "The async `DrawingRepository` interface with memory, Web Storage and IndexedDB implementations.",
+          "why": "applications choose where drawings live without changing any other code",
+          "stories": [
+            {
+              "id": "E06-F02-S01",
+              "title": "Repository interface and memory repository",
+              "userStory": "As a chart application developer, I want one async repository interface so that I can plug in my own backend (for example a REST API).",
+              "sds": ["FR-PER-001"],
+              "acceptance": [
+                "`DrawingRepository { load(scope), save(scope, doc), remove(scope) }` is exported with TSDoc and a REST example in the docs.",
+                "`MemoryRepository` implements it for tests and SSR.",
+                "A shared repository contract test suite runs against every implementation."
+              ],
+              "tasks": ["Define the interface.", "Implement `MemoryRepository`.", "Write the contract suite."]
+            },
+            {
+              "id": "E06-F02-S02",
+              "title": "Web Storage repository",
+              "userStory": "As a chart application developer, I want a localStorage repository so that simple apps persist drawings with no backend.",
+              "sds": ["FR-PER-001", "FR-PER-004"],
+              "acceptance": [
+                "`WebStorageRepository(storage, prefix)` passes the contract suite.",
+                "Quota errors are reported as rejected promises with a clear message; nothing partial is written.",
+                "Loading a corrupt entry resolves to an empty document plus the issue (FR-PER-004)."
+              ],
+              "tasks": ["Implement.", "Contract and error tests."]
+            },
+            {
+              "id": "E06-F02-S03",
+              "title": "IndexedDB repository",
+              "userStory": "As a chart application developer, I want an IndexedDB repository so that large numbers of drawings per symbol are stored efficiently.",
+              "sds": ["FR-PER-001", "FR-LIC-002"],
+              "acceptance": [
+                "`IndexedDbRepository({ dbName })` passes the contract suite (tests use `fake-indexeddb`).",
+                "Opening handles version upgrades; failures reject with a clear message.",
+                "Feature is marked Professional tier in `TOOL_CATALOG`/feature map (OD-2)."
+              ],
+              "tasks": ["Implement with a small promise wrapper.", "Contract tests."]
+            }
+          ]
+        },
+        {
+          "id": "E06-F03",
+          "title": "Auto-save and scopes",
+          "sds": ["FR-PER-002", "FR-PER-003"],
+          "description": "Debounced auto-save with flush, stop and error reporting, and scope keys per symbol and optionally per timeframe.",
+          "why": "drawings are saved reliably without hammering storage on every pointer move",
+          "stories": [
+            {
+              "id": "E06-F03-S01",
+              "title": "Debounced auto-save",
+              "userStory": "As a chart application developer, I want auto-save to batch rapid changes so that dragging does not write on every frame.",
+              "sds": ["FR-PER-002"],
+              "acceptance": [
+                "`autoSave(store, repository, scope, { debounceMs = 500, onError })` saves once after changes settle.",
+                "`flush()` saves pending changes immediately and resolves when written; `stop()` flushes then unsubscribes.",
+                "Save errors call `onError` and retry on the next change; they never throw into the store."
+              ],
+              "tasks": ["Implement with an injectable scheduler.", "Tests with fake timers."]
+            },
+            {
+              "id": "E06-F03-S02",
+              "title": "Scope keys",
+              "userStory": "As a chart application developer, I want drawings stored per symbol (and optionally per timeframe) so that switching instruments shows the right markup.",
+              "sds": ["FR-PER-003", "§5.5"],
+              "acceptance": [
+                "`scopeKey({ symbol, timeframe? })` returns `keystone-drawings:<symbol>[:<timeframe>]` with symbols URL-encoded.",
+                "Documents store their scope; loading checks it matches and reports a mismatch issue otherwise."
+              ],
+              "tasks": ["Implement `scope.ts`.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E06-F04",
+          "title": "Import and export helpers",
+          "sds": ["FR-DM-032", "FR-PER-004"],
+          "description": "File-friendly export and import helpers with reports, built on the core import.",
+          "why": "traders can share markup and back it up without ever losing data to a bad file",
+          "stories": [
+            {
+              "id": "E06-F04-S01",
+              "title": "Export and import text",
+              "userStory": "As a trader, I want to export my drawings to a file and import them elsewhere so that I can back up and share my markup.",
+              "sds": ["FR-DM-032"],
+              "acceptance": [
+                "`exportDrawings(store, { pretty })` returns JSON text of the current document version.",
+                "`importDrawings(store, text, { mode })` parses and returns the core `ImportReport`; unparsable text returns a report with `KFT-E-JSON` and changes nothing.",
+                "Docs show a download/upload example for the browser."
+              ],
+              "tasks": ["Implement helpers.", "Tests with fixtures from E01-F04."]
+            },
+            {
+              "id": "E06-F04-S02",
+              "title": "Safe loading",
+              "userStory": "As a chart application developer, I want loading never to throw on bad stored data so that a corrupt entry cannot break the page.",
+              "sds": ["FR-PER-004"],
+              "acceptance": [
+                "`loadStore(repository, scope)` resolves to `{ store, report }` in every case, with an empty store on unreadable data.",
+                "Partially valid documents load their valid drawings (report lists the skipped ones)."
+              ],
+              "tasks": ["Implement.", "Tests with corrupt fixtures."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "Framework adapters",
+      "milestone": "M4 Adapters and integration",
+      "labels": ["area:core"],
+      "sds": ["§10"],
+      "description": "Store and controller adapters for Vue, React and Angular, the headless toolbar model, i18n and the cross-package parity test.",
+      "features": [
+        {
+          "id": "E07-F01",
+          "title": "Store adapters",
+          "sds": ["FR-FW-010", "FR-FW-020", "FR-FW-030"],
+          "description": "The 0.1 store adapters: `useDrawings` for Vue and React and `KeystoneDrawingService` for Angular.",
+          "why": "applications can render the list of drawings reactively",
+          "stories": [
+            {
+              "id": "E07-F01-S01",
+              "title": "Vue: useDrawings",
+              "userStory": "As a chart application developer using Vue, I want a ref of the drawings so that templates update on every change.",
+              "sds": ["FR-FW-010"],
+              "acceptance": ["`useDrawings(store?)` returns `{ store, drawings }`; the subscription ends with the effect scope."],
+              "tasks": ["Implement and test."],
+              "labels": ["area:vue"],
+              "status": "done"
+            },
+            {
+              "id": "E07-F01-S02",
+              "title": "React: useDrawings",
+              "userStory": "As a chart application developer using React, I want a hook for the drawings so that components re-render on change.",
+              "sds": ["FR-FW-020"],
+              "acceptance": ["`useDrawings(store?)` uses `useSyncExternalStore`, keeps a created store across renders and switches when a new store is passed."],
+              "tasks": ["Implement and test."],
+              "labels": ["area:react"],
+              "status": "done"
+            },
+            {
+              "id": "E07-F01-S03",
+              "title": "Angular: KeystoneDrawingService",
+              "userStory": "As a chart application developer using Angular, I want an observable of the drawings so that templates update with the async pipe.",
+              "sds": ["FR-FW-030"],
+              "acceptance": ["`KeystoneDrawingService` exposes `store`, `drawings$` and `attach(store)` and completes on destroy."],
+              "tasks": ["Implement and test."],
+              "labels": ["area:angular"],
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E07-F02",
+          "title": "Vue controller adapter",
+          "sds": ["FR-FW-010"],
+          "description": "`useDrawingTools` for Vue 3 and its default text editor.",
+          "why": "Vue applications get the full drawing workflow with one composable",
+          "stories": [
+            {
+              "id": "E07-F02-S01",
+              "title": "Vue: `useDrawingTools(host, options)`",
+              "userStory": "As a chart application developer using Vue, I want `useDrawingTools(host, options)` so that toolbar, selection and drawings stay in sync with the controller without glue code.",
+              "sds": ["§10", "AR-2"],
+              "acceptance": [
+                "`useDrawingTools(host, options)` creates a controller for the given host and exposes state, drawings and every controller action.",
+                "Returns reactive `state` and `drawings` (shallow refs) and destroys the controller with the effect scope.",
+                "No business logic in the adapter: it only maps controller state and events to framework reactivity (AR-2).",
+                "Tests cover creation, state updates on controller events and cleanup."
+              ],
+              "tasks": ["Implement the adapter.", "Tests with the mock host.", "README section and example."]
+            },
+            {
+              "id": "E07-F02-S02",
+              "title": "Vue: default text editor",
+              "userStory": "As a chart application developer using Vue, I want a default inline text editor so that text notes work even if my host has no `editText`.",
+              "sds": ["FR-INT-050"],
+              "acceptance": [
+                "When the host has no `editText`, the adapter shows a minimal accessible textarea overlay at the note position (Enter + Ctrl/Cmd confirms, Escape cancels).",
+                "The editor is optional and replaceable through an option/slot/template.",
+                "Text is set with `textContent`/bindings only, never as HTML (NFR-SEC-002)."
+              ],
+              "tasks": ["Implement the editor.", "Tests.", "a11y check (label, focus management)."],
+              "labels": ["a11y"]
+            }
+          ],
+          "labels": ["area:vue"]
+        },
+        {
+          "id": "E07-F03",
+          "title": "React controller adapter",
+          "sds": ["FR-FW-020"],
+          "description": "`useDrawingTools` for React 18/19 and its default text editor.",
+          "why": "React applications get the full drawing workflow with one hook",
+          "stories": [
+            {
+              "id": "E07-F03-S01",
+              "title": "React: `useDrawingTools(host, options)`",
+              "userStory": "As a chart application developer using React, I want `useDrawingTools(host, options)` so that toolbar, selection and drawings stay in sync with the controller without glue code.",
+              "sds": ["§10", "AR-2"],
+              "acceptance": [
+                "`useDrawingTools(host, options)` creates a controller for the given host and exposes state, drawings and every controller action.",
+                "Built on `useSyncExternalStore`; StrictMode double-mount creates and destroys one controller per mount with no leaked host listeners.",
+                "No business logic in the adapter: it only maps controller state and events to framework reactivity (AR-2).",
+                "Tests cover creation, state updates on controller events and cleanup."
+              ],
+              "tasks": ["Implement the adapter.", "Tests with the mock host.", "README section and example."]
+            },
+            {
+              "id": "E07-F03-S02",
+              "title": "React: default text editor",
+              "userStory": "As a chart application developer using React, I want a default inline text editor so that text notes work even if my host has no `editText`.",
+              "sds": ["FR-INT-050"],
+              "acceptance": [
+                "When the host has no `editText`, the adapter shows a minimal accessible textarea overlay at the note position (Enter + Ctrl/Cmd confirms, Escape cancels).",
+                "The editor is optional and replaceable through an option/slot/template.",
+                "Text is set with `textContent`/bindings only, never as HTML (NFR-SEC-002)."
+              ],
+              "tasks": ["Implement the editor.", "Tests.", "a11y check (label, focus management)."],
+              "labels": ["a11y"]
+            }
+          ],
+          "labels": ["area:react"]
+        },
+        {
+          "id": "E07-F04",
+          "title": "Angular controller adapter",
+          "sds": ["FR-FW-030"],
+          "description": "`KeystoneDrawingToolsService` with signals and observables, and its default text editor.",
+          "why": "Angular applications get the full drawing workflow with one service",
+          "stories": [
+            {
+              "id": "E07-F04-S01",
+              "title": "Angular: `KeystoneDrawingToolsService`",
+              "userStory": "As a chart application developer using Angular, I want `KeystoneDrawingToolsService` so that toolbar, selection and drawings stay in sync with the controller without glue code.",
+              "sds": ["§10", "AR-2"],
+              "acceptance": [
+                "`KeystoneDrawingToolsService` creates a controller for the given host and exposes state, drawings and every controller action.",
+                "Exposes Angular signals (`state`, `drawings`) and observables; cleans up via `DestroyRef`; works zoneless and with zone.js.",
+                "No business logic in the adapter: it only maps controller state and events to framework reactivity (AR-2).",
+                "Tests cover creation, state updates on controller events and cleanup."
+              ],
+              "tasks": ["Implement the adapter.", "Tests with the mock host.", "README section and example."]
+            },
+            {
+              "id": "E07-F04-S02",
+              "title": "Angular: default text editor",
+              "userStory": "As a chart application developer using Angular, I want a default inline text editor so that text notes work even if my host has no `editText`.",
+              "sds": ["FR-INT-050"],
+              "acceptance": [
+                "When the host has no `editText`, the adapter shows a minimal accessible textarea overlay at the note position (Enter + Ctrl/Cmd confirms, Escape cancels).",
+                "The editor is optional and replaceable through an option/slot/template.",
+                "Text is set with `textContent`/bindings only, never as HTML (NFR-SEC-002)."
+              ],
+              "tasks": ["Implement the editor.", "Tests.", "a11y check (label, focus management)."],
+              "labels": ["a11y"]
+            }
+          ],
+          "labels": ["area:angular"]
+        },
+        {
+          "id": "E07-F05",
+          "title": "Headless toolbar model",
+          "sds": ["FR-FW-040", "FR-FW-041"],
+          "description": "A tool catalog with labels, groups, icons, shortcuts and tiers, exposed by every adapter so applications build their own toolbar.",
+          "why": "every application can offer a complete toolbar without re-describing the tools",
+          "stories": [
+            {
+              "id": "E07-F05-S01",
+              "title": "Tool catalog",
+              "userStory": "As a chart application developer, I want metadata for every tool so that I can render a toolbar with groups, icons and tooltips.",
+              "sds": ["FR-FW-040"],
+              "acceptance": [
+                "`TOOL_CATALOG` lists id, label key, group (`lines`, `shapes`, `fibonacci`, `annotations`), icon name, shortcut and tier for all eight kinds.",
+                "Each adapter exposes the catalog with `active` and `enabled` (license and `tools` option) per entry.",
+                "Docs show a toolbar example per framework."
+              ],
+              "tasks": ["Add `catalog.ts`.", "Expose in adapters.", "Tests."]
+            },
+            {
+              "id": "E07-F05-S02",
+              "title": "Keyboard shortcuts",
+              "userStory": "As a trader, I want shortcuts for my favourite tools so that I switch tools without the mouse.",
+              "sds": ["FR-FW-041", "NFR-A11Y-001"],
+              "acceptance": [
+                "Default shortcuts: Alt+T, Alt+H, Alt+R, Alt+N, Alt+F; configurable via `shortcuts` option; `null` disables one.",
+                "Shortcuts are handled through `host.onKey` and only when the chart has focus.",
+                "Undo/redo shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are handled too."
+              ],
+              "tasks": ["Implement shortcut map.", "Tests."],
+              "labels": ["a11y"]
+            }
+          ]
+        },
+        {
+          "id": "E07-F06",
+          "title": "Parity and i18n",
+          "sds": ["FR-FW-050", "NFR-I18N-001", "AR-5"],
+          "description": "A parity test across packages and a replaceable message table for every user-visible string.",
+          "why": "every framework gets the same features and every string can be translated",
+          "stories": [
+            {
+              "id": "E07-F06-S01",
+              "title": "Cross-package parity test",
+              "userStory": "As a chart application developer, I want every core feature available in my framework package so that I never need to reach into core internals.",
+              "sds": ["FR-FW-050", "AR-5"],
+              "acceptance": [
+                "A test enumerates core's public exports and fails if a framework package neither re-exports nor wraps one (explicit allow-list for intentional exceptions).",
+                "Runs in CI for all packages."
+              ],
+              "tasks": ["Write the parity test.", "Add to CI."],
+              "labels": ["area:ci"]
+            },
+            {
+              "id": "E07-F06-S02",
+              "title": "Message table",
+              "userStory": "As a chart application developer serving non-English users, I want to replace every label so that tool names and editor texts are translated.",
+              "sds": ["NFR-I18N-001"],
+              "acceptance": [
+                "`DEFAULT_MESSAGES` (English) covers tool labels, editor buttons and accessibility labels; `messages` option merges overrides.",
+                "No user-visible string is hard-coded elsewhere (lint rule or test)."
+              ],
+              "tasks": ["Implement messages.", "Tests."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "Playground, e2e and chart integration",
+      "milestone": "M4 Adapters and integration",
+      "labels": ["area:playground"],
+      "sds": ["§11", "QA-006", "QA-007"],
+      "description": "A reference canvas host and demo app, Playwright end-to-end tests, and the integration with keystone-charts-financial.",
+      "features": [
+        {
+          "id": "E08-F01",
+          "title": "Playground reference host",
+          "sds": ["FR-INTG-004"],
+          "description": "`apps/playground`: a minimal canvas chart implementing `DrawingHost` v2 with demo pages for TypeScript, Vue, React and Angular.",
+          "why": "the tools can be developed, demonstrated and tested end to end without the chart's release cycle",
+          "stories": [
+            {
+              "id": "E08-F01-S01",
+              "title": "Canvas reference host",
+              "userStory": "As a chart application developer, I want a small canvas chart that implements the host so that I can try the tools and see how a host is built.",
+              "sds": ["FR-INTG-004", "FR-HOST-010"],
+              "acceptance": [
+                "Renders candles from a static data set with linear price and time scales, zoom and scroll, two panes.",
+                "Implements `DrawingHost` v2 and passes `runHostConformance` (QA-008).",
+                "Renders `shape`, `handles`, `preview` items and a simple Fibonacci renderer for `fibonacci` items."
+              ],
+              "tasks": ["Create `apps/playground` (Vite).", "Implement host and renderer.", "Conformance test."]
+            },
+            {
+              "id": "E08-F01-S02",
+              "title": "Framework demo pages",
+              "userStory": "As a chart application developer, I want a demo page per framework so that I can copy a working integration.",
+              "sds": ["§10"],
+              "acceptance": [
+                "Pages for TypeScript, Vue, React and Angular with a toolbar from `TOOL_CATALOG`, undo/redo buttons, magnet toggle and persistence to localStorage.",
+                "Toolbar is keyboard accessible and labelled (NFR-A11Y-001)."
+              ],
+              "tasks": ["Build the pages.", "Link them from the docs site."],
+              "labels": ["a11y"]
+            }
+          ]
+        },
+        {
+          "id": "E08-F02",
+          "title": "End-to-end tests",
+          "sds": ["QA-006"],
+          "description": "Playwright tests on the playground for the main drawing flows in three browsers.",
+          "why": "real pointer, touch and keyboard input is verified in real browsers",
+          "stories": [
+            {
+              "id": "E08-F02-S01",
+              "title": "Drawing flow e2e tests",
+              "userStory": "As a chart application developer, I want end-to-end tests of every drawing flow so that regressions in real browsers are caught before release.",
+              "sds": ["QA-006"],
+              "acceptance": [
+                "Tests cover place (click-click and drag), magnet snap, select, multi-select, move, resize, delete, undo/redo, text edit and reload persistence for every tool.",
+                "Run in Chromium, Firefox and WebKit; touch emulation for one mobile profile.",
+                "Run headless in CI; screenshots and traces kept on failure."
+              ],
+              "tasks": ["Set up Playwright in `e2e/`.", "Write the flows.", "Add a CI job."],
+              "labels": ["area:ci"]
+            },
+            {
+              "id": "E08-F02-S02",
+              "title": "Keyboard-only e2e test",
+              "userStory": "As a trader who uses the keyboard, I want keyboard-only drawing verified so that accessibility does not regress.",
+              "sds": ["NFR-A11Y-001", "FR-INT-034"],
+              "acceptance": [
+                "One test places, nudges, selects and deletes a trend line using only the keyboard.",
+                "An axe accessibility scan of the demo toolbar has no serious or critical findings."
+              ],
+              "tasks": ["Write the test.", "Add `@axe-core/playwright`."],
+              "labels": ["a11y"]
+            }
+          ]
+        },
+        {
+          "id": "E08-F03",
+          "title": "keystone-charts-financial integration",
+          "sds": ["FR-INTG-001..003", "QA-007"],
+          "description": "Handing the host contract to keystone-charts-financial: integration guide, shared Fibonacci parity fixture and conformance in the chart's CI.",
+          "why": "drawing tools work on the real Keystone chart",
+          "stories": [
+            {
+              "id": "E08-F03-S01",
+              "title": "Host implementation guide and chart handoff",
+              "userStory": "As a chart (host) implementer, I want a step-by-step guide and a tracking issue in the chart repo so that the chart team can implement the host.",
+              "sds": ["FR-INTG-001", "DOC-003"],
+              "acceptance": [
+                "Docs page: implementing `DrawingHost` v2 (transforms, events, overlay pass, Fibonacci items) with a code skeleton.",
+                "An issue in gwinnem/keystone-charts-financial replaces its E19 placeholder and links this epic.",
+                "The chart's E19 tier plan is reconciled with FR-LIC-002 (OD-2)."
+              ],
+              "tasks": ["Write the guide.", "Open and link the chart issue."],
+              "labels": ["area:docs"]
+            },
+            {
+              "id": "E08-F03-S02",
+              "title": "Shared Fibonacci parity fixture",
+              "userStory": "As a chart (host) implementer, I want one fixture that both repos test against so that interactive and programmatic Fibonacci always match.",
+              "sds": ["QA-007", "D-3"],
+              "acceptance": [
+                "A versioned fixture (anchors, scales, expected level prices and pixel lines for all four Fibonacci kinds) is published from core `/testing`.",
+                "Core geometry tests use it; the chart repo issue references it for its renderer tests."
+              ],
+              "tasks": ["Create the fixture.", "Use it in core tests."],
+              "labels": ["tool:fibonacci"]
+            },
+            {
+              "id": "E08-F03-S03",
+              "title": "Conformance in the chart's CI",
+              "userStory": "As a chart (host) implementer, I want the conformance kit running in the chart's CI so that host regressions are caught there.",
+              "sds": ["FR-INTG-002"],
+              "acceptance": ["The chart repo runs `runHostConformance` against its host in CI (tracked in the chart issue).", "This story closes when the chart issue links a green CI run."],
+              "tasks": ["Track and verify."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "Quality, docs and release",
+      "milestone": "M5 Release",
+      "labels": ["area:ci"],
+      "sds": ["§13", "§14", "§15"],
+      "description": "The documentation site and API reference, performance and size budgets, accessibility verification and the release pipeline.",
+      "features": [
+        {
+          "id": "E09-F01",
+          "title": "Documentation site",
+          "sds": ["DOC-002", "DOC-003"],
+          "description": "An Astro/Starlight site with guides, tool pages with live examples and a generated API reference.",
+          "why": "developers can adopt the tools without reading the source",
+          "stories": [
+            {
+              "id": "E09-F01-S01",
+              "title": "Docs site scaffold",
+              "userStory": "As a chart application developer, I want a documentation site so that I can learn the tools quickly.",
+              "sds": ["DOC-003"],
+              "acceptance": [
+                "`packages/docs` is an Astro/Starlight site with getting started per framework, host guide, persistence guide, keyboard reference and one page per tool.",
+                "Builds in CI; broken links fail the build."
+              ],
+              "tasks": ["Scaffold the site.", "Write the pages.", "CI build job."],
+              "labels": ["area:docs"]
+            },
+            {
+              "id": "E09-F01-S02",
+              "title": "Generated API reference",
+              "userStory": "As a chart application developer, I want an API reference generated from TSDoc so that it is always current.",
+              "sds": ["DOC-002", "NFR-DOC-001"],
+              "acceptance": ["TypeDoc generates the reference for all packages into the docs site.", "A check fails CI when a public export has no TSDoc."],
+              "tasks": ["Set up TypeDoc.", "Add the TSDoc check."],
+              "labels": ["area:docs"]
+            },
+            {
+              "id": "E09-F01-S03",
+              "title": "Live tool examples",
+              "userStory": "As a trader evaluating the library, I want to try every tool in the docs so that I can see how it behaves.",
+              "sds": ["DOC-003"],
+              "acceptance": ["Each tool page embeds the playground host with only that tool enabled.", "Examples work with keyboard and touch."],
+              "tasks": ["Embed playground builds.", "Write examples."],
+              "labels": ["area:docs"]
+            }
+          ]
+        },
+        {
+          "id": "E09-F02",
+          "title": "Performance and size budgets",
+          "sds": ["NFR-PERF-001..003", "NFR-SIZE-001"],
+          "description": "Benchmarks with recorded baselines and bundle-size checks in CI.",
+          "why": "the tools stay fast and small as features are added",
+          "stories": [
+            {
+              "id": "E09-F02-S01",
+              "title": "Benchmarks with baselines",
+              "userStory": "As a chart application developer, I want benchmarks for scene building, hit-testing and drag handling so that performance regressions are visible.",
+              "sds": ["NFR-PERF-001", "NFR-PERF-002", "NFR-PERF-003"],
+              "acceptance": [
+                "Vitest benches for 500 drawings: `getScene` ≤ 2 ms, `hitTest` ≤ 0.5 ms, drag move ≤ 1 ms on the CI baseline.",
+                "Results are stored as a CI artifact; a run more than 20% slower than the baseline fails."
+              ],
+              "tasks": ["Write benches.", "Baseline compare script.", "CI job."]
+            },
+            {
+              "id": "E09-F02-S02",
+              "title": "Bundle size checks",
+              "userStory": "As a chart application developer, I want bundle size checked on every PR so that the library stays light.",
+              "sds": ["NFR-SIZE-001"],
+              "acceptance": ["CI measures min+gzip size: core ≤ 25 kB, each framework package ≤ 3 kB; exceeding fails.", "The `/testing` entry is excluded from the core budget."],
+              "tasks": ["Add a size-check script.", "CI step."]
+            }
+          ]
+        },
+        {
+          "id": "E09-F03",
+          "title": "Accessibility",
+          "sds": ["NFR-A11Y-001"],
+          "description": "Keyboard completeness, screen-reader announcements and an accessibility review of adapters and demos.",
+          "why": "keyboard and assistive technology users can draw and manage markup",
+          "stories": [
+            {
+              "id": "E09-F03-S01",
+              "title": "Screen-reader announcements",
+              "userStory": "As a trader using a screen reader, I want changes announced so that I know what was drawn, selected or deleted.",
+              "sds": ["NFR-A11Y-001", "NFR-I18N-001"],
+              "acceptance": [
+                "The controller emits an `announce` event with a localised message for placement, selection, deletion and undo/redo.",
+                "Adapters render it into a polite ARIA live region (optional, on by default)."
+              ],
+              "tasks": ["Add announcements.", "Adapter live regions.", "Tests."],
+              "labels": ["a11y"]
+            },
+            {
+              "id": "E09-F03-S02",
+              "title": "Accessibility review",
+              "userStory": "As a chart application developer, I want an accessibility review before release so that 1.0 meets WCAG 2.1 AA in the demos.",
+              "sds": ["NFR-A11Y-001"],
+              "acceptance": ["Keyboard-only walkthrough of every tool documented in the docs keyboard reference.", "Findings are fixed or recorded as issues before release."],
+              "tasks": ["Run the review.", "Fix or file findings."],
+              "labels": ["a11y"]
+            }
+          ]
+        },
+        {
+          "id": "E09-F04",
+          "title": "Release pipeline",
+          "sds": ["DOC-004", "NFR-COMP-001"],
+          "description": "Versioning, changelog, tagging and build artifacts for releases.",
+          "why": "releases are repeatable and documented",
+          "stories": [
+            {
+              "id": "E09-F04-S01",
+              "title": "Versioned releases",
+              "userStory": "As a chart application developer, I want tagged releases with changelogs so that I know what changed between versions.",
+              "sds": ["DOC-004"],
+              "acceptance": [
+                "A release workflow on tags `v*` builds all packages, runs the full test, mutation and e2e suites and attaches the build artifacts; it never publishes to npm (D-7).",
+                "All packages share one version; the CHANGELOG section for the tag is used as the release notes."
+              ],
+              "tasks": ["Write the release workflow.", "Document the release steps in CLAUDE.md."]
+            },
+            {
+              "id": "E09-F04-S02",
+              "title": "Manual npm publishing",
+              "userStory": "As the maintainer, I want a documented, repeatable manual publish to npm so that every release is published the same way without automation.",
+              "sds": ["D-7", "NFR-COMP-001"],
+              "acceptance": [
+                "Packages are publishable: `private: true` removed, `files`/`exports`/`types` verified with `npm pack --dry-run` (no tests, fixtures or source maps in the tarballs).",
+                "A publish checklist in CLAUDE.md and the docs: versions bumped together, CHANGELOG updated, build, unit, mutation and e2e green, then `npm publish` per package in order core, typescript, vue, react, angular (Angular from `packages/angular/dist`).",
+                "`workspace:*` dependencies are replaced by the released version in the published manifests (pnpm publish behaviour or an explicit step in the checklist).",
+                "The release workflow contains no publish step (D-7)."
+              ],
+              "tasks": ["Make the packages publishable.", "Write the publish checklist.", "Dry-run the publish with `npm pack` for every package."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "Licensing",
+      "milestone": "M5 Release",
+      "labels": ["area:core", "licensing"],
+      "sds": ["§12"],
+      "description": "Integration with keystone-license: tier map, gating of tools and features with clear events, and read-only rendering of gated drawings so data is never lost.",
+      "features": [
+        {
+          "id": "E10-F01",
+          "title": "Tier decision and license context",
+          "sds": ["FR-LIC-001", "FR-LIC-002", "OD-2"],
+          "description": "Deciding the Community/Professional split and accepting a license context from keystone-license.",
+          "why": "the commercial model is explicit before gating is implemented",
+          "stories": [
+            {
+              "id": "E10-F01-S01",
+              "title": "Decide the tier split",
+              "userStory": "As the product owner, I want the Community and Professional tiers decided so that gating matches the commercial model.",
+              "sds": ["OD-2", "FR-LIC-002"],
+              "acceptance": [
+                "OD-2 is closed in the SDS with the final split (proposal in FR-LIC-002). Deferred on 2026-10-28; E10-F01-S02 and E10-F02 wait for this decision.",
+                "The split is consistent with keystone-charts-financial's tiers (Community, Professional, Professional Plus, Enterprise)."
+              ],
+              "tasks": ["Review the proposal.", "Update the SDS and the tool catalog tiers."],
+              "labels": ["decision"]
+            },
+            {
+              "id": "E10-F01-S02",
+              "title": "License context",
+              "userStory": "As a chart application developer, I want to pass my keystone-license context to the tools so that features unlock according to my license.",
+              "sds": ["FR-LIC-001"],
+              "acceptance": [
+                "`createDrawingTools(host, { license })` accepts the keystone-license verification result; no license means Community.",
+                "`FEATURE_TIERS` maps tools and features (magnet, IndexedDB, merge import) to tiers.",
+                "core stays free of runtime dependencies: the license is passed in, not verified by core (AR-1)."
+              ],
+              "tasks": ["Define `LicenseContext` and `FEATURE_TIERS`.", "Tests per tier."]
+            }
+          ]
+        },
+        {
+          "id": "E10-F02",
+          "title": "Gating",
+          "sds": ["FR-LIC-003"],
+          "description": "Blocking gated tools and features with `blocked` events, and rendering gated drawings read-only.",
+          "why": "users see why something is unavailable and never lose drawings when a license lapses",
+          "stories": [
+            {
+              "id": "E10-F02-S01",
+              "title": "Gate tools and features",
+              "userStory": "As a trader on the Community tier, I want a clear message when I pick a Professional tool so that I know what to upgrade for.",
+              "sds": ["FR-LIC-003"],
+              "acceptance": [
+                "Activating a gated tool or enabling a gated feature emits `blocked` with `KFT-E-LICENSE` and the required tier; nothing changes.",
+                "The toolbar model marks gated entries `enabled: false` with the required tier."
+              ],
+              "tasks": ["Implement checks in the controller.", "Tests."]
+            },
+            {
+              "id": "E10-F02-S02",
+              "title": "Read-only gated drawings",
+              "userStory": "As a trader whose license lapsed, I want my Fibonacci drawings still visible so that I never lose my markup.",
+              "sds": ["FR-LIC-003"],
+              "acceptance": [
+                "Loaded drawings of gated kinds are rendered and selectable but cannot be edited or moved (treated like locked, with `KFT-E-LICENSE`).",
+                "They can still be deleted (data ownership stays with the user) and are saved unchanged."
+              ],
+              "tasks": ["Implement read-only state.", "Tests."]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

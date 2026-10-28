@@ -1,0 +1,5 @@
+npx --no-install lint-staged
+pnpm format:check
+pnpm type-check
+pnpm lint
+pnpm test:coverage

@@ -1,0 +1,6 @@
+# Keep LF in the repository and working copy on every OS, matching .editorconfig and Prettier.
+* text=auto eol=lf
+
+# Windows scripts keep CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf

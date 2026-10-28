@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+# Angular CLI build cache
+.angular/
+# Playwright (e2e) output
+playwright-report/
+test-results/
+# Stryker (mutation testing) output
+.stryker-tmp/
+**/reports/mutation/
+stryker.log
+.turbo/
+.env
+.env.*
+*.log
+.DS_Store
+.idea/
+.vscode/
+_to_delete/
+# Local backlog script state and dry-run preview
+specs/backlog/.backlog-state.json
+specs/backlog/.backlog-preview.md

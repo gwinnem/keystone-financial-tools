@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "fileLogLevel": "info",
+  "fileLogLevel_comment": "Writes stryker.log next to this file, so a failed run can be diagnosed from disk.",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "clearTextReporter": {
+    "allowColor": true,
+    "allowEmojis": true,
+    "logTests": false,
+    "reportScoreTable": true,
+    "skipFull": false
+  },
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "coverageAnalysis": "perTest",
+  "concurrency": 8,
+  "timeoutMS": 2500,
+  "incremental": true,
+  "incrementalFile": "reports/mutation/stryker-incremental.json",
+  "incremental_comment": "Reruns only retest mutants whose code or covering tests changed. Delete the file (or pass --force) for a clean full run. CI starts without the file, so CI always runs in full.",
+  "ignoreStatic": false,
+  "mutate": ["src/**/*.ts", "!src/index.ts", "!src/types.ts"],
+  "mutate_comment": "Excluded: the entry barrel (index.ts) and type-only declarations (types.ts). Everything else under src is mutated.",
+  "thresholds": {
+    "high": 100,
+    "low": 100,
+    "break": 100
+  },
+  "thresholds_comment": "Any survivor fails the run: the floor is 100% (timed-out mutants count as detected). Never lower `break`.",
+  "ignorePatterns": ["node_modules", "dist", "coverage", ".stryker-tmp", "reports"]
+}

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "paths": {
+      "keystone-financial-tools-core": ["./packages/core/src"],
+      "keystone-financial-tools-typescript": ["./packages/typescript/src"],
+      "keystone-financial-tools-vue": ["./packages/vue/src"],
+      "keystone-financial-tools-react": ["./packages/react/src"],
+      "keystone-financial-tools-angular": ["./packages/angular/src/public-api.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

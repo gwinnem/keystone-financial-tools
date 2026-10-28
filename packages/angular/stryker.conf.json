@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "fileLogLevel": "info",
+  "fileLogLevel_comment": "Writes stryker.log next to this file, so a failed run can be diagnosed from disk.",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "clearTextReporter": {
+    "allowColor": true,
+    "allowEmojis": true,
+    "logTests": false,
+    "reportScoreTable": true,
+    "skipFull": false
+  },
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "coverageAnalysis": "perTest",
+  "concurrency": 8,
+  "timeoutMS": 2500,
+  "incremental": true,
+  "incrementalFile": "reports/mutation/stryker-incremental.json",
+  "ignoreStatic": false,
+  "ignoreStatic_comment": "Kept off on purpose: static mutants here include the injectable's providedIn, so ignoring them would hide them from the 100% floor.",
+  "mutate": ["src/lib/**/*.ts", "!src/lib/**/*.spec.ts"],
+  "mutate_comment": "Scoped to src/lib, the same folder vitest.config.ts measures coverage on. Spec files live next to the source, so they are excluded explicitly; src/test-helpers and the public-api barrel are out of scope. The sibling keystone-financial-tools-core is not mutated.",
+  "thresholds": {
+    "high": 100,
+    "low": 100,
+    "break": 100
+  },
+  "thresholds_comment": "Any survivor fails the run: the floor is 100% (timed-out mutants count as detected). Never lower `break`.",
+  "ignorePatterns": ["node_modules", "dist", "coverage", ".stryker-tmp", "reports"]
+}

@@ -1,0 +1,95 @@
+name: CI
+
+# Runs on every push to main or dev and on every pull request into them.
+# Branch flow: work happens on `dev`; a pull request dev -> main runs this workflow before the merge.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Angular 22, jsdom 30 and lint-staged 17 need Node 22.22+ or 24.15+; CI uses Node 24 (LTS).
+  NODE_VERSION: '24'
+  # `prepare` runs `husky`, which installs git hooks. Pointless in CI.
+  HUSKY: '0'
+
+jobs:
+  verify:
+    name: Verify (Node 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        # The version comes from the root package.json "packageManager" field. pnpm 12 needs action-setup 6.1+.
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check (all packages)
+        run: pnpm type-check
+
+      - name: Lint (all packages)
+        run: pnpm lint
+
+      - name: Unit tests (with 90% coverage gates)
+        run: pnpm test:coverage
+
+      - name: Build all packages
+        run: pnpm build
+
+  mutation:
+    name: Mutation (${{ matrix.package }})
+    # Mutation testing is slow, so it only runs for changes headed to main: pull requests into main, and pushes to main.
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [core, typescript, vue, react, angular]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Mutation tests (${{ matrix.package }})
+        # One runner per package so the runs go in parallel. Config: packages/<package>/stryker.conf.json
+        run: pnpm --filter keystone-financial-tools-${{ matrix.package }} test:mutation
+
+      - name: Upload mutation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/reports/mutation/
+          retention-days: 14
+          if-no-files-found: ignore

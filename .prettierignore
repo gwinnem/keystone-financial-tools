@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+reports
+.turbo
+.stryker-tmp
+pnpm-lock.yaml
+package-lock.json
+# Markdown is not formatted by Prettier
+*.md

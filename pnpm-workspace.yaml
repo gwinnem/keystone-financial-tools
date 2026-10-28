@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+# pnpm 10+ blocks dependency build scripts unless approved here. Both come in through ng-packagr (esbuild, sass).
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
