@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "drawings": [
+    {
+      "id": "8f1c2d0e-1b5a-4c7e-9a33-2f6d1e0b4a71",
+      "kind": "trend-line",
+      "anchors": [
+        { "time": 1767312000000, "price": 182.4, "yAxisId": "price" },
+        { "time": 1770595200000, "price": 201.7, "yAxisId": "price" }
+      ],
+      "style": { "color": "#e91e63", "lineWidth": 2 }
+    },
+    {
+      "id": "h-support",
+      "kind": "horizontal-line",
+      "anchors": [{ "time": 1769904000000, "price": 175, "yAxisId": "price" }]
+    },
+    {
+      "id": "fib-1",
+      "kind": "fibonacci-retracement",
+      "anchors": [
+        { "time": 1767312000000, "price": 182.4, "yAxisId": "price" },
+        { "time": 1770595200000, "price": 201.7, "yAxisId": "price" }
+      ]
+    },
+    {
+      "id": "note-1",
+      "kind": "text-note",
+      "anchors": [{ "time": 1769904000000, "price": 190, "yAxisId": "price" }],
+      "text": "Earnings"
+    },
+    {
+      "id": "rsi-zone",
+      "kind": "rectangle",
+      "anchors": [
+        { "time": 1767312000000, "price": 30, "yAxisId": "rsi" },
+        { "time": 1770595200000, "price": 70, "yAxisId": "rsi" }
+      ]
+    }
+  ]
+}

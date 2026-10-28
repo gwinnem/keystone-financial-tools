@@ -24,6 +24,11 @@
   operations and rolls back when `fn` throws; `clear()` is one change. `ordered()` and the z-order
   commands `bringToFront`, `sendToBack`, `bringForward` and `sendBackward` (minimal zIndex writes,
   one change each).
+- Core (E01-F04): saved documents are version 2 with an optional `scope` (`{ symbol?, timeframe? }`,
+  `new DrawingStore(drawings, { scope })`); `fromJSON` still reads version 1 through `readDocument` and
+  the pure `migrateV1ToV2`. `importDocument(store, json, { mode })` imports in `merge` or `replace`
+  mode as one change and returns an `ImportReport` (`added`, `renamed`, `skipped`) instead of failing
+  on individual bad drawings.
 
 ### Specification and backlog
 

@@ -18,7 +18,10 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `createId`, `createIdGenerator`, `IdSource` | Collision-safe drawing ids (`crypto.randomUUID`, or time + counter + random suffix) |
 | `DrawingStore` | `add`, `update`, `remove`, `clear`, `batch`, `get`, `list`, `ordered`, `bringToFront`, `sendToBack`, `bringForward`, `sendBackward`, `subscribe`, `toJSON`, `fromJSON` |
 | `StoreChange`, `StoreOperation`, `DrawingListener` | What listeners receive: the new list and the `add`/`update`/`remove` operations |
-| `DOCUMENT_VERSION`, `DrawingDocument` | The saved document format (version 1) |
+| `DOCUMENT_VERSION`, `SUPPORTED_DOCUMENT_VERSIONS`, `DrawingDocument`, `DrawingDocumentV1`, `DocumentScope` | The saved document format (version 2; version 1 is read and migrated) |
+| `readDocument`, `migrateV1ToV2` | Reading and migrating saved documents |
+| `importDocument`, `ImportMode`, `ImportOptions`, `ImportReport` | Importing a document in `merge` or `replace` mode, keeping the valid drawings |
+| `DrawingStoreOptions` | `new DrawingStore(drawings, { scope })` |
 | `DrawingHost`, `HostPointerEvent`, `Ohlc` | What a chart supplies for the drawing tools |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
@@ -53,6 +56,31 @@ change (one notification): the moved drawings keep their relative order, and onl
 that must change to produce the new order are written, so the rest keep theirs. They return false
 when nothing moves (for example a drawing already at the front) and throw `KFT-E-MISSING` for an
 unknown id. Locked and hidden drawings can be reordered through the API.
+
+## Saved documents
+
+`store.toJSON()` writes `{ version: 2, scope?, drawings }`; the scope (`{ symbol?, timeframe? }`)
+comes from `new DrawingStore(drawings, { scope })` or from the loaded document. `DrawingStore.fromJSON`
+reads versions 1 and 2 (version 1 is migrated in memory by the pure `migrateV1ToV2`) and throws on
+the first invalid drawing. Anything that is not a readable document (wrong version, no `drawings`
+array, bad scope) is `KFT-E-JSON`.
+
+`importDocument(store, json, { mode })` takes a JSON string or a parsed value and applies it as one
+change, keeping every valid drawing:
+
+| Mode | Behaviour |
+|---|---|
+| `merge` (default) | Adds the drawings; a taken id gets a new one (`createId`, injectable) and is listed in `renamed` |
+| `replace` | Removes everything and adds the drawings; a repeated id in the document is skipped (`KFT-E-ID`) |
+
+The `ImportReport` lists `added` ids, `renamed` (`{ from, to }`) and `skipped` (`{ index, issues }`)
+drawings. An unreadable document throws `KFT-E-JSON` and changes nothing; the store scope is never
+changed by an import.
+
+```ts
+const report = importDocument(store, fileText, { mode: 'merge' });
+console.log(`${report.added.length} imported, ${report.skipped.length} skipped`);
+```
 
 ## Drawing fields
 
@@ -124,7 +152,7 @@ options, locked, hidden, zIndex, meta) and never throws.
 | `KFT-E-OPTIONS` | Options that are not a plain object, a key the kind does not use, a flag that is not a boolean, bad levels or a bad sequence |
 | `KFT-E-META` | `meta` is not a plain object, or holds a value that is not JSON-safe (the message names its path, e.g. `meta.a.b[3]`) |
 | `KFT-E-MISSING` | Update or reorder of a drawing that is not in the store |
-| `KFT-E-JSON` | Not a version 1 document |
+| `KFT-E-JSON` | Not valid JSON, or not a document of version 1 or 2, or an invalid scope |
 
 ```ts
 import { createId, DrawingStore } from 'keystone-financial-tools-core';

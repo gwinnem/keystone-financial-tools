@@ -34,9 +34,12 @@ store.add({
   ],
 });
 
-const saved = JSON.stringify(store); // { "version": 1, "drawings": [...] }
-const restored = DrawingStore.fromJSON(JSON.parse(saved));
+const saved = JSON.stringify(store); // { "version": 2, "drawings": [...] }
+const restored = DrawingStore.fromJSON(JSON.parse(saved)); // also reads version 1
 ```
+
+`importDocument(store, text, { mode: 'merge' | 'replace' })` imports a saved document and keeps the
+valid drawings when some are broken; it returns which were added, renamed or skipped.
 
 Invalid drawings throw a `DrawingError` whose `issues` list what is wrong (`KFT-E-ID`,
 `KFT-E-KIND`, `KFT-E-ANCHORS`, `KFT-E-AXIS`, `KFT-E-META`, ...). `validateDrawing` returns the

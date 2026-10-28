@@ -121,8 +121,28 @@ export interface Drawing {
 /** Fields of a drawing that `DrawingStore.update` can change. */
 export type DrawingPatch = Partial<Omit<Drawing, 'id'>>;
 
-/** The saved form of a store (`DrawingStore.toJSON` / `DrawingStore.fromJSON`). */
+/** What a saved document belongs to. Drawings are timeframe independent unless `timeframe` is set. */
+export interface DocumentScope {
+  readonly symbol?: string;
+  readonly timeframe?: string;
+}
+
+/**
+ * The saved form of a store (`DrawingStore.toJSON` / `DrawingStore.fromJSON`), version 2.
+ *
+ * @example
+ * ```ts
+ * const doc: DrawingDocument = { version: 2, scope: { symbol: 'EURUSD' }, drawings: store.list() };
+ * ```
+ */
 export interface DrawingDocument {
+  readonly version: 2;
+  readonly scope?: DocumentScope;
+  readonly drawings: readonly Drawing[];
+}
+
+/** The version 1 document written by 0.1. `fromJSON` migrates it to version 2. */
+export interface DrawingDocumentV1 {
   readonly version: 1;
   readonly drawings: readonly Drawing[];
 }

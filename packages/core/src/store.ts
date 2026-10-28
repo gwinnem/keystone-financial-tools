@@ -1,9 +1,13 @@
 import { DrawingError } from './errors';
-import type { Drawing, DrawingDocument, DrawingListener, DrawingPatch, StoreChange, StoreOperation } from './types';
+import { DOCUMENT_VERSION, readDocument } from './migrations';
+import type { DocumentScope, Drawing, DrawingDocument, DrawingListener, DrawingPatch, StoreChange, StoreOperation } from './types';
 import { validateDrawing } from './validate';
 
-/** The version `toJSON` writes and `fromJSON` accepts. */
-export const DOCUMENT_VERSION = 1;
+/** Options of a new `DrawingStore`. */
+export interface DrawingStoreOptions {
+  /** What the drawings belong to; written into the saved document. */
+  readonly scope?: DocumentScope;
+}
 
 function assertValid(drawing: unknown): void {
   const issues = validateDrawing(drawing);
@@ -105,22 +109,27 @@ const backward: Arrange = (order, selected) => {
  * ```
  */
 export class DrawingStore {
+  /** What the drawings belong to, from the options or the loaded document. */
+  readonly scope: DocumentScope | undefined;
   private items: readonly Drawing[] = [];
   private readonly listeners = new Set<DrawingListener>();
   private batching = false;
   private pending = new Map<string, StoreOperation>();
 
-  constructor(initial: readonly Drawing[] = []) {
+  constructor(initial: readonly Drawing[] = [], options: DrawingStoreOptions = {}) {
+    this.scope = options.scope;
     for (const drawing of initial) this.insert(drawing);
   }
 
-  /** Reads a saved document; throws `DrawingError` when it is not a version 1 document. */
+  /**
+   * Reads a saved document of version 1 or 2 (version 1 is migrated in memory) with its scope.
+   * Throws `DrawingError`: `KFT-E-JSON` when it is not a readable document, the drawing issues of the
+   * first invalid drawing otherwise. Use `importDocument` to keep the valid drawings of a partly
+   * broken document.
+   */
   static fromJSON(value: unknown): DrawingStore {
-    const doc = value as Partial<DrawingDocument> | null | undefined;
-    if (doc?.version !== DOCUMENT_VERSION || !Array.isArray(doc.drawings)) {
-      throw new DrawingError([{ code: 'KFT-E-JSON', message: `Expected a drawing document of version ${DOCUMENT_VERSION}.` }]);
-    }
-    return new DrawingStore(doc.drawings);
+    const doc = readDocument(value);
+    return new DrawingStore(doc.drawings, { scope: doc.scope });
   }
 
   /** The drawings in insertion order. */
@@ -223,8 +232,9 @@ export class DrawingStore {
     };
   }
 
+  /** The saved document (current version); `scope` only when the store has one. */
   toJSON(): DrawingDocument {
-    return { version: DOCUMENT_VERSION, drawings: this.items };
+    return this.scope === undefined ? { version: DOCUMENT_VERSION, drawings: this.items } : { version: DOCUMENT_VERSION, scope: this.scope, drawings: this.items };
   }
 
   private insert(drawing: Drawing): void {

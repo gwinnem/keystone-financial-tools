@@ -359,7 +359,8 @@
                 "Versions above 2 and non-objects fail with `KFT-E-JSON` stating the supported versions.",
                 "A fixture of a real version 1 document migrates to the expected version 2 document."
               ],
-              "tasks": ["Add `migrations.ts` with a chain runner.", "Update `DOCUMENT_VERSION` to 2.", "Fixtures under `__fixtures__/documents/`."]
+              "tasks": ["Add `migrations.ts` with a chain runner.", "Update `DOCUMENT_VERSION` to 2.", "Fixtures under `__fixtures__/documents/`."],
+              "status": "done"
             },
             {
               "id": "E01-F04-S03",
@@ -372,7 +373,8 @@
                 "In `merge` mode id collisions get a new id and are listed in `renamed` (old -> new).",
                 "`replace` swaps the store contents in one change; nothing changes if the document itself is not readable (`KFT-E-JSON`)."
               ],
-              "tasks": ["Implement `import.ts`.", "Tests for both modes, collisions and partial validity."]
+              "tasks": ["Implement `import.ts`.", "Tests for both modes, collisions and partial validity."],
+              "status": "done"
             }
           ]
         },

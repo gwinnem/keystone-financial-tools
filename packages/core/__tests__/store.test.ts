@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
 import { DrawingError } from '../src/errors';
-import { DOCUMENT_VERSION, DrawingStore } from '../src/store';
+import { DrawingStore } from '../src/store';
 import type { Drawing, StoreChange } from '../src/types';
 import { anchor, horizontalLine, trendLine } from './fixtures';
 
@@ -144,12 +144,29 @@ describe('DrawingStore', () => {
     expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('round-trips through JSON', () => {
+  it('round-trips through JSON as a version 2 document', () => {
     const store = new DrawingStore([trendLine('a'), horizontalLine('b')]);
-    expect(DOCUMENT_VERSION).toBe(1);
-    expect(store.toJSON()).toEqual({ version: 1, drawings: store.list() });
+    expect(store.toJSON()).toEqual({ version: 2, drawings: store.list() });
+    expect(store.toJSON()).not.toHaveProperty('scope');
     const copy = DrawingStore.fromJSON(JSON.parse(JSON.stringify(store)));
     expect(copy.list()).toEqual(store.list());
+    expect(copy.scope).toBeUndefined();
+  });
+
+  it('keeps its scope and writes it into the document', () => {
+    const scope = { symbol: 'EURUSD', timeframe: '1h' };
+    const store = new DrawingStore([trendLine('a')], { scope });
+    expect(store.scope).toBe(scope);
+    expect(store.toJSON()).toEqual({ version: 2, scope, drawings: [trendLine('a')] });
+    const copy = DrawingStore.fromJSON(JSON.parse(JSON.stringify(store)));
+    expect(copy.scope).toEqual(scope);
+    expect(copy.list()).toEqual([trendLine('a')]);
+  });
+
+  it('reads a version 1 document', () => {
+    const copy = DrawingStore.fromJSON({ version: 1, drawings: [trendLine('a')] });
+    expect(copy.list()).toEqual([trendLine('a')]);
+    expect(copy.toJSON()).toEqual({ version: 2, drawings: [trendLine('a')] });
   });
 
   it('round-trips locked, hidden, zIndex and meta unchanged', () => {
@@ -189,17 +206,17 @@ describe('DrawingStore', () => {
     expect(copy.list()).toEqual([fib]);
   });
 
-  it('rejects anything that is not a version 1 document', () => {
-    const json = [{ code: 'KFT-E-JSON', message: 'Expected a drawing document of version 1.' }];
+  it('rejects anything that is not a version 1 or 2 document', () => {
+    const json = [{ code: 'KFT-E-JSON', message: 'Expected a drawing document of version 1 or 2.' }];
     expect(issuesOf(() => DrawingStore.fromJSON(null))).toEqual(json);
     expect(issuesOf(() => DrawingStore.fromJSON(undefined))).toEqual(json);
-    expect(issuesOf(() => DrawingStore.fromJSON({ version: 2, drawings: [] }))).toEqual(json);
+    expect(issuesOf(() => DrawingStore.fromJSON({ version: 3, drawings: [] }))).toEqual(json);
     expect(issuesOf(() => DrawingStore.fromJSON({ version: 1, drawings: 'ab' }))).toEqual(json);
     expect(issuesOf(() => DrawingStore.fromJSON({ version: 1 }))).toEqual(json);
   });
 
   it('rejects a document with an invalid drawing', () => {
-    expect(issuesOf(() => DrawingStore.fromJSON({ version: 1, drawings: [{ ...trendLine(), id: '' }] }))).toEqual([{ code: 'KFT-E-ID', message: 'The id must be a non-empty string.' }]);
+    expect(issuesOf(() => DrawingStore.fromJSON({ version: 2, drawings: [{ ...trendLine(), id: '' }] }))).toEqual([{ code: 'KFT-E-ID', message: 'The id must be a non-empty string.' }]);
   });
 });
 
