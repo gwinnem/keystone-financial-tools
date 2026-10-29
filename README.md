@@ -11,7 +11,7 @@ the chart package itself.
 
 | Package | Folder | Purpose |
 |---|---|---|
-| `keystone-financial-tools-core` | `packages/core` | Drawing model, validation, `DrawingStore`, saved document format, `DrawingHost` contract |
+| `keystone-financial-tools-core` | `packages/core` | Drawing model, validation, `DrawingStore`, history, saved document format, `DrawingHost` contract; `/testing` entry with a mock host and the host conformance kit |
 | `keystone-financial-tools-typescript` | `packages/typescript` | Framework-free API: the core plus Web Storage persistence (`saveDrawings`, `loadDrawings`, `autoSave`) |
 | `keystone-financial-tools-vue` | `packages/vue` | Vue 3 composable (`useDrawings`) |
 | `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |

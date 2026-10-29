@@ -41,6 +41,12 @@
   `button` and the `cancel`/`leave` phases; new `HostKeyEvent`, `DrawingCursor`, `Rect`, `Point`,
   `NearestBar`, `TextEditRequest`. The 0.1 interface is removed without a shim (FR-HOST-007; no host
   implemented it). `validateHost`/`assertHost` (`KFT-E-HOST`), `Disposables` and `connectHost`.
+- Core (E02-F02): `anchorToPoint` and `pointToAnchor` projection helpers, with property tests for
+  round trips over random linear scales and for zooming in and back out.
+- Core (E02-F03): new entry `keystone-financial-tools-core/testing` (ESM and CommonJS, built by
+  `vite.testing.config.ts`) with `createMockHost` (deterministic linear host with scripted input and
+  recorded output) and `runHostConformance` (host conformance suite for Vitest or Jest). The main
+  entry never imports it.
 
 ### Specification and backlog
 

@@ -502,7 +502,8 @@
                 "Anchors beyond the last bar keep their position after scrolling (uses host extrapolation).",
                 "`pointToAnchor` returns `null` when the y-axis has no pane (`paneRect` null)."
               ],
-              "tasks": ["Implement `projection.ts`.", "Tests on the mock host with offset and scaled axes."]
+              "tasks": ["Implement `projection.ts`.", "Tests on the mock host with offset and scaled axes."],
+              "status": "done"
             },
             {
               "id": "E02-F02-S02",
@@ -513,7 +514,8 @@
                 "Property test: for random linear scales and anchors, `pointToAnchor(anchorToPoint(a))` equals `a` within 1e-9 relative error.",
                 "Property test: zooming the mock host and back restores identical pixel geometry."
               ],
-              "tasks": ["Add a seeded random helper.", "Write the property tests."]
+              "tasks": ["Add a seeded random helper.", "Write the property tests."],
+              "status": "done"
             }
           ]
         },
@@ -534,7 +536,8 @@
                 "Scripted input helpers: `pointer(phase, x, y, modifiers)`, `key(key, modifiers)`, `zoom(factor)`, `scroll(px)`.",
                 "Records cursor changes and render requests for assertions."
               ],
-              "tasks": ["Implement `testing/mock-host.ts`.", "Self-tests of the mock host."]
+              "tasks": ["Implement `testing/mock-host.ts`.", "Self-tests of the mock host."],
+              "status": "done"
             },
             {
               "id": "E02-F03-S02",
@@ -546,7 +549,8 @@
                 "Works with Vitest and Jest (runner functions are passed in).",
                 "Passes against the mock host in this repo's CI (QA-008)."
               ],
-              "tasks": ["Implement `testing/conformance.ts`.", "Run it against the mock host in core tests."]
+              "tasks": ["Implement `testing/conformance.ts`.", "Run it against the mock host in core tests."],
+              "status": "done"
             },
             {
               "id": "E02-F03-S03",
@@ -559,7 +563,8 @@
                 "README documents the entry."
               ],
               "tasks": ["Add a second Vite entry and exports map.", "Bundle content test."],
-              "labels": ["area:ci"]
+              "labels": ["area:ci"],
+              "status": "done"
             }
           ]
         }

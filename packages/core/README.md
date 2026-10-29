@@ -27,6 +27,7 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `DrawingHost`, `HOST_API_VERSION`, `HostPointerEvent`, `HostKeyEvent`, `DrawingCursor`, `Rect`, `Point`, `NearestBar`, `Ohlc`, `Modifiers`, `PointerPhase`, `PointerType`, `TextEditRequest` | What a chart supplies for the drawing tools (host contract version 2) |
 | `validateHost`, `assertHost`, `REQUIRED_HOST_MEMBERS` | Checks a host against the contract (`KFT-E-HOST`) |
 | `connectHost`, `HostHandlers`, `Disposables` | Subscribes to the host's events once and unsubscribes every one exactly once |
+| `anchorToPoint`, `pointToAnchor` | Anchors to plot points and back through the host transforms |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -132,6 +133,63 @@ every missing function; `editText` is optional but must be a function when prese
 `Disposables`: `dispose()` unsubscribes every listener exactly once, even when one unsubscribe
 throws, and returns the errors instead of throwing. A key handler's result reaches the host as a
 strict boolean. A subscribe method that returns no function is `KFT-E-HOST`.
+
+`anchorToPoint(anchor, host)` gives the plot point of an anchor; `pointToAnchor(point, yAxisId, host)`
+gives the anchor at a point on a y-axis (also for points outside that pane), or null when the y-axis
+has no pane. Anchors beyond the last bar follow the host's extrapolation, so they stay in place
+relative to the bars when the chart scrolls or zooms.
+
+## Testing entry: `keystone-financial-tools-core/testing`
+
+Test helpers live in a separate entry so they never end up in production bundles.
+
+```ts
+import { createMockHost, runHostConformance } from 'keystone-financial-tools-core/testing';
+```
+
+`createMockHost(options)` is a deterministic in-memory host with linear scales:
+
+| Option | Default |
+|---|---|
+| `width` | 800 (CSS px) |
+| `panes` | `DEFAULT_MOCK_PANE`: `price`, 400 px high, prices 0 to 200 |
+| `barInterval` | 60 000 ms |
+| `pxPerBar` | 10 |
+| `startTime` | 0 (time at x = 0) |
+| `bars` | none (for `nearestBar`) |
+| `editText` | none |
+
+Scripted input: `pointer(phase, x, y, options?)`, `key(key, modifiers?)` (returns whether a listener
+handled it), `zoom(factor, aroundX?)`, `scroll(px)`. Recorded output: `cursors`, `renderRequests`,
+`listenerCount(kind)`.
+
+`runHostConformance(factory, { describe, it, expect })` registers the host conformance tests with
+Vitest or Jest. `factory` returns a fresh subject for every test: the `host`, the `yAxisIds` to
+check, the `lastBarTime`, and `changeViewport`, `firePointer` and `fireKey` wired to the chart's
+own input. It checks contract version 2, time and price round trips within 0.5 px across every pane,
+linear extrapolation beyond the last bar, `yAxisAt` agreeing with `paneRect`, listeners called until
+they unsubscribe (twice is harmless) and handled keys reported as handled. This repo runs it
+against the mock host.
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { runHostConformance } from 'keystone-financial-tools-core/testing';
+
+runHostConformance(
+  () => {
+    const chart = createTestChart();
+    return {
+      host: chart.drawingHost,
+      yAxisIds: ['price'],
+      lastBarTime: chart.lastBarTime,
+      changeViewport: () => chart.zoom(2),
+      firePointer: (event) => chart.dispatchPointer(event),
+      fireKey: (event) => chart.dispatchKey(event),
+    };
+  },
+  { describe, it, expect },
+);
+```
 
 ## Saved documents
 

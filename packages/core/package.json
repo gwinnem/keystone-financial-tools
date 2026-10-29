@@ -14,6 +14,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing.js",
+      "require": "./dist/testing.cjs"
     }
   },
   "sideEffects": false,
@@ -21,8 +26,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
-    "build:dev": "vite build --mode dev && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "vite build && vite build -c vite.testing.config.ts && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build:dev": "vite build --mode dev && vite build -c vite.testing.config.ts --mode dev && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "dev": "vite build --watch --mode dev",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

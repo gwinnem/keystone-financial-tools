@@ -24,6 +24,7 @@ export { assertHost, REQUIRED_HOST_MEMBERS, validateHost } from './host-check';
 export { Disposables } from './disposables';
 export type { HostHandlers } from './host-connection';
 export { connectHost } from './host-connection';
+export { anchorToPoint, pointToAnchor } from './projection';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';
