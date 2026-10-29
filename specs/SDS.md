@@ -385,13 +385,32 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
 
 ### 8.2 Hit-testing
 
-- FR-HIT-001: `hitTest(x, y)` returns `{ id, part } | null` for the topmost visible drawing within
-  tolerance: 6 CSS px for mouse and pen, 12 for touch.
-- FR-HIT-002: Handles of the selected drawings win over bodies; among bodies the highest `zIndex`
-  (then the latest) wins.
-- FR-HIT-003: Fibonacci level lines report `level:<ratio>`; fills (rectangle) hit only when
-  `fillOpacity > 0`, otherwise only the border hits.
-- FR-HIT-004: Hit-testing uses a per-frame geometry cache invalidated by store or viewport changes.
+- FR-HIT-001: `hitTest(point, { drawings, cache, selected?, pointerType?, theme? })` returns
+  `{ id, part, locked } | null` for the topmost visible drawing within tolerance: 6 CSS px for mouse
+  and pen (the default), 12 for touch (`HIT_TOLERANCE`). A distance of exactly the tolerance hits.
+  Distances are measured to segments (not to their extensions), rays as clipped by the geometry,
+  rectangle borders, arcs (to the nearer end where the arc does not cover the direction of the
+  point) and text boxes (solid). Hidden drawings are never hit (FR-DM-006); locked drawings are,
+  with `locked: true`, so they can be selected, and the caller decides what a locked drawing allows
+  (FR-DM-005).
+- FR-HIT-002: Handles of the selected drawings win over every body, including bodies with a higher
+  `zIndex`; the nearest handle of a drawing wins and the lowest index on a tie. Among drawings the
+  highest `zIndex` (default 0) wins, then the one added last: `drawings` is passed in insertion order
+  (`store.list()`), and `hitTest` resolves the order itself. Handles of locked selected drawings are
+  hit too and reported with `locked: true`. Within one drawing the nearest shape wins, the first one
+  on a tie (so the point where all rays of a fan start reports the first level).
+- FR-HIT-003: Parts: `body`, `handle:<n>`, `level:<ratio>` (Fibonacci levels and time-zone values)
+  and `label`. Fills (rectangle) hit only when the resolved `fillOpacity` (the drawing's style over
+  the theme) is above 0, otherwise only the border hits; text notes are always solid. The core cannot
+  know the extent of the text a renderer draws, so a `label` is the tolerance disc around the label
+  anchor (the left end of its level line), and it wins over the lines of its drawing.
+- FR-HIT-004: `GeometryCache(host, { store?, theme?, measureText? })` keeps the geometry of each
+  drawing between pointer moves, including a null geometry for a drawing without a pane. An entry
+  is used only while the drawing is the same object it was computed from, and the store replaces a
+  drawing on every change, so a changed drawing is recomputed and the others are not (no stale
+  geometry). A viewport change clears every entry; with a `store` the entries of removed drawings
+  are dropped. The theme and `measureText` are fixed per cache: a change of either needs a new
+  cache. `destroy()` unsubscribes and is safe to call twice.
 
 ### 8.3 Scene
 

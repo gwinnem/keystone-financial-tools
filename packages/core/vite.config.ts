@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     environment: 'node',
     include: ['__tests__/**/*.test.ts'],
+    benchmark: { include: ['__tests__/**/*.bench.ts'] },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'lcov'],

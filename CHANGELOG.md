@@ -54,6 +54,14 @@
   a rectangle). Shape types (`Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`,
   `LabelShape`), `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT`. Golden
   fixtures per kind in `__fixtures__/geometry`.
+- Core (E03-F02): `hitTest(point, { drawings, cache, selected?, pointerType?, theme? })` returns
+  `{ id, part, locked }` for the topmost visible drawing within 6 CSS px (mouse, pen) or 12 (touch,
+  `HIT_TOLERANCE`). Parts `body`, `handle:<n>`, `level:<ratio>` and `label`; the handles of selected
+  drawings win, then the highest `zIndex`, then the latest drawing; a rectangle hits inside only with
+  a resolved `fillOpacity` above 0; hidden drawings are never hit, locked ones are (`locked: true`).
+  `GeometryCache(host, { store?, theme?, measureText? })` keeps geometry per drawing object, clears on
+  viewport changes and drops removed drawings. `pnpm bench` in the core package measures 500 drawings
+  with a warm cache.
 
 ### Specification and backlog
 

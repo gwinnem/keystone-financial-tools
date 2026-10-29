@@ -30,6 +30,7 @@ geometry of every drawing kind.
 | `connectHost`, `HostHandlers`, `Disposables` | Subscribes to the host's events once and unsubscribes every one exactly once |
 | `anchorToPoint`, `pointToAnchor` | Anchors to plot points and back through the host transforms |
 | `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
+| `hitTest`, `HitResult`, `HitPart`, `HitTestOptions`, `HIT_TOLERANCE`, `GeometryCache`, `GeometryCacheOptions` | What is under a plot point (drawing id, part, locked), and the geometry cache it reads from |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -177,6 +178,55 @@ for (const shape of geometry?.shapes ?? []) {
   if (shape.type === 'line') drawLine(shape.from, shape.to);
 }
 ```
+
+## Hit-testing
+
+`hitTest(point, options)` finds what is under a plot point and returns `{ id, part, locked }`, or null.
+
+```ts
+import { GeometryCache, hitTest } from 'keystone-financial-tools-core';
+
+const cache = new GeometryCache(host, { store }); // follows the viewport and the store
+const hit = hitTest(
+  { x: event.x, y: event.y },
+  { drawings: store.list(), cache, selected: new Set(selection), pointerType: event.pointerType },
+);
+if (hit !== null) console.log(hit.id, hit.part, hit.locked);
+cache.destroy(); // when the chart is torn down
+```
+
+| Option | Meaning | Default |
+|---|---|---|
+| `drawings` | The drawings to test, in insertion order (`store.list()`) | required |
+| `cache` | A `GeometryCache` that supplies the pixel geometry | required |
+| `selected` | Ids of the selected drawings; only their handles can be hit | none |
+| `pointerType` | `mouse`, `pen` or `touch`; sets the tolerance | `mouse` |
+| `theme` | Decides whether a rectangle has a fill | `LIGHT_THEME` |
+
+- **Tolerance** (`HIT_TOLERANCE`): 6 CSS px for a mouse and a pen, 12 for touch. A distance equal to the
+  tolerance hits.
+- **Parts**: `body`, `handle:<n>`, `level:<ratio>` (Fibonacci levels; the value of a time-zone line),
+  `label`. A rectangle hits inside only when its resolved `fillOpacity` is above 0 (the rectangle
+  default of the theme is 0.15); otherwise only its border hits. A text note is solid. The core does not
+  know how wide a renderer draws a label, so a `label` is the tolerance disc around the label anchor
+  (the left end of its level line) and wins over the lines of its drawing.
+- **Priority**: the handles of selected drawings win over every body. Otherwise the highest `zIndex`
+  wins, then the drawing added last. Within a drawing the nearest shape wins, the first one on a tie.
+  The nearest handle wins, the lowest index on a tie.
+- **Hidden** drawings are never hit. **Locked** drawings are, with `locked: true` (also their handles
+  when selected), so the caller decides what a locked drawing allows. A drawing without a pane is
+  never hit.
+
+`GeometryCache(host, { store?, theme?, measureText? })` keeps the geometry of each drawing between
+pointer moves, so `hitTest` over many drawings does no geometry work. An entry is used only while the
+drawing is the same object it was computed from; the store replaces a drawing on every change, so a
+changed drawing is recomputed and the others are not. A viewport change clears the whole cache. With a
+`store` the entries of removed drawings are dropped (`size` says how many drawings are held). The
+theme and `measureText` are fixed per cache: create a new one when they change. `destroy()` stops
+following the host and the store and is safe to call twice.
+
+`pnpm --filter keystone-financial-tools-core bench` measures `hitTest` over 500 drawings with a warm
+cache (budget: 0.5 ms).
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

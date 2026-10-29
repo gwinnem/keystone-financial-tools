@@ -689,7 +689,8 @@
                 "Rectangle fills hit only when `fillOpacity > 0`; otherwise only the border.",
                 "Hidden drawings never hit."
               ],
-              "tasks": ["Implement distance functions (segment, ray, arc, box).", "Implement `hitTest`.", "Tests per kind and pointer type."]
+              "tasks": ["Implement distance functions (segment, ray, arc, box).", "Implement `hitTest`.", "Tests per kind and pointer type."],
+              "status": "done"
             },
             {
               "id": "E03-F02-S02",
@@ -701,7 +702,8 @@
                 "Among bodies the highest `zIndex` wins, then the most recently added.",
                 "Locked drawings are hit (so they can be selected) and reported with `locked: true`."
               ],
-              "tasks": ["Implement ordering in `hitTest`.", "Tests with overlapping drawings."]
+              "tasks": ["Implement ordering in `hitTest`.", "Tests with overlapping drawings."],
+              "status": "done"
             },
             {
               "id": "E03-F02-S03",
@@ -713,7 +715,8 @@
                 "Benchmark: 500 drawings, warm cache, `hitTest` ≤ 0.5 ms on CI baseline.",
                 "Tests prove stale geometry is never used after a change."
               ],
-              "tasks": ["Implement `GeometryCache`.", "Add a Vitest bench."]
+              "tasks": ["Implement `GeometryCache`.", "Add a Vitest bench."],
+              "status": "done"
             }
           ]
         },
