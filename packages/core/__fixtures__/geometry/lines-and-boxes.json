@@ -1,0 +1,77 @@
+{
+  "description": "Horizontal lines, rectangles and text notes on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price) (FR-GEO-001, FR-GEO-007).",
+  "cases": [
+    {
+      "name": "horizontal line across the pane, handle at the pane's horizontal centre",
+      "drawing": { "id": "h", "kind": "horizontal-line", "anchors": [{ "time": 600000, "price": 75, "yAxisId": "price" }] },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 0, "y": 250 }, "to": { "x": 800, "y": 250 } }],
+        "handles": [{ "id": "handle:0", "x": 400, "y": 250 }]
+      }
+    },
+    {
+      "name": "rectangle from bottom left to top right",
+      "drawing": {
+        "id": "r",
+        "kind": "rectangle",
+        "anchors": [
+          { "time": 600000, "price": 25, "yAxisId": "price" },
+          { "time": 2400000, "price": 125, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [{ "type": "rect", "part": "body", "x": 100, "y": 150, "width": 300, "height": 200 }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 350 },
+          { "id": "handle:1", "x": 400, "y": 150 },
+          { "id": "handle:2", "x": 100, "y": 150 },
+          { "id": "handle:3", "x": 400, "y": 350 },
+          { "id": "handle:4", "x": 100, "y": 250 },
+          { "id": "handle:5", "x": 400, "y": 250 },
+          { "id": "handle:6", "x": 250, "y": 350 },
+          { "id": "handle:7", "x": 250, "y": 150 }
+        ]
+      }
+    },
+    {
+      "name": "rectangle from top right to bottom left is normalised",
+      "drawing": {
+        "id": "r",
+        "kind": "rectangle",
+        "anchors": [
+          { "time": 1800000, "price": 150, "yAxisId": "price" },
+          { "time": 600000, "price": 50, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [{ "type": "rect", "part": "body", "x": 100, "y": 100, "width": 200, "height": 200 }],
+        "handles": [
+          { "id": "handle:0", "x": 300, "y": 100 },
+          { "id": "handle:1", "x": 100, "y": 300 },
+          { "id": "handle:2", "x": 300, "y": 300 },
+          { "id": "handle:3", "x": 100, "y": 100 },
+          { "id": "handle:4", "x": 300, "y": 200 },
+          { "id": "handle:5", "x": 100, "y": 200 },
+          { "id": "handle:6", "x": 200, "y": 100 },
+          { "id": "handle:7", "x": 200, "y": 300 }
+        ]
+      }
+    },
+    {
+      "name": "text note with two lines: as wide as the widest line",
+      "drawing": { "id": "n", "kind": "text-note", "anchors": [{ "time": 600000, "price": 150, "yAxisId": "price" }], "text": "Hi\nthere", "style": { "fontSize": 10 } },
+      "expected": {
+        "shapes": [{ "type": "text", "part": "body", "x": 100, "y": 100, "width": 30, "height": 26, "lines": ["Hi", "there"], "fontSize": 10, "lineHeight": 13 }],
+        "handles": [{ "id": "handle:0", "x": 100, "y": 100 }]
+      }
+    },
+    {
+      "name": "empty text note: one character wide and one line high, so it stays clickable",
+      "drawing": { "id": "n", "kind": "text-note", "anchors": [{ "time": 600000, "price": 150, "yAxisId": "price" }], "text": "", "style": { "fontSize": 10 } },
+      "expected": {
+        "shapes": [{ "type": "text", "part": "body", "x": 100, "y": 100, "width": 6, "height": 13, "lines": [""], "fontSize": 10, "lineHeight": 13 }],
+        "handles": [{ "id": "handle:0", "x": 100, "y": 100 }]
+      }
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "description": "Fibonacci retracements on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price): up and down moves, reverse, extension and labels (FR-GEO-003).",
+  "cases": [
+    {
+      "name": "up move: levels from anchor 1 to anchor 2 with ratio and price labels",
+      "drawing": {
+        "id": "f",
+        "kind": "fibonacci-retracement",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": {
+          "levels": [
+            { "ratio": 0, "visible": true },
+            { "ratio": 0.5, "visible": true },
+            { "ratio": 1, "visible": true },
+            { "ratio": 1.618, "visible": false }
+          ]
+        }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 100, "y": 300 }, "to": { "x": 300, "y": 300 } },
+          { "type": "label", "part": "label", "x": 100, "y": 300, "ratio": 0, "price": 50, "showRatio": true, "showPrice": true },
+          { "type": "line", "part": "level:0.5", "from": { "x": 100, "y": 200 }, "to": { "x": 300, "y": 200 } },
+          { "type": "label", "part": "label", "x": 100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": true },
+          { "type": "line", "part": "level:1", "from": { "x": 100, "y": 100 }, "to": { "x": 300, "y": 100 } },
+          { "type": "label", "part": "label", "x": 100, "y": 100, "ratio": 1, "price": 150, "showRatio": true, "showPrice": true }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "down move, anchor 2 left of anchor 1, without labels",
+      "drawing": {
+        "id": "f",
+        "kind": "fibonacci-retracement",
+        "anchors": [
+          { "time": 1800000, "price": 175, "yAxisId": "price" },
+          { "time": 600000, "price": 75, "yAxisId": "price" }
+        ],
+        "options": {
+          "levels": [
+            { "ratio": 0.25, "visible": true },
+            { "ratio": 0.75, "visible": true }
+          ],
+          "showLabels": false,
+          "showPrices": false
+        }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0.25", "from": { "x": 100, "y": 100 }, "to": { "x": 300, "y": 100 } },
+          { "type": "line", "part": "level:0.75", "from": { "x": 100, "y": 200 }, "to": { "x": 300, "y": 200 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 300, "y": 50 },
+          { "id": "handle:1", "x": 100, "y": 250 }
+        ]
+      }
+    },
+    {
+      "name": "reverse: measured from anchor 2 back to anchor 1",
+      "drawing": {
+        "id": "f",
+        "kind": "fibonacci-retracement",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": {
+          "levels": [
+            { "ratio": 0, "visible": true },
+            { "ratio": 0.25, "visible": true }
+          ],
+          "reverse": true,
+          "showLabels": false,
+          "showPrices": false
+        }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 100, "y": 100 }, "to": { "x": 300, "y": 100 } },
+          { "type": "line", "part": "level:0.25", "from": { "x": 100, "y": 150 }, "to": { "x": 300, "y": 150 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "extended both ways, prices only",
+      "drawing": {
+        "id": "f",
+        "kind": "fibonacci-retracement",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }], "extendLeft": true, "extendRight": true, "showLabels": false }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0.5", "from": { "x": 0, "y": 200 }, "to": { "x": 800, "y": 200 } },
+          { "type": "label", "part": "label", "x": 0, "y": 200, "ratio": 0.5, "price": 100, "showRatio": false, "showPrice": true }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "anchor left of the pane, extended left, ratios only: the extension never shortens the lines",
+      "drawing": {
+        "id": "f",
+        "kind": "fibonacci-retracement",
+        "anchors": [
+          { "time": -600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }], "extendLeft": true, "showPrices": false }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0.5", "from": { "x": -100, "y": 200 }, "to": { "x": 300, "y": 200 } },
+          { "type": "label", "part": "label", "x": -100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": false }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": -100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    }
+  ]
+}

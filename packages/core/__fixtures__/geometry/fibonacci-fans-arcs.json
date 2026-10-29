@@ -1,0 +1,234 @@
+{
+  "description": "Fibonacci fans and arcs on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price) (FR-GEO-004, FR-GEO-005). Angles are radians, canvas convention.",
+  "cases": [
+    {
+      "name": "fans: rays from anchor 1 through each visible level at anchor 2's time, clipped to the pane",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": {
+          "levels": [
+            { "ratio": 0, "visible": true },
+            { "ratio": 0.5, "visible": true },
+            { "ratio": 1, "visible": true },
+            { "ratio": 0.618, "visible": false }
+          ]
+        }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 100, "y": 300 }, "to": { "x": 400, "y": 0 } },
+          { "type": "line", "part": "level:0.5", "from": { "x": 100, "y": 300 }, "to": { "x": 700, "y": 0 } },
+          { "type": "line", "part": "level:1", "from": { "x": 100, "y": 300 }, "to": { "x": 800, "y": 300 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "fans with both anchors at one time: vertical rays",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 1200000, "price": 50, "yAxisId": "price" },
+          { "time": 1200000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "level:0.5", "from": { "x": 200, "y": 300 }, "to": { "x": 200, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 300 },
+          { "id": "handle:1", "x": 200, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "fans with both anchors on one point: no rays",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 1200000, "price": 100, "yAxisId": "price" },
+          { "time": 1200000, "price": 100, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 200 },
+          { "id": "handle:1", "x": 200, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "fans right of the pane, pointing away from it: no rays",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 5400000, "price": 50, "yAxisId": "price" },
+          { "time": 6000000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 900, "y": 300 },
+          { "id": "handle:1", "x": 1000, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "fans starting on the right edge, pointing out: no zero-length ray",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 4800000, "price": 50, "yAxisId": "price" },
+          { "time": 6000000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 800, "y": 300 },
+          { "id": "handle:1", "x": 1000, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "fans starting left of the pane: the ray starts at the left edge",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": -600000, "price": 50, "yAxisId": "price" },
+          { "time": 600000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 1, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "level:1", "from": { "x": 0, "y": 300 }, "to": { "x": 800, "y": 300 } }],
+        "handles": [
+          { "id": "handle:0", "x": -100, "y": 300 },
+          { "id": "handle:1", "x": 100, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "fans with a horizontal ray above the pane: the ray misses it",
+      "drawing": {
+        "id": "fan",
+        "kind": "fibonacci-fans",
+        "anchors": [
+          { "time": 600000, "price": 225, "yAxisId": "price" },
+          { "time": 1800000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 1, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": -50 },
+          { "id": "handle:1", "x": 300, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "arcs: half circles around anchor 2, curving towards anchor 1; ratio 0, negative and hidden levels left out",
+      "drawing": {
+        "id": "arc",
+        "kind": "fibonacci-arcs",
+        "anchors": [
+          { "time": 600000, "price": 100, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": {
+          "levels": [
+            { "ratio": 0, "visible": true },
+            { "ratio": 0.5, "visible": true },
+            { "ratio": 1, "visible": true },
+            { "ratio": 0.618, "visible": false },
+            { "ratio": -0.5, "visible": true }
+          ]
+        }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "arc", "part": "level:0.5", "center": { "x": 300, "y": 200 }, "radius": 100, "startAngle": 1.5707963267948966, "endAngle": 4.71238898038469 },
+          { "type": "arc", "part": "level:1", "center": { "x": 300, "y": 200 }, "radius": 200, "startAngle": 1.5707963267948966, "endAngle": 4.71238898038469 }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 200 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "arcs: full circles",
+      "drawing": {
+        "id": "arc",
+        "kind": "fibonacci-arcs",
+        "anchors": [
+          { "time": 600000, "price": 100, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 0.5, "visible": true }], "fullCircles": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "arc", "part": "level:0.5", "center": { "x": 300, "y": 200 }, "radius": 100, "startAngle": 0, "endAngle": 6.283185307179586 }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 200 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "arcs with anchor 1 straight above anchor 2: the upper half",
+      "drawing": {
+        "id": "arc",
+        "kind": "fibonacci-arcs",
+        "anchors": [
+          { "time": 1800000, "price": 150, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "levels": [{ "ratio": 1, "visible": true }] }
+      },
+      "expected": {
+        "shapes": [{ "type": "arc", "part": "level:1", "center": { "x": 300, "y": 200 }, "radius": 100, "startAngle": -3.141592653589793, "endAngle": 0 }],
+        "handles": [
+          { "id": "handle:0", "x": 300, "y": 100 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "arcs with both anchors on one point: no arcs",
+      "drawing": {
+        "id": "arc",
+        "kind": "fibonacci-arcs",
+        "anchors": [
+          { "time": 1200000, "price": 100, "yAxisId": "price" },
+          { "time": 1200000, "price": 100, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 200 },
+          { "id": "handle:1", "x": 200, "y": 200 }
+        ]
+      }
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 # keystone-financial-tools-core
 
 Framework-neutral core of the Keystone drawing tools: the drawing model, validation, the drawing
-store, the saved document format and the `DrawingHost` contract a chart implements.
+store, the saved document format, the `DrawingHost` contract a chart implements and the pixel
+geometry of every drawing kind.
 
 ## API
 
@@ -28,6 +29,7 @@ store, the saved document format and the `DrawingHost` contract a chart implemen
 | `validateHost`, `assertHost`, `REQUIRED_HOST_MEMBERS` | Checks a host against the contract (`KFT-E-HOST`) |
 | `connectHost`, `HostHandlers`, `Disposables` | Subscribes to the host's events once and unsubscribes every one exactly once |
 | `anchorToPoint`, `pointToAnchor` | Anchors to plot points and back through the host transforms |
+| `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -138,6 +140,43 @@ strict boolean. A subscribe method that returns no function is `KFT-E-HOST`.
 gives the anchor at a point on a y-axis (also for points outside that pane), or null when the y-axis
 has no pane. Anchors beyond the last bar follow the host's extrapolation, so they stay in place
 relative to the bars when the chart scrolls or zooms.
+
+## Geometry
+
+`geometryOf(drawing, host, { theme?, measureText? })` computes a drawing's pixel geometry for the
+current frame from the host transforms: `{ drawingId, kind, shapes, handles }`, or null when the
+drawing's y-axis has no pane. It is pure and deterministic; anchors stay in data space and the
+geometry is recomputed whenever the viewport changes.
+
+| Kind | Shapes |
+|---|---|
+| `trend-line` | One `line` from left to right; `extendLeft`/`extendRight` extend the end with the smaller/larger x to the pane edge (for a vertical line: anchor 1/anchor 2). An extension never shortens the line |
+| `horizontal-line` | One `line` across the pane |
+| `rectangle` | One `rect`, normalised to `x`, `y`, `width`, `height` |
+| `text-note` | One `text` box with its top left corner at the anchor; lines split on `\n`, `fontSize * TEXT_CHAR_WIDTH` (0.6) per character and `fontSize * TEXT_LINE_HEIGHT` (1.3) per line unless `measureText` is given; at least one character wide |
+| `fibonacci-retracement` | Per visible level a `line` (`level:<ratio>`) at `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2), then its `label` position when `showLabels` or `showPrices` |
+| `fibonacci-fans` | Per visible level a `line` from anchor 1 through `(t2, p2 + (p1 - p2) * ratio)`, clipped to the pane |
+| `fibonacci-arcs` | Per visible level an `arc` around anchor 2 with radius `ratio` times the pixel distance between the anchors: half circles curving towards anchor 1, full circles with `fullCircles` |
+| `fibonacci-time-zones` | Per sequence value a vertical `line` (`level:<n>`) at `t1 + n * (t2 - t1)` across the pane; lines outside the pane are left out, prices play no part |
+
+Every shape carries its `part` (`body`, `label` or `level:<value>`) for hit-testing. Degenerate
+drawings (anchors on one point, a time unit of 0) produce no Fibonacci shapes and never NaN. Arc
+angles are radians in the canvas convention.
+
+Handles are `{ id: 'handle:<n>', x, y }` with ids that stay the same across frames: one per anchor;
+a horizontal line's at the pane's horizontal centre; time-zone handles at the anchor times,
+vertically centred; rectangles add `handle:2` (x1, y2) and `handle:3` (x2, y1), the other corners,
+and the edge midpoints `handle:4` (x1 edge), `handle:5` (x2 edge), `handle:6` (y1 edge) and
+`handle:7` (y2 edge).
+
+```ts
+import { geometryOf } from 'keystone-financial-tools-core';
+
+const geometry = geometryOf(drawing, host);
+for (const shape of geometry?.shapes ?? []) {
+  if (shape.type === 'line') drawLine(shape.from, shape.to);
+}
+```
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

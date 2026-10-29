@@ -354,21 +354,34 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
 
 ### 8.1 Geometry
 
-- FR-GEO-001: `geometryOf(drawing, host)` returns pixel geometry per kind: segments, rays (for
-  extensions), rectangles, arcs, text boxes and handle points. Pure and deterministic.
-- FR-GEO-002: Trend line extensions are clipped to `paneRect`.
+- FR-GEO-001: `geometryOf(drawing, host, options?)` returns pixel geometry per kind: shapes
+  (lines, rectangles, arcs, text boxes, Fibonacci level labels), each tagged with its part, and
+  handle points with stable ids (`handle:<n>`). Pure and deterministic; null when the y-axis has no
+  pane. Handles: one per anchor; a horizontal line's handle at the pane's horizontal centre;
+  time-zone handles at the anchor times, vertically centred; rectangles add the other two corners
+  (`handle:2` at (x1, y2), `handle:3` at (x2, y1)) and the edge midpoints (`handle:4..7`: x1, x2,
+  y1, y2 edges).
+- FR-GEO-002: Trend line extensions are clipped to `paneRect`. Left and right mean the end with the
+  smaller and the larger x (for a vertical line: anchor 1 and anchor 2). An extension never shortens
+  the segment; a line that misses the pane, or has zero length, is not extended.
 - FR-GEO-003: Retracement level price = `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2);
-  level lines span from the left to the right anchor, or to the pane edge when extended.
+  level lines span from the left to the right anchor, or to the pane edge when extended (never
+  shorter). With `showLabels` or `showPrices` each visible level has a label position at the left
+  end of its line; the renderer formats the ratio and/or price.
 - FR-GEO-004: Fans: rays from anchor 1 through `(t2, p2 + (p1 - p2) * ratio)`, clipped to the pane.
+  Rays without a direction or outside the pane are left out.
 - FR-GEO-005: Arcs: centre at anchor 2, radius = `ratio` times the **pixel** distance between the
   anchors, recomputed every frame. Arcs therefore keep their shape on screen and change in data
-  space when the price/time aspect changes (zoom). Half circles (opening away from anchor 1) by
-  default, full circles with `fullCircles`.
+  space when the price/time aspect changes (zoom). Half circles (opening away from anchor 1, so
+  the curve faces it) by default, full circles with `fullCircles`. Levels with a radius of 0 or less
+  are left out.
 - FR-GEO-006: Time zones: unit `u = t2 - t1`; vertical lines at `t1 + n * u` for each `n` in the
-  sequence, across the full pane height.
-- FR-GEO-007: Text note box: anchored at its anchor, text measured by a host-independent estimate
-  (`fontSize * 0.6` per character, line height `fontSize * 1.3`) unless the host supplies
-  `measureText` in the scene options.
+  sequence, across the full pane height. Lines outside the pane's horizontal range are left out; a
+  unit of 0 produces no lines.
+- FR-GEO-007: Text note box: top left corner at its anchor, lines split on `\n`, text measured by a
+  host-independent estimate (`fontSize * 0.6` per character, line height `fontSize * 1.3`) unless
+  the host supplies `measureText` in the options; at least one character wide, so an empty note
+  stays clickable.
 
 ### 8.2 Hit-testing
 

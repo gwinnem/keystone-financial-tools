@@ -1,0 +1,232 @@
+{
+  "description": "Trend lines on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price), every extension combination (FR-GEO-001, FR-GEO-002).",
+  "cases": [
+    {
+      "name": "no extension",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": 300 }, "to": { "x": 300, "y": 200 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "extended left to the left edge",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 0, "y": 350 }, "to": { "x": 300, "y": 200 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "extended right to the top edge",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": 300 }, "to": { "x": 700, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "extended both ways",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 1800000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true, "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 0, "y": 350 }, "to": { "x": 700, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 300 },
+          { "id": "handle:1", "x": 300, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "anchor 2 left of anchor 1, extended right: right is the larger x",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 1800000, "price": 100, "yAxisId": "price" },
+          { "time": 600000, "price": 50, "yAxisId": "price" }
+        ],
+        "options": { "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": 300 }, "to": { "x": 700, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 300, "y": 200 },
+          { "id": "handle:1", "x": 100, "y": 300 }
+        ]
+      }
+    },
+    {
+      "name": "anchor 2 left of anchor 1, extended left",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 1800000, "price": 100, "yAxisId": "price" },
+          { "time": 600000, "price": 50, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 0, "y": 350 }, "to": { "x": 300, "y": 200 } }],
+        "handles": [
+          { "id": "handle:0", "x": 300, "y": 200 },
+          { "id": "handle:1", "x": 100, "y": 300 }
+        ]
+      }
+    },
+    {
+      "name": "vertical, extended right: beyond anchor 2",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 1200000, "price": 50, "yAxisId": "price" },
+          { "time": 1200000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 200, "y": 300 }, "to": { "x": 200, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 300 },
+          { "id": "handle:1", "x": 200, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "vertical, extended left: beyond anchor 1",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 1200000, "price": 50, "yAxisId": "price" },
+          { "time": 1200000, "price": 150, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 200, "y": 400 }, "to": { "x": 200, "y": 100 } }],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 300 },
+          { "id": "handle:1", "x": 200, "y": 100 }
+        ]
+      }
+    },
+    {
+      "name": "zero length, extended both ways: stays a point, no NaN",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 1200000, "price": 100, "yAxisId": "price" },
+          { "time": 1200000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true, "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 200, "y": 200 }, "to": { "x": 200, "y": 200 } }],
+        "handles": [
+          { "id": "handle:0", "x": 200, "y": 200 },
+          { "id": "handle:1", "x": 200, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "along the top edge, extended right: the edge counts as inside",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 200, "yAxisId": "price" },
+          { "time": 1800000, "price": 200, "yAxisId": "price" }
+        ],
+        "options": { "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": 0 }, "to": { "x": 800, "y": 0 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 0 },
+          { "id": "handle:1", "x": 300, "y": 0 }
+        ]
+      }
+    },
+    {
+      "name": "above the pane, extended both ways: the line misses the pane and stays as it is",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 225, "yAxisId": "price" },
+          { "time": 1800000, "price": 225, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true, "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": -50 }, "to": { "x": 300, "y": -50 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": -50 },
+          { "id": "handle:1", "x": 300, "y": -50 }
+        ]
+      }
+    },
+    {
+      "name": "entering the pane right of its anchors, extended both ways: the left extension never shortens it",
+      "drawing": {
+        "id": "t",
+        "kind": "trend-line",
+        "anchors": [
+          { "time": 600000, "price": 225, "yAxisId": "price" },
+          { "time": 1800000, "price": 210, "yAxisId": "price" }
+        ],
+        "options": { "extendLeft": true, "extendRight": true }
+      },
+      "expected": {
+        "shapes": [{ "type": "line", "part": "body", "from": { "x": 100, "y": -50 }, "to": { "x": 800, "y": 55 } }],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": -50 },
+          { "id": "handle:1", "x": 300, "y": -20 }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "description": "Fibonacci time zones on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price): one line per sequence value inside the pane; prices play no part (FR-GEO-006, D-5).",
+  "cases": [
+    {
+      "name": "unit of one bar to the right: the default sequence up to the right edge",
+      "drawing": {
+        "id": "z",
+        "kind": "fibonacci-time-zones",
+        "anchors": [
+          { "time": 600000, "price": 10, "yAxisId": "price" },
+          { "time": 660000, "price": 190, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 100, "y": 0 }, "to": { "x": 100, "y": 400 } },
+          { "type": "line", "part": "level:1", "from": { "x": 110, "y": 0 }, "to": { "x": 110, "y": 400 } },
+          { "type": "line", "part": "level:2", "from": { "x": 120, "y": 0 }, "to": { "x": 120, "y": 400 } },
+          { "type": "line", "part": "level:3", "from": { "x": 130, "y": 0 }, "to": { "x": 130, "y": 400 } },
+          { "type": "line", "part": "level:5", "from": { "x": 150, "y": 0 }, "to": { "x": 150, "y": 400 } },
+          { "type": "line", "part": "level:8", "from": { "x": 180, "y": 0 }, "to": { "x": 180, "y": 400 } },
+          { "type": "line", "part": "level:13", "from": { "x": 230, "y": 0 }, "to": { "x": 230, "y": 400 } },
+          { "type": "line", "part": "level:21", "from": { "x": 310, "y": 0 }, "to": { "x": 310, "y": 400 } },
+          { "type": "line", "part": "level:34", "from": { "x": 440, "y": 0 }, "to": { "x": 440, "y": 400 } },
+          { "type": "line", "part": "level:55", "from": { "x": 650, "y": 0 }, "to": { "x": 650, "y": 400 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 200 },
+          { "id": "handle:1", "x": 110, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "negative unit: mirrored to the left, up to the left edge",
+      "drawing": {
+        "id": "z",
+        "kind": "fibonacci-time-zones",
+        "anchors": [
+          { "time": 4200000, "price": 100, "yAxisId": "price" },
+          { "time": 4140000, "price": 100, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 700, "y": 0 }, "to": { "x": 700, "y": 400 } },
+          { "type": "line", "part": "level:1", "from": { "x": 690, "y": 0 }, "to": { "x": 690, "y": 400 } },
+          { "type": "line", "part": "level:2", "from": { "x": 680, "y": 0 }, "to": { "x": 680, "y": 400 } },
+          { "type": "line", "part": "level:3", "from": { "x": 670, "y": 0 }, "to": { "x": 670, "y": 400 } },
+          { "type": "line", "part": "level:5", "from": { "x": 650, "y": 0 }, "to": { "x": 650, "y": 400 } },
+          { "type": "line", "part": "level:8", "from": { "x": 620, "y": 0 }, "to": { "x": 620, "y": 400 } },
+          { "type": "line", "part": "level:13", "from": { "x": 570, "y": 0 }, "to": { "x": 570, "y": 400 } },
+          { "type": "line", "part": "level:21", "from": { "x": 490, "y": 0 }, "to": { "x": 490, "y": 400 } },
+          { "type": "line", "part": "level:34", "from": { "x": 360, "y": 0 }, "to": { "x": 360, "y": 400 } },
+          { "type": "line", "part": "level:55", "from": { "x": 150, "y": 0 }, "to": { "x": 150, "y": 400 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 700, "y": 200 },
+          { "id": "handle:1", "x": 690, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "lines on both pane edges are kept, the next one is left out",
+      "drawing": {
+        "id": "z",
+        "kind": "fibonacci-time-zones",
+        "anchors": [
+          { "time": 0, "price": 100, "yAxisId": "price" },
+          { "time": 480000, "price": 100, "yAxisId": "price" }
+        ],
+        "options": { "sequence": [0, 10, 11] }
+      },
+      "expected": {
+        "shapes": [
+          { "type": "line", "part": "level:0", "from": { "x": 0, "y": 0 }, "to": { "x": 0, "y": 400 } },
+          { "type": "line", "part": "level:10", "from": { "x": 800, "y": 0 }, "to": { "x": 800, "y": 400 } }
+        ],
+        "handles": [
+          { "id": "handle:0", "x": 0, "y": 200 },
+          { "id": "handle:1", "x": 80, "y": 200 }
+        ]
+      }
+    },
+    {
+      "name": "both anchors at one time: no lines",
+      "drawing": {
+        "id": "z",
+        "kind": "fibonacci-time-zones",
+        "anchors": [
+          { "time": 600000, "price": 50, "yAxisId": "price" },
+          { "time": 600000, "price": 150, "yAxisId": "price" }
+        ]
+      },
+      "expected": {
+        "shapes": [],
+        "handles": [
+          { "id": "handle:0", "x": 100, "y": 200 },
+          { "id": "handle:1", "x": 100, "y": 200 }
+        ]
+      }
+    }
+  ]
+}

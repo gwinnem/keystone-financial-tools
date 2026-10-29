@@ -596,7 +596,8 @@
                 "Vertical trend lines (same time) and zero-length lines produce valid geometry without NaN.",
                 "Golden fixtures cover all extension combinations (QA-003)."
               ],
-              "tasks": ["Implement `geometry/lines.ts` with Liang-Barsky clipping.", "Golden fixtures and tests."]
+              "tasks": ["Implement `geometry/lines.ts` with Liang-Barsky clipping.", "Golden fixtures and tests."],
+              "status": "done"
             },
             {
               "id": "E03-F01-S02",
@@ -608,7 +609,8 @@
                 "Text note box uses the estimate in FR-GEO-007 or a host `measureText` when provided; multi-line text splits on `\\n`.",
                 "Empty text produces a minimum-size box so the note stays clickable."
               ],
-              "tasks": ["Implement `geometry/boxes.ts`.", "Golden fixtures."]
+              "tasks": ["Implement `geometry/boxes.ts`.", "Golden fixtures."],
+              "status": "done"
             },
             {
               "id": "E03-F01-S03",
@@ -622,7 +624,8 @@
                 "Golden fixtures for up and down moves, reverse and extension (QA-003)."
               ],
               "tasks": ["Implement `geometry/fibonacci-retracement.ts`.", "Fixtures."],
-              "labels": ["tool:fibonacci"]
+              "labels": ["tool:fibonacci"],
+              "status": "done"
             },
             {
               "id": "E03-F01-S04",
@@ -636,7 +639,8 @@
                 "Degenerate cases (anchors on one point) produce no geometry and no errors."
               ],
               "tasks": ["Implement `geometry/fibonacci-fans.ts` and `geometry/fibonacci-arcs.ts`.", "Fixtures including zoom."],
-              "labels": ["tool:fibonacci"]
+              "labels": ["tool:fibonacci"],
+              "status": "done"
             },
             {
               "id": "E03-F01-S05",
@@ -649,7 +653,8 @@
                 "Anchor prices do not affect the geometry (D-5)."
               ],
               "tasks": ["Implement `geometry/fibonacci-time-zones.ts`.", "Fixtures."],
-              "labels": ["tool:fibonacci"]
+              "labels": ["tool:fibonacci"],
+              "status": "done"
             },
             {
               "id": "E03-F01-S06",
@@ -661,7 +666,8 @@
                 "Horizontal line handle sits at the pane's horizontal centre; time-zone handles sit at the anchor times, vertically centred.",
                 "Handles are returned with ids (`handle:<n>`) stable across frames."
               ],
-              "tasks": ["Implement `geometry/handles.ts`.", "Tests per kind."]
+              "tasks": ["Implement `geometry/handles.ts`.", "Tests per kind."],
+              "status": "done"
             }
           ]
         },

@@ -47,6 +47,13 @@
   `vite.testing.config.ts`) with `createMockHost` (deterministic linear host with scripted input and
   recorded output) and `runHostConformance` (host conformance suite for Vitest or Jest). The main
   entry never imports it.
+- Core (E03-F01): `geometryOf(drawing, host, options)` with pixel geometry for all eight kinds:
+  trend lines with Liang-Barsky clipped extensions, horizontal lines, normalised rectangles, text
+  note boxes (estimate or `measureText`), Fibonacci retracement levels and label positions, fans
+  clipped to the pane, arcs in pixel space and time zones; handle points with stable ids (eight on
+  a rectangle). Shape types (`Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`,
+  `LabelShape`), `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT`. Golden
+  fixtures per kind in `__fixtures__/geometry`.
 
 ### Specification and backlog
 
