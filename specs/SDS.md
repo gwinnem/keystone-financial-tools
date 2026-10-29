@@ -416,20 +416,44 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
 
 ```ts
 type SceneItem =
-  | { type: 'shape'; drawingId: string; shapes: Shape[]; style: ResolvedStyle; state: ItemState }
+  | { type: 'shape'; drawingId: string; shapes: Shape[]; style: ResolvedStyle; opacity: number; state: ItemState }
   | { type: 'fibonacci'; drawingId: string; kind: FibonacciKind; anchors: Anchor[];
-      options: ResolvedFibonacciOptions; style: ResolvedStyle; state: ItemState }
-  | { type: 'handles'; drawingId: string; points: Point[]; active?: number }
+      options: ResolvedFibonacciOptions[FibonacciKind]; style: ResolvedStyle; opacity: number; state: ItemState }
+  | { type: 'handles'; drawingId: string; points: Point[]; active?: number; style: HandleStyle; locked: boolean }
   | { type: 'preview'; shapes: Shape[]; style: ResolvedStyle };
 type ItemState = 'normal' | 'hover' | 'selected' | 'locked';
+
+buildScene(host, { drawings, cache, theme?, selected?, hover?, active?, preview?, snap? }): SceneItem[];
+new SceneCache(host).get(options): readonly SceneItem[]; // same array until an input or the viewport changes
 ```
 
-- FR-SC-001: `getScene()` returns items in paint order (`zIndex`, then insertion), handles last.
-- FR-SC-002: The placement preview of a drawing in progress is a `preview` item.
-- FR-SC-003: Hover and selected states are visible (host-styled, defaults in the theme: hover
-  lineWidth + 1, selected handles 8 px squares).
-- FR-SC-004: Fibonacci items are in data space for the host's Fibonacci overlay (D-3); their
-  `options` are fully resolved (no defaults left for the host to guess).
+- FR-SC-001: `buildScene` returns items in paint order (`zIndex`, then insertion), then the preview
+  items, then handles last. Primitive kinds are `shape` items; hidden drawings and drawings without
+  a pane have no item. The scene is a pure function of the host and its options (drawings, geometry
+  cache, theme, selection, hover, active handle, preview, snap); `SceneCache` returns the same array
+  until one of them (compared by reference) or the viewport changes, so `getScene()` costs nothing
+  between changes. The controller (E04) holds the state and wraps `SceneCache` as `getScene()`.
+- FR-SC-002: The placement preview of a drawing in progress is a `preview` item with the drawing's
+  shapes (the pointer is its missing anchor) and resolved style. A snapped point is a second `preview`
+  item: a circle of `SNAP_INDICATOR_RADIUS` (5 px) in the theme's default style. Both are absent from
+  the scene once placement completes or is cancelled.
+- FR-SC-003: Every drawing item has its `state` (`locked`, else `selected`, else `hover`, else
+  `normal`) and a fully resolved `style`: `resolveStyle` with the state's `lineWidthDelta` added to
+  `lineWidth` (hover and selected: +1). `opacity` is the state's opacity (locked 0.6, otherwise 1) and
+  multiplies strokes, fills and text. A selected drawing also gets a `handles` item with the theme's
+  handle style (8 px squares) and `locked`, so the host draws lock markers instead of grab handles on
+  a locked drawing; `active` is the index of the handle being dragged.
+- FR-SC-004: Fibonacci items are in data space for the host's Fibonacci overlay (D-3): `kind`,
+  `anchors` and `options` fully resolved (every key of the kind, every level including hidden ones
+  with `visible: false`; no defaults left for the host to guess), plus `style`, `opacity` and
+  `state`. Their handles still come as `handles` items.
+
+Decisions made while implementing (E03-F03): `opacity` is an item field because `ResolvedStyle`
+has no stroke opacity; `handles` items carry `style` and `locked` so the host needs no theme lookup;
+the snap indicator is a `preview` item with an arc, not a new item type; locked wins over selected
+and hover; there is no polyline shape (geometry has none); the scene theme must be the theme of the
+`GeometryCache`, which has fixed styles per cache; preview geometry uses the default text estimate
+(no `measureText`).
 
 ## 9. Interaction engine
 

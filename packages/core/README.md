@@ -31,6 +31,7 @@ geometry of every drawing kind.
 | `anchorToPoint`, `pointToAnchor` | Anchors to plot points and back through the host transforms |
 | `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
 | `hitTest`, `HitResult`, `HitPart`, `HitTestOptions`, `HIT_TOLERANCE`, `GeometryCache`, `GeometryCacheOptions` | What is under a plot point (drawing id, part, locked), and the geometry cache it reads from |
+| `buildScene`, `SceneCache`, `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`, `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions`, `SNAP_INDICATOR_RADIUS` | The scene a host draws: items in paint order with state, resolved style, preview, snap indicator and handles |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -227,6 +228,57 @@ following the host and the store and is safe to call twice.
 
 `pnpm --filter keystone-financial-tools-core bench` measures `hitTest` over 500 drawings with a warm
 cache (budget: 0.5 ms).
+
+## Scene
+
+`buildScene(host, options)` returns the items the host draws on its overlay, in paint order. It is a
+pure function of its inputs; the controller (E04) will hold the state and expose it as `getScene()`.
+
+```ts
+import { buildScene, GeometryCache, SceneCache } from 'keystone-financial-tools-core';
+
+const cache = new GeometryCache(host, { store }); // use the same theme here as in the scene
+const scenes = new SceneCache(host);
+// in the overlay render pass:
+for (const item of scenes.get({ drawings: store.list(), cache, selected, hover, preview, snap })) {
+  if (item.type === 'shape') drawShapes(item.shapes, item.style, item.opacity);
+  else if (item.type === 'fibonacci') drawFibonacci(item);
+  else if (item.type === 'handles') drawHandles(item);
+  else drawPreview(item);
+}
+```
+
+| Option | Meaning | Default |
+|---|---|---|
+| `drawings` | The drawings in insertion order (`store.list()`) | required |
+| `cache` | The `GeometryCache` that supplies pixel geometry (same theme as `theme`) | required |
+| `theme` | Styles and state styles | `LIGHT_THEME` |
+| `selected` | Ids of selected drawings; each gets a `handles` item | none |
+| `hover` | Id of the drawing under the pointer | none |
+| `active` | `{ drawingId, index }` of the handle being dragged | none |
+| `preview` | The drawing being placed, with the pointer as its missing anchor | none |
+| `snap` | The snapped plot point | none |
+
+- **Order**: drawings by `zIndex` (default 0), ties in insertion order; then the `preview` item, then the
+  snap indicator (also a `preview` item); the `handles` items of the selected drawings come last, in paint
+  order. Hidden drawings and drawings without a pane have no item.
+- **`shape` items** (primitive kinds): `{ drawingId, shapes, style, opacity, state }` with pixel shapes.
+- **`fibonacci` items** (the four Fibonacci kinds): `{ drawingId, kind, anchors, options, style, opacity,
+  state }` in data space. `options` is fully resolved: every key of the kind, and every level including
+  the hidden ones with `visible: false`. The host renders them with its Fibonacci overlay.
+- **`state`**: `locked`, else `selected`, else `hover`, else `normal`. `style` is `resolveStyle` with the
+  state's `lineWidthDelta` added to `lineWidth`; `opacity` is the state's opacity (1 for normal, 0.6 for
+  locked in the presets) and multiplies strokes, fills and text.
+- **`handles` items**: `{ drawingId, points, active?, style, locked }`. `style` is the theme handle style
+  (8 px squares); a `locked` drawing gets lock markers instead of grab handles in the host.
+- **`preview` items**: `{ shapes, style }`. The placement preview is the drawing's shapes in its resolved
+  style; the snap indicator is a circle of `SNAP_INDICATOR_RADIUS` (5 px) in the theme default style.
+  Both vanish when the options no longer carry `preview` or `snap` (after placement or cancel).
+
+`SceneCache(host)` returns the same array until something changes: any option (compared by reference, so
+pass the same object for an unchanged value) or the viewport. `invalidate()` forgets the scene and
+`destroy()` stops following the host; both are safe to repeat. `pnpm --filter keystone-financial-tools-core bench`
+also measures `buildScene` over 500 drawings (budget: 2 ms).
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

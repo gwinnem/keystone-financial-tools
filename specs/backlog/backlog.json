@@ -737,7 +737,8 @@
                 "Primitive kinds produce `shape` items (line, polyline, rect, arc, text shapes in pixels).",
                 "Hidden drawings are absent; the scene is recomputed only after store, viewport, state or theme changes (cached otherwise)."
               ],
-              "tasks": ["Define scene types in `scene/types.ts`.", "Implement `buildScene`.", "Tests on the mock host."]
+              "tasks": ["Define scene types in `scene/types.ts`.", "Implement `buildScene`.", "Tests on the mock host."],
+              "status": "done"
             },
             {
               "id": "E03-F03-S02",
@@ -748,7 +749,8 @@
                 "Every item carries `state` (`normal`, `hover`, `selected`, `locked`) and a fully resolved style (no undefined values).",
                 "Theme state styles apply: hover lineWidth + 1, selected handles 8 px squares, locked handles drawn as lock markers."
               ],
-              "tasks": ["Apply `resolveStyle` and state styles in `buildScene`.", "Tests per state."]
+              "tasks": ["Apply `resolveStyle` and state styles in `buildScene`.", "Tests per state."],
+              "status": "done"
             },
             {
               "id": "E03-F03-S03",
@@ -760,7 +762,8 @@
                 "When magnet snapping applies, a snap indicator shape marks the snapped OHLC point.",
                 "Preview and indicator disappear after placement or cancel."
               ],
-              "tasks": ["Add preview and indicator building.", "Interaction tests asserting scene contents."]
+              "tasks": ["Add preview and indicator building.", "Interaction tests asserting scene contents."],
+              "status": "done"
             },
             {
               "id": "E03-F03-S04",
@@ -773,7 +776,8 @@
                 "Handles for Fibonacci drawings still come from the core as `handles` items."
               ],
               "tasks": ["Implement Fibonacci item building.", "Tests for each Fibonacci kind."],
-              "labels": ["tool:fibonacci"]
+              "labels": ["tool:fibonacci"],
+              "status": "done"
             }
           ]
         }

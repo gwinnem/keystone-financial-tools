@@ -62,6 +62,15 @@
   `GeometryCache(host, { store?, theme?, measureText? })` keeps geometry per drawing object, clears on
   viewport changes and drops removed drawings. `pnpm bench` in the core package measures 500 drawings
   with a warm cache.
+- Core (E03-F03): `buildScene(host, options)` returns the scene items in paint order (`zIndex`, then
+  insertion; hidden drawings and drawings without a pane left out): `shape` items with pixel shapes,
+  `fibonacci` items in data space with fully resolved options, `preview` items (the placement preview
+  and a snap indicator circle) and, last, `handles` items for selected drawings. Every drawing item has
+  its `state` (`locked`, `selected`, `hover`, `normal`), the style resolved from the theme with the
+  state's line width change, and the state's `opacity`. `SceneCache(host)` keeps the scene until an
+  option or the viewport changes. Types `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`,
+  `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions` and
+  `SNAP_INDICATOR_RADIUS`.
 
 ### Specification and backlog
 
