@@ -560,8 +560,10 @@ in one `batch`, which is one history entry.
 
 - FR-INT-030: Dragging a handle moves that anchor; dragging the body moves all anchors of all
   selected unlocked drawings by the same time and price delta (in data space).
-- FR-INT-031: Shift while dragging a trend-line or fan anchor locks the angle to multiples of 45° in
-  pixel space; Shift while moving locks to horizontal or vertical movement.
+- FR-INT-031: Shift while placing the second anchor of, or dragging an anchor of, a trend line or
+  fans locks the angle to multiples of 45° in pixel space, measured from the other anchor; an
+  angle-locked anchor does not snap to the magnet and the keyboard cursor is not locked; Shift while
+  moving locks to horizontal or vertical movement.
 - FR-INT-032: Rectangle handles: four corners and four edge midpoints; edge handles move one
   coordinate only.
 - FR-INT-033: Escape during a drag reverts to the state at pointer down without a history entry.

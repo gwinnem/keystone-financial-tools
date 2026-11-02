@@ -2,6 +2,7 @@ import { ANCHOR_COUNT } from '../kinds';
 import type { DrawingHost, Point } from '../host';
 import { anchorToPoint, pointToAnchor } from '../projection';
 import type { Anchor, Drawing, DrawingKind } from '../types';
+import { ANGLE_KINDS, constrainAngle } from './move';
 import { snapAnchor, type MagnetMode } from './snap';
 
 /** Two anchors closer than this in both x and y (CSS px) are one point: no drawing is created from them (FR-INT-011). */
@@ -145,6 +146,34 @@ function reduceAnchored(progress: Anchored, input: PlacementInput, magnet: Magne
  */
 export function reducePlacement(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, host: DrawingHost, magnet: MagnetMode = 'off'): PlacementResult {
   return progress.type === 'waiting' ? reduceWaiting(tool, progress, input, magnet, host) : reduceAnchored(progress, input, magnet, host);
+}
+
+/**
+ * Shift while placing a trend line or fans (FR-INT-031): once the first anchor is set, the point of
+ * a `move`, `click`, `drag` or `drag-end` goes to the multiple of 45 degrees (in pixel space,
+ * measured from the first anchor) nearest to where the pointer is, at the same pixel distance. Any
+ * other input, other kinds, a placement that has no first anchor yet, `shift` false and a first
+ * anchor without a pane come back as they are. The caller places with the magnet `off` when the
+ * returned input is not the one it passed: an angle-locked anchor never snaps.
+ *
+ * @example
+ * ```ts
+ * const aimed = lockAngle('trend-line', progress, input, event.shiftKey, host);
+ * const result = reducePlacement('trend-line', progress, aimed, host, aimed === input ? magnet : 'off');
+ * ```
+ */
+export function lockAngle(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, shift: boolean, host: DrawingHost): PlacementInput {
+  if (!shift || progress.type !== 'anchored' || !ANGLE_KINDS.has(tool) || host.paneRect(progress.first.yAxisId) === null) return input;
+  const first = anchorToPoint(progress.first, host);
+  switch (input.type) {
+    case 'move':
+    case 'click':
+    case 'drag':
+    case 'drag-end':
+      return { ...input, point: constrainAngle(first, input.point) };
+    default:
+      return input;
+  }
 }
 
 /**

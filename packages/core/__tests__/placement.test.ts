@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DrawingHost, Point } from '../src/host';
 import { ANCHOR_COUNT, DRAWING_KINDS } from '../src/kinds';
-import { PLACEMENT_START, placementPreview, reducePlacement, ZERO_LENGTH_PX, type PlacementInput, type PlacementProgress, type PlacementResult } from '../src/interaction/placement';
+import { lockAngle, PLACEMENT_START, placementPreview, reducePlacement, ZERO_LENGTH_PX, type PlacementInput, type PlacementProgress, type PlacementResult } from '../src/interaction/placement';
 import { createMockHost, DEFAULT_MOCK_PANE } from '../src/testing/mock-host';
 import type { Anchor, DrawingKind } from '../src/types';
 
@@ -226,6 +226,70 @@ describe('zero-length drawings are not created', () => {
     // One pixel on the volume axis is 10 volume units: 4 px apart in y is not within one pixel.
     expect(placed(reducePlacement('trend-line', anchored(volume), click(100, 454), host))).toHaveLength(2);
     expectIgnored('trend-line', anchored(volume), click(100, 451));
+  });
+});
+
+describe('lockAngle, Shift while placing (FR-INT-031)', () => {
+  const first = A(100, 100);
+  // 100 px right and 90 px down of the first anchor: nearest to the 45 degree direction, at the same distance.
+  const diagonal = 100 + Math.hypot(100, 90) * Math.SQRT1_2;
+  const lock = (input: PlacementInput, kind: DrawingKind = 'trend-line', progress: PlacementProgress = anchored(first), shift = true): PlacementInput => lockAngle(kind, progress, input, shift, host);
+  const pointOf = (input: PlacementInput): Point => (input as { point: Point }).point;
+
+  it.each([
+    ['move', move(200, 190)],
+    ['click', click(200, 190)],
+    ['drag', drag(200, 190)],
+    ['drag-end', dragEnd(200, 190)],
+  ])('puts the point of a %s on the 45 degree direction', (type, input) => {
+    const locked = lock(input);
+    expect(locked.type).toBe(type);
+    expect(pointOf(locked).x).toBeCloseTo(diagonal, 9);
+    expect(pointOf(locked).y).toBeCloseTo(diagonal, 9);
+  });
+
+  it('puts a nearly horizontal move on the horizontal, at the same distance', () => {
+    const locked = pointOf(lock(move(200, 110)));
+    expect(locked.x).toBeCloseTo(100 + Math.hypot(100, 10), 9);
+    expect(locked.y).toBeCloseTo(100, 9);
+  });
+
+  it('keeps the rest of the input', () => {
+    expect(lock(click(200, 190, 0))).toMatchObject({ type: 'click', button: 0 });
+  });
+
+  it('locks the fans too', () => {
+    expect(pointOf(lock(move(200, 110), 'fibonacci-fans')).y).toBeCloseTo(100, 9);
+  });
+
+  it('leaves the input as it is without Shift', () => {
+    const input = move(200, 190);
+    expect(lock(input, 'trend-line', anchored(first), false)).toBe(input);
+  });
+
+  it.each<DrawingKind>(['rectangle', 'fibonacci-retracement', 'fibonacci-arcs'])('leaves the input of %s as it is', (kind) => {
+    const input = move(200, 190);
+    expect(lock(input, kind)).toBe(input);
+  });
+
+  it('leaves the input as it is before the first anchor is set', () => {
+    const input = click(200, 190);
+    expect(lock(input, 'trend-line', PLACEMENT_START)).toBe(input);
+  });
+
+  it('leaves the input as it is when the first anchor has no pane', () => {
+    const input = move(200, 190);
+    expect(lock(input, 'trend-line', anchored({ time: 600_000, price: 10, yAxisId: 'gone' }))).toBe(input);
+  });
+
+  it.each([dragStart(200, 190), { type: 'cancel' } as PlacementInput])('leaves a $type as it is', (input) => {
+    expect(lock(input)).toBe(input);
+  });
+
+  it('measures from the first anchor on its own pane', () => {
+    const volume = V(100, 450);
+    // 100 px right and 20 px up of the first anchor is 11.3 degrees: horizontal.
+    expect(pointOf(lock(move(200, 430), 'trend-line', anchored(volume))).y).toBeCloseTo(450, 9);
   });
 });
 

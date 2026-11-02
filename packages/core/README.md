@@ -34,7 +34,7 @@ geometry of every drawing kind.
 | `buildScene`, `SceneCache`, `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`, `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions`, `SNAP_INDICATOR_RADIUS` | The scene a host draws: items in paint order with state, resolved style, preview, snap indicator and handles |
 | `GestureRecogniser`, `Gesture`, `GestureBase`, `GestureOptions` | Pointer events to `move`, `click`, `double-click`, `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (3 px, 300 ms, 400 ms and 6 px by default, injectable clock) |
 | `reduceInteraction`, `IDLE_STATE`, `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext`, `InteractionResult` | The pure interaction state machine (idle, placing, selected, dragging-handle, moving, editing-text) |
-| `reducePlacement`, `placementPreview`, `PLACEMENT_START`, `ZERO_LENGTH_PX`, `PlacementProgress`, `PlacementInput`, `PlacementResult` | Pure placement of new drawings: one-anchor click, two-anchor click-click and drag, preview, pane rules |
+| `reducePlacement`, `placementPreview`, `lockAngle`, `PLACEMENT_START`, `ZERO_LENGTH_PX`, `PlacementProgress`, `PlacementInput`, `PlacementResult` | Pure placement of new drawings: one-anchor click, two-anchor click-click and drag, preview, pane rules, the Shift 45 degree lock |
 | `cursorFor`, `CursorSync` | The cursor for what is under the pointer, and a setter that calls `host.setCursor` only on a change |
 | `duplicateDrawing`, `DUPLICATE_OFFSET_PX` | The copy Ctrl/Cmd+D adds: one bar later, 10 px down, unlocked |
 | `dragHandle`, `moveDrawings`, `nudgeAnchors`, `MovedDrawing`, `constrainMove`, `constrainAngle`, `SHIFT_STEP_FACTOR` | New anchors for a handle drag, a body move and an arrow-key nudge, and the Shift rules |
@@ -565,6 +565,34 @@ tools.destroy(); // when the chart goes away
 - **`destroy()`**: reverts a drag in progress, resets the cursor, unsubscribes from the host and the store and
   clears the listeners. It is idempotent; afterwards every call does nothing and emits nothing, `getScene()`
   returns an empty scene and `hitTest` returns null.
+
+## Trend line
+
+`trend-line` has two anchors. Activate it and place it on the chart, then select it to edit it:
+
+```ts
+const tools = createDrawingTools(host, { store });
+tools.activate('trend-line');
+// click, move, click  or  press, drag, release: the second anchor goes on the first anchor's y-axis
+
+// later: extend it to the pane edges (one history entry, undo takes it back)
+store.update(id, { options: { extendRight: true } });
+```
+
+- **Placing**: click-click or press-drag-release. A second anchor on the first one (within 1 px) creates
+  nothing. Escape and the right button cancel without a store change; undo removes the line.
+- **Editing**: a selected line has two handles (`handle:0`, `handle:1`), one per anchor; dragging one resizes
+  the line, dragging the body moves it. Each gesture is one history entry; Escape puts a drag back. Delete
+  removes it.
+- **Shift** locks the angle to a multiple of 45 degrees (in pixels, around the other anchor, keeping the
+  pixel length) while placing the second anchor and while dragging an endpoint. The locked anchor does not
+  snap to the magnet. Releasing Shift frees the next move. The keyboard cursor is not locked (Shift makes
+  its step ten times as long). `lockAngle(tool, progress, input, shift, host)` is the placement half.
+- **Extensions**: `options.extendLeft` and `options.extendRight` (default false) draw a ray from the end with
+  the smaller (larger) x to the edge of the pane; for a vertical line anchor 1 is the left end. The ray is
+  computed from the host transforms, so it stays correct in future space right of the last bar. It never
+  shortens the line, and a line that misses the pane or has no length is not extended. The extension is
+  part of the `body`, so `hitTest` finds the line along it, with the same tolerance.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

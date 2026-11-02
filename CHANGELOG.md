@@ -121,6 +121,13 @@
   raises an `error` event (`DrawingToolsError`, with a `source`); `destroy()` is idempotent and turns
   every later call into a no-op. Options: `store`, `history`, `magnet`, `theme`, `stayInTool`, `tools`,
   `gestures`, `defaultYAxisId`, `createId` and `debug`.
+- Core (E05-F01): the trend line tool. Shift while placing now locks the second anchor of a trend line
+  (and of fans) to multiples of 45 degrees around the first, as it already did for a handle drag
+  (`lockAngle`, used by the controller; `ANGLE_KINDS` is exported from the move module); an
+  angle-locked anchor does not snap and the keyboard cursor is not locked. Scenario tests through the
+  controller cover placing by click-click and drag, resizing, moving, deleting, undo, the
+  `extendLeft`/`extendRight` rays (including future space), hit-testing along an extension and
+  toggling an extension as one history entry.
 
 ### Specification and backlog
 

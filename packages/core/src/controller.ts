@@ -12,7 +12,7 @@ import type { Gesture, GestureOptions } from './interaction/gesture';
 import { GestureRecogniser } from './interaction/gesture';
 import { reduceInteraction } from './interaction/machine';
 import { dragHandle, handleSnap, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeAnchors } from './interaction/move';
-import { PLACEMENT_START, placementPreview, placementSnap, reducePlacement, type PlacementInput, type PlacementProgress } from './interaction/placement';
+import { lockAngle, PLACEMENT_START, placementPreview, placementSnap, reducePlacement, type PlacementInput, type PlacementProgress } from './interaction/placement';
 import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
@@ -620,25 +620,25 @@ class DrawingToolsController implements DrawingTools {
     this.keyboardCursor = null;
     switch (gesture.type) {
       case 'move':
-        this.place(state.tool, { type: 'move', point: gesture.point }, gesture.point);
+        this.place(state.tool, { type: 'move', point: gesture.point }, gesture.point, this.modifiers.shift);
         return;
       case 'click':
         // The right button cancels (the machine); the left button places.
         if (gesture.button === 2) this.feed({ type: 'click', button: gesture.button, shiftKey: gesture.shiftKey, target: null });
-        else this.place(state.tool, { type: 'click', point: gesture.point, button: gesture.button }, gesture.point);
+        else this.place(state.tool, { type: 'click', point: gesture.point, button: gesture.button }, gesture.point, this.modifiers.shift);
         return;
       case 'drag-start':
-        this.place(state.tool, { type: 'drag-start', origin: gesture.origin, button: gesture.button }, gesture.origin);
-        this.place(state.tool, { type: 'drag', point: gesture.point }, gesture.point);
+        this.place(state.tool, { type: 'drag-start', origin: gesture.origin, button: gesture.button }, gesture.origin, this.modifiers.shift);
+        this.place(state.tool, { type: 'drag', point: gesture.point }, gesture.point, this.modifiers.shift);
         return;
       case 'drag':
-        this.place(state.tool, { type: 'drag', point: gesture.point }, gesture.point);
+        this.place(state.tool, { type: 'drag', point: gesture.point }, gesture.point, this.modifiers.shift);
         return;
       case 'drag-end':
-        this.place(state.tool, { type: 'drag-end', point: gesture.point }, gesture.point);
+        this.place(state.tool, { type: 'drag-end', point: gesture.point }, gesture.point, this.modifiers.shift);
         return;
       case 'cancel':
-        this.place(state.tool, { type: 'cancel' }, null);
+        this.place(state.tool, { type: 'cancel' }, null, this.modifiers.shift);
         return;
       default:
         // `leave`, and a double-click, which a placement has no use for: the snap point is out of date.
@@ -690,10 +690,14 @@ class DrawingToolsController implements DrawingTools {
 
   // ---- placing ----------------------------------------------------------------------------------------
 
-  /** One placement input with the effective magnet; `point` is where the snap indicator is looked for (null: none). */
-  private place(tool: DrawingKind, input: PlacementInput, point: Point | null): void {
-    const magnet = effectiveMagnet(this.magnet, this.modifiers.invert);
-    const result = reducePlacement(tool, this.progress, input, this.host, magnet);
+  /**
+   * One placement input with the effective magnet; `point` is where the snap indicator is looked for (null: none).
+   * With `shift` the second anchor of a trend line or fans keeps to 45 degree angles and does not snap (FR-INT-031).
+   */
+  private place(tool: DrawingKind, input: PlacementInput, point: Point | null, shift: boolean): void {
+    const aimed = lockAngle(tool, this.progress, input, shift, this.host);
+    const magnet = aimed === input ? effectiveMagnet(this.magnet, this.modifiers.invert) : 'off';
+    const result = reducePlacement(tool, this.progress, aimed, this.host, magnet);
     if (result.ignored) this.debug?.(`Ignored placement ${input.type}.`);
     this.progress = result.progress;
     this.snap = point === null ? null : placementSnap(result.progress, point, magnet, this.host);
@@ -719,14 +723,14 @@ class DrawingToolsController implements DrawingTools {
     const cursor = moveKeyboardCursor(from as Point, bars, pixels, yAxisId, this.host);
     if (cursor === null) return;
     this.keyboardCursor = cursor;
-    this.place((this.interaction as Placing).tool, { type: 'move', point: cursor }, cursor);
+    this.place((this.interaction as Placing).tool, { type: 'move', point: cursor }, cursor, false);
   }
 
   private keyboardPlace(): void {
     const cursor = this.keyboardCursor ?? keyboardCursorStart(this.keyboardAxis(), this.host);
     if (cursor === null) return;
     this.keyboardCursor = cursor;
-    this.place((this.interaction as Placing).tool, { type: 'click', point: cursor, button: 0 }, cursor);
+    this.place((this.interaction as Placing).tool, { type: 'click', point: cursor, button: 0 }, cursor, false);
   }
 
   // ---- dragging, nudging, duplicating, editing --------------------------------------------------------

@@ -48,8 +48,8 @@ const RECTANGLE_HANDLES: readonly (readonly Edit[])[] = [
   [{ index: 1, ...PRICE_ONLY }],
 ];
 
-/** The kinds whose anchor handles snap to 45 degree angles with Shift. */
-const ANGLE_KINDS: ReadonlySet<DrawingKind> = new Set<DrawingKind>(['trend-line', 'fibonacci-fans']);
+/** The kinds whose anchors, while placed and while dragged by a handle, snap to 45 degree angles with Shift (FR-INT-031). */
+export const ANGLE_KINDS: ReadonlySet<DrawingKind> = new Set<DrawingKind>(['trend-line', 'fibonacci-fans']);
 
 const DIAGONAL = Math.SQRT1_2;
 /** The unit vectors of the eight multiples of 45 degrees, from 0 (right) clockwise on the screen. */

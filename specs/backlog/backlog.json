@@ -1133,7 +1133,8 @@
                 "Shift locks the angle to 45° steps while placing or dragging an endpoint.",
                 "Golden geometry fixture and scenario test cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool in the tool registry.", "Fixtures and scenario tests.", "Docs page and example."]
+              "tasks": ["Register the tool in the tool registry.", "Fixtures and scenario tests.", "Docs page and example."],
+              "status": "done"
             },
             {
               "id": "E05-F01-S02",
@@ -1145,7 +1146,8 @@
                 "Hit-testing works along the extension.",
                 "Toggling an extension is one history entry."
               ],
-              "tasks": ["Wire options into geometry and hit-testing.", "Tests."]
+              "tasks": ["Wire options into geometry and hit-testing.", "Tests."],
+              "status": "done"
             }
           ]
         },
