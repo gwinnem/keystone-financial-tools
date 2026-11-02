@@ -1043,7 +1043,8 @@
               "userStory": "As a trader, I want to hold Ctrl to toggle the magnet for one move so that I can place a free anchor without changing settings.",
               "sds": ["FR-INT-042"],
               "acceptance": ["Holding Ctrl/Cmd turns `off` into `strong` and `weak`/`strong` into `off` while held.", "The stored magnet mode does not change."],
-              "tasks": ["Read modifiers per pointer event.", "Tests."]
+              "tasks": ["Read modifiers per pointer event.", "Tests."],
+              "status": "done"
             },
             {
               "id": "E04-F05-S03",
@@ -1074,7 +1075,8 @@
                 "Uses the provided store or creates one; `tools` option restricts the available kinds.",
                 "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57)."
               ],
-              "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."]
+              "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."],
+              "status": "done"
             },
             {
               "id": "E04-F06-S02",
@@ -1086,7 +1088,8 @@
                 "`on(event, listener)` for `change`, `selection`, `tool`, `interaction`, `blocked`, `error` returns an unsubscribe function.",
                 "Event payloads are typed per event name."
               ],
-              "tasks": ["Implement state store and typed emitter.", "Tests for reference stability."]
+              "tasks": ["Implement state store and typed emitter.", "Tests for reference stability."],
+              "status": "done"
             },
             {
               "id": "E04-F06-S03",
@@ -1098,7 +1101,8 @@
                 "`destroy()` is idempotent, unsubscribes everything, clears listeners and makes further calls no-ops that emit nothing.",
                 "`getScene()` after destroy returns an empty scene."
               ],
-              "tasks": ["Wrap host callbacks.", "Fault-injection tests."]
+              "tasks": ["Wrap host callbacks.", "Fault-injection tests."],
+              "status": "done"
             }
           ]
         }

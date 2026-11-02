@@ -59,6 +59,18 @@ export {
   nudgeAnchors,
   SHIFT_STEP_FACTOR,
 } from './interaction/move';
+export type {
+  DrawingTools,
+  DrawingToolsBlocked,
+  DrawingToolsError,
+  DrawingToolsErrorSource,
+  DrawingToolsEventName,
+  DrawingToolsEvents,
+  DrawingToolsOptions,
+  DrawingToolsRuntimeOptions,
+  DrawingToolsState,
+} from './controller';
+export { createDrawingTools } from './controller';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';

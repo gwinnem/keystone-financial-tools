@@ -641,19 +641,53 @@ pointer. The indicator is absent when the magnet is off, outside a pane or where
 ```ts
 const tools = createDrawingTools(host, {
   store?, history?: { limit?: number }, magnet?: MagnetMode, theme?: DrawingTheme,
-  stayInTool?: boolean, tools?: DrawingKind[], license?: LicenseContext,
+  stayInTool?: boolean, tools?: DrawingKind[], license?: LicenseContext, // license: E10, not yet
+  gestures?: GestureOptions, defaultYAxisId?: string, createId?: () => string, debug?: (message: string) => void,
 });
 tools.activate('trend-line'); tools.deactivate();
 tools.select(ids); tools.clearSelection(); tools.remove(ids);
 tools.undo(); tools.redo(); tools.setMagnet('weak'); tools.setTheme(theme);
 tools.getState(); // { activeTool, interaction, selection, hover, canUndo, canRedo, magnet }
-tools.on('change' | 'selection' | 'tool' | 'interaction' | 'blocked' | 'error', listener);
+tools.setOptions({ stayInTool?, tools? });
+tools.on('change' | 'selection' | 'tool' | 'interaction' | 'state' | 'blocked' | 'error', listener); // returns unsubscribe
 tools.getScene(); tools.hitTest(x, y); tools.destroy();
 ```
 
 - FR-INT-060: `destroy()` unsubscribes from the host, clears listeners and is idempotent.
 - FR-INT-061: State is exposed as an immutable snapshot that changes reference only when it
   changes (adapter-friendly, like the store).
+- FR-INT-062: Every entry point (pointer, key and viewport handlers, store and history callbacks,
+  actions, `getScene`, `hitTest`, listeners) catches exceptions (NFR-REL-001): the open drag is
+  reverted, an `error` event carries `{ source, message, error }` and the store is left as it was.
+  After `destroy()` every call is a no-op that emits nothing and `getScene()` returns an empty scene.
+
+`createDrawingTools` is `DrawingToolsController` in `controller.ts`. It owns the interaction state, the
+placement progress and snap, the keyboard cursor and the drag session, and wires the pure parts of
+9.1 to 9.5: host events go through `GestureRecogniser`, `reduceInteraction` returns effects and the
+controller performs them against the `DrawingStore` and the `History`.
+
+Decisions made while implementing (E04-F06): the construction order is `assertHost`, option checks
+(`RangeError` for a bad magnet or history limit, `KFT-E-KIND` for unknown kinds in `tools`), then the
+history, geometry cache, scene cache, gesture recogniser and the host subscriptions; if one step
+throws, everything already subscribed is released before the error propagates. `activate` of a kind
+outside `tools` throws `KFT-E-KIND`; `setOptions({ tools })` deactivates an active tool that is no
+longer allowed. `getState()` keeps its object while `interaction`, `canUndo`, `canRedo` and `magnet`
+are unchanged and keeps the `selection` array while the ids are the same; the `hover` is part of
+`interaction`. Besides the six events of the story there is a `state` event that fires for every new
+snapshot (a magnet, `canUndo` or `canRedo` change has no other event); `tool`, `selection` and
+`interaction` fire first, only for what changed. `blocked` carries `{ code: 'KFT-E-LOCKED', ids }`, once
+per drag or key press. `error` sources are `pointer`, `key`, `viewport`, `store`, `history`, `action`,
+`scene`, `text-editor` and `listener`; a listener that throws is reported as a `listener` error (a throwing
+`error` listener is ignored, so there is no loop) and the other listeners are still called. A
+failed drag is reverted (the history transaction cancelled, the anchors restored) and the state returns
+to `selected`. After every handled input the controller publishes the state and calls
+`host.requestRender()`. `activate` and `deactivate` set the `crosshair` or `default` cursor. Undo and
+redo are API actions (there is no Ctrl+Z binding; the host or adapter binds shortcuts, FR-FW-041).
+Keyboard placement needs a pane; it uses the pane of the first anchor, otherwise `defaultYAxisId`
+(default `price`). A text note is created with `text: ''`, the editor (`host.editText`) is opened when
+the host has one, and a cancelled or failed editor keeps the empty text; the answer of an editor that
+arrives after `destroy()` is dropped. `destroy()` reverts an open drag, resets the cursor and releases
+every subscription. The `license` option belongs to E10 and is not implemented here.
 
 ## 10. Framework packages
 

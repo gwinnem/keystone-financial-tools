@@ -40,6 +40,7 @@ geometry of every drawing kind.
 | `dragHandle`, `moveDrawings`, `nudgeAnchors`, `MovedDrawing`, `constrainMove`, `constrainAngle`, `SHIFT_STEP_FACTOR` | New anchors for a handle drag, a body move and an arrow-key nudge, and the Shift rules |
 | `keyboardCursorStart`, `moveKeyboardCursor`, `KEYBOARD_CURSOR_INSET_PX` | The keyboard cursor for placing without a pointer |
 | `snapAnchor`, `effectiveMagnet`, `placementSnap`, `handleSnap`, `MagnetMode`, `SnapResult`, `WEAK_MAGNET_PX` | Magnet snapping to the open, high, low or close of the nearest bar, the Ctrl/Cmd inversion and the point for the snap indicator |
+| `createDrawingTools`, `DrawingTools`, `DrawingToolsOptions`, `DrawingToolsRuntimeOptions`, `DrawingToolsState`, `DrawingToolsEvents`, `DrawingToolsEventName`, `DrawingToolsBlocked`, `DrawingToolsError`, `DrawingToolsErrorSource` | The controller: ties a host, a store, the history and the tools together (actions, state snapshot, typed events, scene, hit test, destroy) |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -508,6 +509,62 @@ host.onPointer((event) => {
   fans, arcs, retracements, rectangle corners, text note). Rectangle edge handles, horizontal lines, time
   zones and body moves do not snap, and a Shift angle-locked drag keeps its angle. `handleSnap` takes the same
   arguments as `dragHandle`.
+
+## Controller
+
+`createDrawingTools(host, options)` wires every piece above to a host. It subscribes to the host's pointer,
+key and viewport events, runs the gesture recogniser, the interaction machine, placement, move and snap
+functions, writes to a `DrawingStore` through a `History`, and answers the host's render pass with
+`getScene()`.
+
+```ts
+import { createDrawingTools } from 'keystone-financial-tools-core';
+
+const tools = createDrawingTools(host, { store, magnet: 'weak', stayInTool: false });
+const off = tools.on('state', (state) => updateToolbar(state)); // returns an unsubscribe function
+tools.on('blocked', ({ code, ids }) => toast(`Locked: ${ids.join(', ')}`)); // KFT-E-LOCKED
+tools.on('error', ({ source, message }) => report(source, message));
+
+tools.activate('trend-line'); // click-click or press-drag-release on the chart
+tools.undo();
+// in the host's overlay render pass (it is called after host.requestRender()):
+for (const item of tools.getScene()) draw(item);
+tools.destroy(); // when the chart goes away
+```
+
+| Option | Meaning | Default |
+|---|---|---|
+| `store` | The `DrawingStore` to draw into | a new one |
+| `history` | `{ limit?, now? }` for the `History` | 100 entries |
+| `magnet` | `off`, `weak` or `strong` | `off` |
+| `theme` | The `DrawingTheme` | `LIGHT_THEME` |
+| `stayInTool` | Keep the tool active after a placement | `false` |
+| `tools` | The kinds that can be activated | all kinds |
+| `gestures` | `GestureOptions` (thresholds, clock) | defaults |
+| `defaultYAxisId` | The pane keyboard placement starts in when no anchor is set | `price` |
+| `createId` | Id of a new drawing | `createId` |
+| `debug` | Receives a message for every input the state machine ignores | none |
+
+- **Actions**: `activate(kind)` (throws `KFT-E-KIND` for a kind that is not available), `deactivate()`,
+  `select(ids)`, `clearSelection()`, `remove(ids)` (one history entry), `undo()` and `redo()` (return whether
+  anything happened), `setMagnet(mode)`, `setTheme(theme)`, `setOptions({ stayInTool?, tools? })`,
+  `hitTest(x, y)`. Undo and redo are API actions; the application binds the shortcuts.
+- **`getState()`**: `{ activeTool, interaction, selection, hover, canUndo, canRedo, magnet }`. The same object
+  comes back until a value changes, and `selection` keeps its array while the ids are the same, so adapters
+  can compare by reference.
+- **Events** (`on(event, listener)`, payload typed per name): `change` (`StoreChange`), `selection` (ids),
+  `tool` (kind or null), `interaction` (the interaction state), `state` (every new snapshot, including magnet,
+  `canUndo` and `canRedo` changes), `blocked` (`{ code: 'KFT-E-LOCKED', ids }`, once per drag or key press)
+  and `error` (`{ source, message, error }`).
+- **Errors never reach the host** (NFR-REL-001): an exception in a handler, an action, a listener, the text
+  editor or the history is caught and raised as an `error` event; an open drag is reverted and the store is
+  left as it was. A listener that throws does not stop the other listeners.
+- **Magnet**: Ctrl/Cmd inverts the mode for the event it comes with; the stored mode never changes.
+- **Text notes**: a new note is created with empty text and `host.editText` (when the host has it) is asked
+  for the text; a cancelled or failed editor keeps the empty text.
+- **`destroy()`**: reverts a drag in progress, resets the cursor, unsubscribes from the host and the store and
+  clears the listeners. It is idempotent; afterwards every call does nothing and emits nothing, `getScene()`
+  returns an empty scene and `hitTest` returns null.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

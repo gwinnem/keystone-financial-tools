@@ -110,6 +110,17 @@
   `effectiveMagnet(mode, invert)` is the Ctrl/Cmd inversion; `placementSnap` and `handleSnap` return the
   point for the scene's `snap` indicator. Rectangle edge handles, horizontal lines, time zones, body
   moves and Shift angle drags do not snap.
+- Core (E04-F06): `createDrawingTools(host, options)` is the controller of SDS 9.7. It connects the host
+  to the gesture recogniser, the interaction machine, placement, move and snap functions, the store,
+  the history and the scene cache, and returns `activate`, `deactivate`, `select`, `clearSelection`,
+  `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions`, `getState`, `on`, `getScene`,
+  `hitTest` and `destroy`. `getState()` returns `{ activeTool, interaction, selection, hover, canUndo,
+  canRedo, magnet }` and keeps the same object until a value changes. `on` takes `change`,
+  `selection`, `tool`, `interaction`, `state`, `blocked` and `error` with a payload type per name and
+  returns an unsubscribe function. Every entry point catches exceptions, reverts an open drag and
+  raises an `error` event (`DrawingToolsError`, with a `source`); `destroy()` is idempotent and turns
+  every later call into a no-op. Options: `store`, `history`, `magnet`, `theme`, `stayInTool`, `tools`,
+  `gestures`, `defaultYAxisId`, `createId` and `debug`.
 
 ### Specification and backlog
 
