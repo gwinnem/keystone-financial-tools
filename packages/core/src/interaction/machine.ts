@@ -4,6 +4,7 @@ import type { InteractionContext, InteractionEffect, InteractionInput, Interacti
 const NO_EFFECTS: readonly InteractionEffect[] = Object.freeze([]);
 const CANCEL_PLACEMENT: InteractionEffect = Object.freeze({ type: 'cancel-placement' });
 const DRAG_REVERT: InteractionEffect = Object.freeze({ type: 'drag-revert' });
+const SELECT_ALL: InteractionEffect = Object.freeze({ type: 'select-all' });
 const HANDLE_PREFIX = 'handle:';
 
 type Selected = Extract<InteractionState, { type: 'selected' }>;
@@ -22,6 +23,17 @@ function selection(ids: readonly string[], hover: string | null): InteractionSta
 }
 
 const exists = (ctx: InteractionContext, id: string): boolean => ctx.lookup(id) !== undefined;
+
+/** Ctrl or Cmd with this letter (any case). */
+const isShortcut = (input: Extract<InteractionInput, { type: 'key' }>, letter: string): boolean => input.ctrl === true && input.key.toLowerCase() === letter;
+
+/** Select exactly these drawings, those that exist, in the given order; the same state when that is the selection already. */
+function select(state: Idle | Selected, ids: readonly string[], ctx: InteractionContext): InteractionResult {
+  const wanted = [...new Set(ids)].filter((id) => exists(ctx, id));
+  const current = state.type === 'selected' ? state.ids : [];
+  const unchanged = wanted.length === current.length && wanted.every((id, index) => id === current[index]);
+  return go(unchanged ? state : selection(wanted, state.hover));
+}
 
 /** The state after a drag ends: the selection that existed, without drawings that are gone. */
 function afterDrag(ids: readonly string[], ctx: InteractionContext): InteractionState {
@@ -57,6 +69,10 @@ function reduceIdle(state: Idle, input: InteractionInput, ctx: InteractionContex
       return input.button === 0 && input.target !== null ? go({ type: 'selected', ids: [input.target.id], hover: state.hover }) : ignore(state);
     case 'sync':
       return go(state.hover !== null && !exists(ctx, state.hover) ? { type: 'idle', hover: null } : state);
+    case 'select':
+      return select(state, input.ids, ctx);
+    case 'key':
+      return isShortcut(input, 'a') ? go(state, [SELECT_ALL]) : ignore(state);
     default:
       return ignore(state);
   }
@@ -115,15 +131,25 @@ function reduceSelected(state: Selected, input: InteractionInput, ctx: Interacti
       return startDrag(state, input, ctx);
     case 'sync':
       return syncSelected(state, ctx);
+    case 'select':
+      return select(state, input.ids, ctx);
     case 'key':
-      return reduceSelectedKey(state, input.key, ctx);
+      return reduceSelectedKey(state, input, ctx);
     default:
       return ignore(state);
   }
 }
 
-function reduceSelectedKey(state: Selected, key: string, ctx: InteractionContext): InteractionResult {
-  switch (key) {
+/** Ctrl/Cmd+D: copy the selected drawings that still exist. */
+function duplicateSelected(state: Selected, ctx: InteractionContext): InteractionResult {
+  const ids = state.ids.filter((id) => exists(ctx, id));
+  return ids.length === 0 ? ignore(state) : go(state, [{ type: 'duplicate', ids }]);
+}
+
+function reduceSelectedKey(state: Selected, input: Extract<InteractionInput, { type: 'key' }>, ctx: InteractionContext): InteractionResult {
+  if (isShortcut(input, 'a')) return go(state, [SELECT_ALL]);
+  if (isShortcut(input, 'd')) return duplicateSelected(state, ctx);
+  switch (input.key) {
     case 'Escape':
       return go({ type: 'idle', hover: state.hover });
     case 'Delete':
@@ -207,6 +233,9 @@ function reduceEditing(state: EditingText, input: InteractionInput, ctx: Interac
  * | placing | `deactivate`, Escape, right click | idle (`cancel-placement`) |
  * | placing | `placement-complete` | placing when `stay`, else selected; with `edit`: editing-text (`edit-text`), which returns to placing when `stay` |
  * | idle | left click on a drawing | selected |
+ * | idle, selected | `select` | selected with those that exist (idle when none); the same state when unchanged |
+ * | idle, selected | Ctrl/Cmd+A | same state (`select-all`: answer with a `select` of the visible drawings) |
+ * | selected | Ctrl/Cmd+D | same state (`duplicate`: add the copies, answer with a `select` of them) |
  * | selected | click on a drawing; shift-click | selected (only it; toggled); a click on empty space is idle |
  * | selected | Escape | idle |
  * | selected | Delete, Backspace | idle, or selected with the locked drawings (`remove`, `blocked`) |

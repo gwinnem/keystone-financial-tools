@@ -881,10 +881,10 @@
               "sds": ["FR-INT-013"],
               "acceptance": [
                 "With `stayInTool: true` the tool stays active after placement and the new drawing is not selected.",
-                "With `stayInTool: false` (default) the tool deactivates and the new drawing is selected."
+                "With `stayInTool: false` (default) the tool deactivates and the new drawing is selected.",
+                "`stayInTool` can be changed at runtime via `setOptions`."
               ],
-              "tasks": ["Implement option and runtime change.", "Tests."],
-              "status": "done"
+              "tasks": ["Implement option and runtime change.", "Tests."]
             }
           ]
         },
@@ -905,7 +905,8 @@
                 "With a tool active the cursor is `crosshair`; over a locked drawing's handle it is `not-allowed`.",
                 "`setCursor` is called only when the cursor changes."
               ],
-              "tasks": ["Implement hover tracking and cursor mapping.", "Tests asserting recorded cursors."]
+              "tasks": ["Implement hover tracking and cursor mapping.", "Tests asserting recorded cursors."],
+              "status": "done"
             },
             {
               "id": "E04-F03-S02",
@@ -941,7 +942,8 @@
                 "Ctrl/Cmd+D duplicates the selection shifted by one bar and 10 px in price; the copies get new ids and become the selection; one history entry.",
                 "Duplicating locked drawings creates unlocked copies."
               ],
-              "tasks": ["Implement both actions.", "Tests."]
+              "tasks": ["Implement both actions.", "Tests."],
+              "status": "done"
             }
           ]
         },
@@ -1067,8 +1069,7 @@
                 "`createDrawingTools(host, options)` validates the host and options and returns the controller.",
                 "Actions: `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions`, `getScene`, `hitTest`.",
                 "Uses the provided store or creates one; `tools` option restricts the available kinds.",
-                "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57).",
-                "`stayInTool` can be changed at runtime via `setOptions`; the new value applies from the next placement (moved here from E04-F02-S04, #63)."
+                "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57)."
               ],
               "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."]
             },

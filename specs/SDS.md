@@ -474,7 +474,7 @@ and hover; there is no polyline shape (geometry has none); the scene theme must 
   and lock flag), never throws, and an input that means nothing in the current state returns the same
   state with `ignored: true` (the controller logs it at debug level). The caller performs the effects
   (`remove`, `blocked`, `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`,
-  `apply-text`, `cancel-placement`). Pointer cancel and leave during a drag revert like Escape.
+  `apply-text`, `cancel-placement`, `select-all`, `duplicate`). Pointer cancel and leave during a drag revert like Escape.
 - FR-INT-002: A pointer down and up within 3 px and 300 ms is a click; beyond 3 px it is a drag. The
   `GestureRecogniser` turns host pointer events into `move`, `click`, `double-click`, `drag-start`,
   `drag`, `drag-end`, `cancel` and `leave` gestures. A press held longer than 300 ms without moving is
@@ -534,6 +534,27 @@ otherwise it is selected.
 - FR-INT-023: Escape clears the selection (or cancels the current placement/drag first).
 - FR-INT-024: Ctrl/Cmd+A selects all visible drawings; Ctrl/Cmd+D duplicates the selection offset
   by one bar and 10 px.
+
+`cursorFor(tool, hit, drawing, host)` is the pure cursor mapping and `CursorSync` passes cursors to
+`host.setCursor` only when they change. `reduceInteraction` takes a `select` input (the API, or the
+answer to an effect) and Ctrl/Cmd+A and Ctrl/Cmd+D as `key` inputs with `ctrl`; it answers them with
+the effects `select-all` and `duplicate`, which the controller performs. `duplicateDrawing(drawing,
+id, host)` builds one copy.
+
+Decisions made while implementing (E04-F03): the cursor is `crosshair` while a tool is active (over
+anything), `default` over nothing, `pointer` over a body, level or label (locked or not),
+`not-allowed` over a handle of a locked drawing, a resize cursor over a rectangle handle and `move`
+over any other handle; a rectangle corner shows the diagonal it sits on as it is on the screen (so it
+stays right when the anchors are dragged past each other) and an edge handle its axis. `select` keeps
+the ids that exist, once each, in the given order, keeps the hover, goes idle for none and returns
+the same state object when the selection does not change, so the controller raises `selection` when
+the state reference changes. Ctrl/Cmd+A works in `idle` and `selected` and is answered with a `select`
+of every visible drawing; Ctrl/Cmd+D works in `selected` on the drawings that still exist (locked
+ones too) and is answered with a `select` of the copies; the key counts as handled when the input
+was not ignored (a Delete, Ctrl+A or Ctrl+D with nothing to act on is not). A copy keeps everything
+of its original, is never locked, and moves one bar later and `DUPLICATE_OFFSET_PX` (10) down in
+pixels on its own y-axis; a drawing whose pane is gone gets no copy. The controller adds the copies
+in one `batch`, which is one history entry.
 
 ### 9.4 Move and resize
 

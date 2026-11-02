@@ -35,6 +35,8 @@ geometry of every drawing kind.
 | `GestureRecogniser`, `Gesture`, `GestureBase`, `GestureOptions` | Pointer events to `move`, `click`, `double-click`, `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (3 px, 300 ms, 400 ms and 6 px by default, injectable clock) |
 | `reduceInteraction`, `IDLE_STATE`, `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext`, `InteractionResult` | The pure interaction state machine (idle, placing, selected, dragging-handle, moving, editing-text) |
 | `reducePlacement`, `placementPreview`, `PLACEMENT_START`, `ZERO_LENGTH_PX`, `PlacementProgress`, `PlacementInput`, `PlacementResult` | Pure placement of new drawings: one-anchor click, two-anchor click-click and drag, preview, pane rules |
+| `cursorFor`, `CursorSync` | The cursor for what is under the pointer, and a setter that calls `host.setCursor` only on a change |
+| `duplicateDrawing`, `DUPLICATE_OFFSET_PX` | The copy Ctrl/Cmd+D adds: one bar later, 10 px down, unlocked |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -315,7 +317,8 @@ host.onPointer((event) => {
   Delete and Backspace remove the unlocked selected drawings; a double-click or Enter on an unlocked text
   note starts `editing-text`.
 - **Effects** (what the caller does): `remove`, `blocked` (locked drawings were asked to change),
-  `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`, `apply-text`, `cancel-placement`.
+  `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`, `apply-text`, `cancel-placement`,
+  `select-all`, `duplicate` (see [Selection, cursors and duplicate](#selection-cursors-and-duplicate)).
 - `reduceInteraction` never throws. An input that means nothing in a state returns the same state object
   with `ignored: true` and no effects. Send `{ type: 'sync' }` after every store change so selected, hovered
   and edited drawings that were removed are dropped.
@@ -360,6 +363,47 @@ const preview = placementPreview(tool, progress, 'preview'); // the scene's `pre
 - **Stay in tool**: `stay` on `placement-complete` keeps the machine in `placing` without selecting the
   new drawing; without it the drawing is selected. A text note (`edit: true`) opens the editor first
   (`edit-text` effect) and, with `stay`, returns to its tool after `edit-result`.
+
+## Selection, cursors and duplicate
+
+```ts
+import { cursorFor, CursorSync, duplicateDrawing, reduceInteraction } from 'keystone-financial-tools-core';
+
+const cursors = new CursorSync(host);
+// on a `move` gesture, with `hit` from hitTest:
+cursors.set(cursorFor(state.type === 'placing' ? state.tool : null, hit, hit && store.get(hit.id), host));
+
+host.onKey((event) => !apply({ type: 'key', key: event.key, ctrl: event.ctrlKey || event.metaKey }).ignored);
+
+function perform(effect) {
+  if (effect.type === 'select-all') apply({ type: 'select', ids: store.list().filter((d) => !d.hidden).map((d) => d.id) });
+  if (effect.type === 'duplicate') {
+    const copies = effect.ids.flatMap((id) => duplicateDrawing(store.get(id), createId(), host) ?? []);
+    store.batch(() => copies.forEach((copy) => store.add(copy))); // one history entry
+    apply({ type: 'select', ids: copies.map((copy) => copy.id) });
+  }
+}
+```
+
+- **Cursor** (`cursorFor(tool, hit, drawing, host)`): `crosshair` while a tool is active; `default` over
+  nothing; `pointer` over a body, level or label (locked or not); `not-allowed` over a handle of a locked
+  drawing; over a rectangle handle the resize cursor of its corner (`nwse-resize` or `nesw-resize`, by the
+  diagonal it sits on in pixels) or edge (`ew-resize`, `ns-resize`); `move` over any other handle.
+  `CursorSync.set(cursor)` calls `host.setCursor` only when the cursor changes and returns whether it did;
+  `reset()` makes the next `set` call the host again.
+- **`select` input**: selects exactly these drawings, in this order. Ids that do not exist and repeated ids
+  are dropped; none left means `idle`; the hover is kept. When nothing changes the machine returns the same
+  state object, so a `selection` event can be raised when the state reference changes.
+- **Ctrl/Cmd+A** (`key` with `ctrl: true`, any letter case) in `idle` or `selected`: effect `select-all`; the
+  caller answers with a `select` of every visible drawing. **Ctrl/Cmd+D** in `selected`: effect `duplicate`
+  with the selected drawings that still exist (locked ones too); the caller adds the copies and answers with
+  a `select` of them. Both are ignored in the other states, without `ctrl`, and Ctrl+D with no drawing to
+  copy.
+- **Keys handled**: return `!result.ignored` from the key listener, so the host only prevents the default
+  action when the key did something (Delete with nothing selected does not).
+- **`duplicateDrawing(drawing, id, host)`**: the same drawing under a new id, each anchor one `barInterval()`
+  later and `DUPLICATE_OFFSET_PX` (10) px down on its own y-axis, never locked. Null when an anchor's y-axis
+  has no pane.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

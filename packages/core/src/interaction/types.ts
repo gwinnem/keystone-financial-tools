@@ -32,6 +32,8 @@ export const IDLE_STATE: InteractionState = Object.freeze({ type: 'idle', hover:
 /**
  * What drives the machine. Pointer input arrives as gestures (`GestureRecogniser`) that the caller
  * has resolved with `hitTest`: `target` is what was under the click, or under the press for a drag.
+ * - `select`: select exactly these drawings (the API, or the answer to a `select-all` or `duplicate` effect); ids that do not exist are dropped.
+ * - `key`: `ctrl` is true when Ctrl or Cmd is held.
  * - `placement-complete`: the drawing `id` was created; `stay` is the `stayInTool` option and `edit` asks for the text editor (a text note, FR-INT-050).
  * - `sync`: the store changed; drop what no longer exists.
  */
@@ -45,7 +47,8 @@ export type InteractionInput =
   | { readonly type: 'drag'; readonly point: Point }
   | { readonly type: 'drag-end'; readonly point: Point }
   | { readonly type: 'cancel' }
-  | { readonly type: 'key'; readonly key: string }
+  | { readonly type: 'select'; readonly ids: readonly string[] }
+  | { readonly type: 'key'; readonly key: string; readonly ctrl?: boolean }
   | { readonly type: 'placement-complete'; readonly id: string; readonly stay: boolean; readonly edit?: boolean }
   | { readonly type: 'edit-result'; readonly text: string | null }
   | { readonly type: 'sync' };
@@ -57,6 +60,8 @@ export type InteractionInput =
  * - `drag-start` / `drag-update` / `drag-commit` / `drag-revert`: a handle or move drag begins, follows the pointer, ends or is undone.
  * - `edit-text`: open the text editor for the note; `apply-text`: store its new text.
  * - `cancel-placement`: drop the drawing being placed.
+ * - `select-all`: answer with a `select` of every visible drawing (Ctrl/Cmd+A).
+ * - `duplicate`: copy these drawings (`duplicateDrawing`), add the copies in one change and answer with a `select` of them (Ctrl/Cmd+D).
  */
 export type InteractionEffect =
   | { readonly type: 'remove'; readonly ids: readonly string[] }
@@ -68,7 +73,9 @@ export type InteractionEffect =
   | { readonly type: 'drag-revert' }
   | { readonly type: 'edit-text'; readonly drawingId: string }
   | { readonly type: 'apply-text'; readonly drawingId: string; readonly text: string }
-  | { readonly type: 'cancel-placement' };
+  | { readonly type: 'cancel-placement' }
+  | { readonly type: 'select-all' }
+  | { readonly type: 'duplicate'; readonly ids: readonly string[] };
 
 /** What the machine needs to know about the drawings; supplied by the caller from the store. */
 export interface InteractionContext {

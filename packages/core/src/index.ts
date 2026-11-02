@@ -42,6 +42,8 @@ export { IDLE_STATE } from './interaction/types';
 export { reduceInteraction } from './interaction/machine';
 export type { PlacementInput, PlacementProgress, PlacementResult } from './interaction/placement';
 export { PLACEMENT_START, placementPreview, reducePlacement, ZERO_LENGTH_PX } from './interaction/placement';
+export { cursorFor, CursorSync } from './interaction/cursor';
+export { DUPLICATE_OFFSET_PX, duplicateDrawing } from './interaction/duplicate';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';

@@ -87,6 +87,13 @@
   scene's `preview` option, `PLACEMENT_START` the start progress. `placement-complete` takes `edit` to
   open the text editor for a note; a note placed with `stayInTool` returns to its tool afterwards
   (`editing-text` has an optional `resume`).
+- Core (E04-F03): `cursorFor(tool, hit, drawing, host)` is the pure cursor mapping (`crosshair` with a
+  tool, `pointer` over bodies, resize cursors over rectangle handles, `move` over other handles,
+  `not-allowed` over a locked handle) and `CursorSync` calls `host.setCursor` only on a change. The
+  interaction machine takes a `select` input (ids that exist, deduplicated, the same state when
+  unchanged) and Ctrl/Cmd+A and Ctrl/Cmd+D as `key` inputs with `ctrl`, answered with the effects
+  `select-all` and `duplicate`. `duplicateDrawing` builds the copy: one bar later, `DUPLICATE_OFFSET_PX`
+  (10) px down, unlocked.
 
 ### Specification and backlog
 
