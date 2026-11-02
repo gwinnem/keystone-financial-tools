@@ -500,6 +500,29 @@ whose drawings are gone; Escape is ignored while a text editor is open (the edit
 - FR-INT-013: `stayInTool` (default false) keeps the tool active after placement for repeated use.
 - FR-INT-014: Placement creates the drawing through one command (one history entry).
 
+`reducePlacement(tool, progress, input, host)` is the pure part that decides where anchors go; it
+runs while `reduceInteraction` is in `placing` and never touches the store. `PlacementProgress` is
+`waiting` or `anchored` (the first anchor, the anchor under the pointer as the preview, and whether
+the pointer is held). It returns the next progress and, when the drawing is complete, its anchors;
+the controller creates the drawing in one store change (`placement-complete` to the machine) and
+`placementPreview` feeds the scene's `preview` option. Escape, the right button, `deactivate` and a
+new `activate` belong to the machine: on its `cancel-placement` effect the controller resets the
+progress to `PLACEMENT_START`.
+
+Decisions made while implementing (E04-F02): both modes share one path (a release or a second click
+with the first anchor set completes, so a press-and-drag at anchor 2 of a click-click placement also
+completes it); a press with the first anchor set but no drag starts the drag mode; the zero-length
+test compares the two anchors in pixels, within 1 px in both x and y (`ZERO_LENGTH_PX`): a drag that
+ends there starts over, a second click there is ignored and waits for another; a pane that
+disappears during placement makes the pointer input ignored until Escape; only left-button input
+places; a press with a one-anchor tool does nothing; the preview exists only for two-anchor tools
+(a one-anchor tool places on the click, and a text note has no text yet to draw); the first anchor
+needs a pane under the pointer, the second does not. A `drag-start` gesture carries the press origin
+and the current pointer: the controller passes a `drag-start` with the origin and then a `drag` with
+the point. `placement-complete` has `edit` (a text note opens the editor, FR-INT-050); a note
+placed with `stayInTool` returns to its tool when the editor closes (`editing-text.resume`),
+otherwise it is selected.
+
 ### 9.3 Selection and hover
 
 - FR-INT-020: Hover sets the cursor (`pointer` on bodies, resize cursors on handles) and the

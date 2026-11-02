@@ -145,10 +145,17 @@ function reducePlacing(state: Placing, input: InteractionInput): InteractionResu
     case 'click':
       return input.button === 2 ? go({ type: 'idle', hover: null }, [CANCEL_PLACEMENT]) : ignore(state);
     case 'placement-complete':
-      return input.stay ? go(state) : go({ type: 'selected', ids: [input.id], hover: null });
+      return completePlacement(state, input);
     default:
       return ignore(state);
   }
+}
+
+/** The drawing exists: select it, or stay in the tool; a note opens its editor first and returns to the tool afterwards when staying. */
+function completePlacement(state: Placing, input: Extract<InteractionInput, { type: 'placement-complete' }>): InteractionResult {
+  if (input.edit !== true) return input.stay ? go(state) : go({ type: 'selected', ids: [input.id], hover: null });
+  const editing: EditingText = input.stay ? { type: 'editing-text', drawingId: input.id, resume: state.tool } : { type: 'editing-text', drawingId: input.id };
+  return go(editing, [{ type: 'edit-text', drawingId: input.id }]);
 }
 
 /** Shared by `dragging-handle` and `moving`: follow, commit, revert, or notice the drawings are gone. */
@@ -169,12 +176,20 @@ function reduceDrag(state: DraggingHandle | Moving, affected: readonly string[],
   }
 }
 
+/** Where editing ends: back in the tool the note was placed with, else `otherwise`. */
+function afterEditing(state: EditingText, otherwise: InteractionState): InteractionState {
+  return state.resume === undefined ? otherwise : { type: 'placing', tool: state.resume };
+}
+
 function reduceEditing(state: EditingText, input: InteractionInput, ctx: InteractionContext): InteractionResult {
   switch (input.type) {
     case 'edit-result':
-      return go({ type: 'selected', ids: [state.drawingId], hover: null }, input.text === null ? NO_EFFECTS : [{ type: 'apply-text', drawingId: state.drawingId, text: input.text }]);
+      return go(
+        afterEditing(state, { type: 'selected', ids: [state.drawingId], hover: null }),
+        input.text === null ? NO_EFFECTS : [{ type: 'apply-text', drawingId: state.drawingId, text: input.text }]
+      );
     case 'sync':
-      return go(exists(ctx, state.drawingId) ? state : { type: 'idle', hover: null });
+      return go(exists(ctx, state.drawingId) ? state : afterEditing(state, { type: 'idle', hover: null }));
     default:
       return ignore(state);
   }
@@ -190,7 +205,7 @@ function reduceEditing(state: EditingText, input: InteractionInput, ctx: Interac
  * | idle, selected | `activate` | placing |
  * | placing | `activate` | placing (`cancel-placement`) |
  * | placing | `deactivate`, Escape, right click | idle (`cancel-placement`) |
- * | placing | `placement-complete` | placing when `stay`, else selected |
+ * | placing | `placement-complete` | placing when `stay`, else selected; with `edit`: editing-text (`edit-text`), which returns to placing when `stay` |
  * | idle | left click on a drawing | selected |
  * | selected | click on a drawing; shift-click | selected (only it; toggled); a click on empty space is idle |
  * | selected | Escape | idle |
@@ -202,7 +217,7 @@ function reduceEditing(state: EditingText, input: InteractionInput, ctx: Interac
  * | dragging-handle, moving | `drag` | same (`drag-update`) |
  * | dragging-handle, moving | `drag-end` | selected (`drag-commit`) |
  * | dragging-handle, moving | `cancel` (pointer cancel or leave), Escape | selected (`drag-revert`) |
- * | editing-text | `edit-result` | selected (`apply-text` unless cancelled with null) |
+ * | editing-text | `edit-result` | selected, or placing when the note was placed with `stay` (`apply-text` unless cancelled with null) |
  *
  * `sync` after a store change drops selected, hovered and edited drawings that no longer exist (and
  * reverts a drag whose drawings are gone). `hover` only changes idle and selected.

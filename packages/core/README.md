@@ -34,6 +34,7 @@ geometry of every drawing kind.
 | `buildScene`, `SceneCache`, `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`, `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions`, `SNAP_INDICATOR_RADIUS` | The scene a host draws: items in paint order with state, resolved style, preview, snap indicator and handles |
 | `GestureRecogniser`, `Gesture`, `GestureBase`, `GestureOptions` | Pointer events to `move`, `click`, `double-click`, `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (3 px, 300 ms, 400 ms and 6 px by default, injectable clock) |
 | `reduceInteraction`, `IDLE_STATE`, `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext`, `InteractionResult` | The pure interaction state machine (idle, placing, selected, dragging-handle, moving, editing-text) |
+| `reducePlacement`, `placementPreview`, `PLACEMENT_START`, `ZERO_LENGTH_PX`, `PlacementProgress`, `PlacementInput`, `PlacementResult` | Pure placement of new drawings: one-anchor click, two-anchor click-click and drag, preview, pane rules |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -318,6 +319,47 @@ host.onPointer((event) => {
 - `reduceInteraction` never throws. An input that means nothing in a state returns the same state object
   with `ignored: true` and no effects. Send `{ type: 'sync' }` after every store change so selected, hovered
   and edited drawings that were removed are dropped.
+
+## Placement
+
+`reducePlacement(tool, progress, input, host)` decides where the anchors of a new drawing go while the
+machine is in `placing`. Like `reduceInteraction` it is pure: it reads the host and returns the next
+`PlacementProgress` and, when the drawing is complete, its `anchors`. The caller creates the drawing,
+then sends `{ type: 'placement-complete', id, stay, edit }` to the machine.
+
+```ts
+import { PLACEMENT_START, placementPreview, reducePlacement } from 'keystone-financial-tools-core';
+
+let progress = PLACEMENT_START;
+// for each gesture while the machine is in `placing` and did not cancel:
+const result = reducePlacement(tool, progress, { type: 'click', point: gesture.point, button: gesture.button }, host);
+progress = result.progress;
+if (result.anchors !== null) {
+  const id = createId();
+  store.add({ id, kind: tool, anchors: result.anchors }); // one change, one history entry
+  state = reduceInteraction(state, { type: 'placement-complete', id, stay: stayInTool, edit: tool === 'text-note' }, ctx).state;
+}
+const preview = placementPreview(tool, progress, 'preview'); // the scene's `preview` option
+// when the machine reports `cancel-placement`: progress = PLACEMENT_START
+```
+
+- **Inputs**: `move`, `click` and `drag-start` (with `button`), `drag`, `drag-end` and `cancel`, taken from
+  the gestures. A `drag-start` gesture has the press origin and the current point: pass a `drag-start`
+  with the origin, then a `drag` with the point. Only the left button (0) places.
+- **One anchor** (`horizontal-line`, `text-note`): a click inside a pane gives one anchor. A click outside
+  every pane does nothing and the tool stays active.
+- **Two anchors**: click, move, click, or press, drag, release. The first anchor needs a pane under the
+  pointer. The second is projected onto the first anchor's y-axis wherever the pointer is, over another
+  pane or outside every pane. Until then `progress` is `anchored` and `placementPreview` returns the
+  drawing to show.
+- **Zero length**: a second anchor within `ZERO_LENGTH_PX` (1 px) of the first in both x and y creates
+  nothing. A release there starts over; a second click there is ignored.
+- **Cancel**: Escape, the right button, `deactivate` and a new `activate` are handled by
+  `reduceInteraction` (effect `cancel-placement`); reset the progress then. A pointer `cancel` during a
+  drag gives the `cancel` input and starts over with the tool still active.
+- **Stay in tool**: `stay` on `placement-complete` keeps the machine in `placing` without selecting the
+  new drawing; without it the drawing is selected. A text note (`edit: true`) opens the editor first
+  (`edit-text` effect) and, with `stay`, returns to its tool after `edit-result`.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

@@ -9,7 +9,7 @@ import type { DrawingKind } from '../types';
  * - `selected`: one or more drawings are selected (`ids`, in selection order).
  * - `dragging-handle`: a handle of `drawingId` is being dragged; `selection` is restored afterwards.
  * - `moving`: the unlocked selected drawings `ids` are being moved; `selection` is restored afterwards.
- * - `editing-text`: the text of the note `drawingId` is being edited.
+ * - `editing-text`: the text of the note `drawingId` is being edited; `resume` is the tool to return to afterwards when the note was placed with `stayInTool` (otherwise the note is selected).
  */
 export type InteractionState =
   | { readonly type: 'idle'; readonly hover: string | null }
@@ -17,7 +17,7 @@ export type InteractionState =
   | { readonly type: 'selected'; readonly ids: readonly string[]; readonly hover: string | null }
   | { readonly type: 'dragging-handle'; readonly drawingId: string; readonly handle: number; readonly selection: readonly string[] }
   | { readonly type: 'moving'; readonly ids: readonly string[]; readonly selection: readonly string[] }
-  | { readonly type: 'editing-text'; readonly drawingId: string };
+  | { readonly type: 'editing-text'; readonly drawingId: string; readonly resume?: DrawingKind };
 
 /**
  * The start state.
@@ -32,6 +32,7 @@ export const IDLE_STATE: InteractionState = Object.freeze({ type: 'idle', hover:
 /**
  * What drives the machine. Pointer input arrives as gestures (`GestureRecogniser`) that the caller
  * has resolved with `hitTest`: `target` is what was under the click, or under the press for a drag.
+ * - `placement-complete`: the drawing `id` was created; `stay` is the `stayInTool` option and `edit` asks for the text editor (a text note, FR-INT-050).
  * - `sync`: the store changed; drop what no longer exists.
  */
 export type InteractionInput =
@@ -45,7 +46,7 @@ export type InteractionInput =
   | { readonly type: 'drag-end'; readonly point: Point }
   | { readonly type: 'cancel' }
   | { readonly type: 'key'; readonly key: string }
-  | { readonly type: 'placement-complete'; readonly id: string; readonly stay: boolean }
+  | { readonly type: 'placement-complete'; readonly id: string; readonly stay: boolean; readonly edit?: boolean }
   | { readonly type: 'edit-result'; readonly text: string | null }
   | { readonly type: 'sync' };
 

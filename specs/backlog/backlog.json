@@ -844,7 +844,8 @@
                 "The creation is one history entry and one store change.",
                 "A text note opens the text editor right after placement (FR-INT-050)."
               ],
-              "tasks": ["Implement placement for one-anchor kinds.", "Scenario tests."]
+              "tasks": ["Implement placement for one-anchor kinds.", "Scenario tests."],
+              "status": "done"
             },
             {
               "id": "E04-F02-S02",
@@ -857,7 +858,8 @@
                 "Anchor 2 is projected onto anchor 1's y-axis even when the pointer is over another pane (FR-INT-012).",
                 "Zero-length drawings (anchor 2 equal to anchor 1 within 1 px) are not created."
               ],
-              "tasks": ["Implement two-anchor placement modes.", "Scenario tests for both modes and pane crossing."]
+              "tasks": ["Implement two-anchor placement modes.", "Scenario tests for both modes and pane crossing."],
+              "status": "done"
             },
             {
               "id": "E04-F02-S03",
@@ -869,7 +871,8 @@
                 "A click outside every pane does nothing and keeps the tool active.",
                 "Deactivating the tool via the API cancels the placement the same way."
               ],
-              "tasks": ["Implement cancel paths.", "Scenario tests."]
+              "tasks": ["Implement cancel paths.", "Scenario tests."],
+              "status": "done"
             },
             {
               "id": "E04-F02-S04",
@@ -878,10 +881,10 @@
               "sds": ["FR-INT-013"],
               "acceptance": [
                 "With `stayInTool: true` the tool stays active after placement and the new drawing is not selected.",
-                "With `stayInTool: false` (default) the tool deactivates and the new drawing is selected.",
-                "`stayInTool` can be changed at runtime via `setOptions`."
+                "With `stayInTool: false` (default) the tool deactivates and the new drawing is selected."
               ],
-              "tasks": ["Implement option and runtime change.", "Tests."]
+              "tasks": ["Implement option and runtime change.", "Tests."],
+              "status": "done"
             }
           ]
         },
@@ -1064,7 +1067,8 @@
                 "`createDrawingTools(host, options)` validates the host and options and returns the controller.",
                 "Actions: `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions`, `getScene`, `hitTest`.",
                 "Uses the provided store or creates one; `tools` option restricts the available kinds.",
-                "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57)."
+                "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57).",
+                "`stayInTool` can be changed at runtime via `setOptions`; the new value applies from the next placement (moved here from E04-F02-S04, #63)."
               ],
               "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."]
             },

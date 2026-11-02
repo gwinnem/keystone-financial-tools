@@ -78,6 +78,15 @@
   returning the next state, effects and an `ignored` flag; it never throws. `IDLE_STATE` and the
   `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext` and
   `InteractionResult` types. Scenario tests drive it from the mock host.
+- Core (E04-F02): `reducePlacement(tool, progress, input, host)` is the pure placement of SDS 9.2: a
+  one-anchor tool places on a left click inside a pane; a two-anchor tool places by click, move, click
+  or by press, drag, release, with the second anchor projected onto the first anchor's y-axis even over
+  another pane; a second anchor within 1 px (`ZERO_LENGTH_PX`) of the first creates nothing; a click
+  outside every pane does nothing. It returns the new `PlacementProgress` and the anchors of the
+  drawing to create (one store change, one history entry). `placementPreview` gives the drawing for the
+  scene's `preview` option, `PLACEMENT_START` the start progress. `placement-complete` takes `edit` to
+  open the text editor for a note; a note placed with `stayInTool` returns to its tool afterwards
+  (`editing-text` has an optional `resume`).
 
 ### Specification and backlog
 
