@@ -1063,7 +1063,8 @@
               "acceptance": [
                 "`createDrawingTools(host, options)` validates the host and options and returns the controller.",
                 "Actions: `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions`, `getScene`, `hitTest`.",
-                "Uses the provided store or creates one; `tools` option restricts the available kinds."
+                "Uses the provided store or creates one; `tools` option restricts the available kinds.",
+                "Inputs the state machine ignores (`ignored: true` in the `reduceInteraction` result) are logged at debug level only (moved here from E04-F01-S01, #57)."
               ],
               "tasks": ["Implement `controller.ts`.", "Integration tests on the mock host."]
             },
