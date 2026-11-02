@@ -79,6 +79,17 @@ describe('distanceToArc', () => {
     expect(distanceToArc({ x: 100, y: 160 }, { ...right, startAngle: Math.PI, endAngle: 1.5 * Math.PI })).toBeCloseTo(Math.hypot(50, 60), 12);
   });
 
+  it('measures to the end on the side the direction of the point is closer to', () => {
+    const endAt = (angle: number): { x: number; y: number } => ({ x: 100 + 50 * Math.cos(angle), y: 100 + 50 * Math.sin(angle) });
+    const dist = (p: { x: number; y: number }, to: { x: number; y: number }): number => Math.hypot(p.x - to.x, p.y - to.y);
+    // Below the left, a quarter turn past the end of the right half circle: the end at the bottom is the near one.
+    const nearEnd = { x: 100 + 60 * Math.cos(0.75 * Math.PI), y: 100 + 60 * Math.sin(0.75 * Math.PI) };
+    expect(distanceToArc(nearEnd, right)).toBeCloseTo(dist(nearEnd, endAt(Math.PI / 2)), 12);
+    // Above the left: the end at the top is the near one.
+    const nearStart = { x: 100 + 60 * Math.cos(1.25 * Math.PI), y: 100 + 60 * Math.sin(1.25 * Math.PI) };
+    expect(distanceToArc(nearStart, right)).toBeCloseTo(dist(nearStart, endAt(-Math.PI / 2)), 12);
+  });
+
   it('wraps angles: an arc that starts below the x axis, one that starts past a quarter turn, one with large angles', () => {
     const left = { center, radius: 50, startAngle: Math.PI / 2, endAngle: (3 * Math.PI) / 2 };
     expect(distanceToArc({ x: 40, y: 100 }, left)).toBeCloseTo(10, 12);

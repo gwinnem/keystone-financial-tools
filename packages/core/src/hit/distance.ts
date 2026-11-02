@@ -28,15 +28,19 @@ export function distanceToRect(p: Point, rect: Pick<RectShape, 'x' | 'y' | 'widt
  * Distance from `p` to the curve of an arc: the distance to the circle where the arc covers the
  * direction of `p`, otherwise to the nearer end of the arc. Angles are radians, canvas convention,
  * from `startAngle` clockwise to `endAngle`.
+ *
+ * Both cases are one formula. With `outside` the angle between the direction of `p` and the nearer
+ * end (0 where the arc covers the direction), the distance to the point of the circle at that angle
+ * is the hypotenuse of the radial offset and the chord `2 * sqrt(r * R) * sin(outside / 2)`. It is
+ * continuous at the ends of the arc, so there is no boundary to decide.
  */
 export function distanceToArc(p: Point, arc: Pick<ArcShape, 'center' | 'radius' | 'startAngle' | 'endAngle'>): number {
   const dx = p.x - arc.center.x;
   const dy = p.y - arc.center.y;
   const turn = (((Math.atan2(dy, dx) - arc.startAngle) % TAU) + TAU) % TAU;
-  // Stryker disable next-line EqualityOperator: on the end angle the point lies on the radius through the end of the arc, so the circle and the end give the same distance.
-  if (turn <= arc.endAngle - arc.startAngle) return Math.abs(Math.hypot(dx, dy) - arc.radius);
-  const toEnd = (angle: number): number => Math.hypot(p.x - (arc.center.x + arc.radius * Math.cos(angle)), p.y - (arc.center.y + arc.radius * Math.sin(angle)));
-  return Math.min(toEnd(arc.startAngle), toEnd(arc.endAngle));
+  const outside = Math.max(0, Math.min(turn - (arc.endAngle - arc.startAngle), TAU - turn));
+  const radial = Math.hypot(dx, dy);
+  return Math.hypot(radial - arc.radius, 2 * Math.sqrt(radial * arc.radius) * Math.sin(outside / 2));
 }
 
 /**
