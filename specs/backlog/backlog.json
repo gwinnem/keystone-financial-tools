@@ -809,7 +809,8 @@
                 "Unexpected events in a state are ignored (no throw) and logged at debug level only.",
                 "`pointer cancel` and `leave` during a drag revert like Escape."
               ],
-              "tasks": ["Implement `interaction/machine.ts` as a reducer plus effects.", "Scenario test table."]
+              "tasks": ["Implement `interaction/machine.ts` as a reducer plus effects.", "Scenario test table."],
+              "status": "done"
             },
             {
               "id": "E04-F01-S02",
@@ -821,7 +822,8 @@
                 "Double-click is two clicks within 400 ms and 6 px.",
                 "Thresholds are configurable and use an injectable clock for tests."
               ],
-              "tasks": ["Implement a gesture recogniser.", "Tests with a fake clock."]
+              "tasks": ["Implement a gesture recogniser.", "Tests with a fake clock."],
+              "status": "done"
             }
           ]
         },

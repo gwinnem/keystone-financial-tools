@@ -469,8 +469,25 @@ and hover; there is no polyline shape (geometry has none); the scene theme must 
 | `editing-text` | double-click a text note, Enter on a selected note | editor resolves or is cancelled |
 
 - FR-INT-001: The engine is a pure state machine driven by host events and API calls; it is fully
-  testable with the mock host.
-- FR-INT-002: A pointer down and up within 3 px and 300 ms is a click; beyond 3 px it is a drag.
+  testable with the mock host. `reduceInteraction(state, input, ctx)` is a pure reducer returning
+  `{ state, effects, ignored }`: it never reads the host or the store (`ctx.lookup(id)` supplies kind
+  and lock flag), never throws, and an input that means nothing in the current state returns the same
+  state with `ignored: true` (the controller logs it at debug level). The caller performs the effects
+  (`remove`, `blocked`, `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`,
+  `apply-text`, `cancel-placement`). Pointer cancel and leave during a drag revert like Escape.
+- FR-INT-002: A pointer down and up within 3 px and 300 ms is a click; beyond 3 px it is a drag. The
+  `GestureRecogniser` turns host pointer events into `move`, `click`, `double-click`, `drag-start`,
+  `drag`, `drag-end`, `cancel` and `leave` gestures. A press held longer than 300 ms without moving is
+  neither. A double-click is two clicks of the same button within 400 ms (between releases) and 6 px;
+  it follows its second `click`, and a third click starts again. While one button is pressed the other
+  buttons are ignored. All thresholds and the clock are injectable.
+
+Decisions made while implementing (E04-F01): a click selects (a drag from an unselected drawing does
+nothing; select it first); with `stayInTool` a completed placement stays in `placing`, without it the
+new drawing is selected (the table's "idle" is read as the tool being left); a drag of a locked drawing
+and deleting locked drawings raise `blocked` (`KFT-E-LOCKED`) and keep them selected; `sync` after a
+store change drops selected, hovered and edited drawings that are gone (FR-ST-020) and reverts a drag
+whose drawings are gone; Escape is ignored while a text editor is open (the editor owns it).
 
 ### 9.2 Placement
 

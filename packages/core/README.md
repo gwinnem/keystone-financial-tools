@@ -32,6 +32,8 @@ geometry of every drawing kind.
 | `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
 | `hitTest`, `HitResult`, `HitPart`, `HitTestOptions`, `HIT_TOLERANCE`, `GeometryCache`, `GeometryCacheOptions` | What is under a plot point (drawing id, part, locked), and the geometry cache it reads from |
 | `buildScene`, `SceneCache`, `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`, `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions`, `SNAP_INDICATOR_RADIUS` | The scene a host draws: items in paint order with state, resolved style, preview, snap indicator and handles |
+| `GestureRecogniser`, `Gesture`, `GestureBase`, `GestureOptions` | Pointer events to `move`, `click`, `double-click`, `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (3 px, 300 ms, 400 ms and 6 px by default, injectable clock) |
+| `reduceInteraction`, `IDLE_STATE`, `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext`, `InteractionResult` | The pure interaction state machine (idle, placing, selected, dragging-handle, moving, editing-text) |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -279,6 +281,43 @@ for (const item of scenes.get({ drawings: store.list(), cache, selected, hover, 
 pass the same object for an unchanged value) or the viewport. `invalidate()` forgets the scene and
 `destroy()` stops following the host; both are safe to repeat. `pnpm --filter keystone-financial-tools-core bench`
 also measures `buildScene` over 500 drawings (budget: 2 ms).
+
+## Interaction state machine
+
+The interaction engine is two pure pieces; the controller (E04) will wire them to the host.
+
+```ts
+import { GestureRecogniser, hitTest, IDLE_STATE, reduceInteraction } from 'keystone-financial-tools-core';
+
+const recogniser = new GestureRecogniser(); // { moveThreshold: 3, clickMs: 300, doubleClickMs: 400, doubleClickPx: 6, now: Date.now }
+let state = IDLE_STATE;
+const ctx = { lookup: (id) => store.get(id) && { kind: store.get(id).kind, locked: store.get(id).locked === true } };
+
+host.onPointer((event) => {
+  for (const gesture of recogniser.handle(event)) {
+    const input = toInput(gesture); // resolve `target` with hitTest at the click point, or at the drag origin
+    const result = reduceInteraction(state, input, ctx);
+    state = result.state;
+    if (result.ignored) console.debug('ignored', input.type, state.type);
+    for (const effect of result.effects) perform(effect);
+  }
+});
+```
+
+- **Gestures**: a press released within 3 px and 300 ms is a `click`; moving further starts a drag
+  (`drag-start` with the press `origin`, then `drag`, then `drag-end`); a press held longer without moving
+  is neither. A second click of the same button within 400 ms and 6 px also gives a `double-click`.
+  Pointer `cancel` and `leave` during a drag give `cancel`; `leave` also gives `leave`.
+- **States**: `idle`, `placing`, `selected`, `dragging-handle`, `moving`, `editing-text`. A click selects
+  (shift-click toggles, empty space clears); Escape leaves `placing` and `selected`, and the right button leaves `placing`;
+  a drag from a handle or body of a selected unlocked drawing starts `dragging-handle` or `moving`;
+  Delete and Backspace remove the unlocked selected drawings; a double-click or Enter on an unlocked text
+  note starts `editing-text`.
+- **Effects** (what the caller does): `remove`, `blocked` (locked drawings were asked to change),
+  `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`, `apply-text`, `cancel-placement`.
+- `reduceInteraction` never throws. An input that means nothing in a state returns the same state object
+  with `ignored: true` and no effects. Send `{ type: 'sync' }` after every store change so selected, hovered
+  and edited drawings that were removed are dropped.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

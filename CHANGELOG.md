@@ -71,6 +71,13 @@
   option or the viewport changes. Types `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`,
   `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions` and
   `SNAP_INDICATOR_RADIUS`.
+- Core (E04-F01): `GestureRecogniser` turns host pointer events into `move`, `click`, `double-click`,
+  `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (click: 3 px and 300 ms; double-click:
+  400 ms and 6 px; configurable, injectable clock). `reduceInteraction(state, input, ctx)` is the pure
+  interaction state machine of SDS 9.1 (idle, placing, selected, dragging-handle, moving, editing-text)
+  returning the next state, effects and an `ignored` flag; it never throws. `IDLE_STATE` and the
+  `InteractionState`, `InteractionInput`, `InteractionEffect`, `InteractionContext` and
+  `InteractionResult` types. Scenario tests drive it from the mock host.
 
 ### Specification and backlog
 
