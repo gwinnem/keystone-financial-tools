@@ -474,7 +474,7 @@ and hover; there is no polyline shape (geometry has none); the scene theme must 
   and lock flag), never throws, and an input that means nothing in the current state returns the same
   state with `ignored: true` (the controller logs it at debug level). The caller performs the effects
   (`remove`, `blocked`, `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`,
-  `apply-text`, `cancel-placement`, `select-all`, `duplicate`). Pointer cancel and leave during a drag revert like Escape.
+  `apply-text`, `cancel-placement`, `select-all`, `duplicate`, `nudge`, `keyboard-move`, `keyboard-place`). Pointer cancel and leave during a drag revert like Escape.
 - FR-INT-002: A pointer down and up within 3 px and 300 ms is a click; beyond 3 px it is a drag. The
   `GestureRecogniser` turns host pointer events into `move`, `click`, `double-click`, `drag-start`,
   `drag`, `drag-end`, `cancel` and `leave` gestures. A press held longer than 300 ms without moving is
@@ -567,6 +567,37 @@ in one `batch`, which is one history entry.
 - FR-INT-033: Escape during a drag reverts to the state at pointer down without a history entry.
 - FR-INT-034: Arrow keys nudge the selection by one bar (left/right) or one pixel-equivalent price
   step (up/down); with Shift by ten. Consecutive nudges within 500 ms coalesce into one history entry.
+- FR-INT-035: With a tool active and no pointer, a keyboard cursor starts at the centre of the pane;
+  the arrow keys move it (one bar or one pixel, Shift ten), Enter places an anchor at it and Escape
+  cancels the placement. A key counts as handled only when it changed something.
+
+The pure part is in `move.ts`: `dragHandle(drawing, handle, origin, point, shift, host)` returns the
+anchors of a handle drag, `moveDrawings(drawings, origin, point, shift, host)` those of a body move,
+`nudgeAnchors(drawing, bars, pixels, host)` one nudge, `keyboardCursorStart` and `moveKeyboardCursor`
+the keyboard cursor, with `constrainMove` and `constrainAngle` as the Shift rules. All take the
+pointer origin and the current point and return new anchors without touching the store, so a drag is
+stateless: the controller keeps the drawings as they were at pointer down, applies the result in one
+store change per pointer move inside `history.transaction('drag')`, commits it on `drag-commit` and
+cancels it on `drag-revert` (nothing is recorded and listeners see the restore as the last change).
+The machine's effects are `nudge` (`ids`, `bars`, `pixels`, done in a `nudge` transaction so quick
+nudges coalesce), `keyboard-move` (`bars`, `pixels`) and `keyboard-place`.
+
+Decisions made while implementing (E04-F04): a handle or body drag applies the pointer's travel to the
+original anchors (not the pointer position), so the grab offset is kept; time moves by the travel in
+x and each anchor's price by the travel in y on its own pane's scale, so drawings on other panes move
+by the same time delta and their own price delta; a drawing with a missing pane is left out. Rectangle
+edge handles (`handle:4..7`) change one coordinate (x1, x2, y1, y2), corners change both, the other
+kinds change both unless they use one (a horizontal line only the price, time zones only the time);
+an unknown handle changes nothing. Shift while moving locks to the axis with the larger delta (the
+horizontal on a tie). Shift on a trend-line or fan handle keeps the other anchor fixed and rounds the
+angle to the nearest of eight directions in pixels, keeping the length; Shift is read at every move,
+so releasing it removes the constraint at the next move. A body move that starts with locked drawings
+in the selection moves the others and emits one `blocked` effect for the locked ones at drag start;
+an arrow key does the same per key press; a handle of a locked drawing is `blocked` and nothing
+starts. Arrow keys work in `selected` (`ctrl` is not an arrow key) and while `placing`; Enter in
+`placing` places at the keyboard cursor. One keyboard step is one bar in x and one pixel in y; the
+keyboard cursor is kept `KEYBOARD_CURSOR_INSET_PX` (1) inside the pane and uses the bar width at its
+position. An arrow key with nothing selected, or only drawings that are gone, is ignored (not handled).
 
 ### 9.5 Magnet
 

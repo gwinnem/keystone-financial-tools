@@ -186,7 +186,7 @@ describe('dragging a handle (FR-INT-030, FR-INT-033)', () => {
 });
 
 describe('moving (FR-INT-030)', () => {
-  it('moves the selected unlocked drawings from a press on a body', () => {
+  it('moves the selected unlocked drawings from a press on a body and reports the locked one once', () => {
     const d = driver();
     d.tap(200, 100);
     d.tap(450, 100, { shiftKey: true });
@@ -197,6 +197,7 @@ describe('moving (FR-INT-030)', () => {
     expect(d.state).toEqual({ type: 'selected', ids: ['l', 'r'], hover: null });
     expect(d.log).toEqual([
       { type: 'drag-start', mode: 'move', ids: ['l'], origin: { x: 200, y: 100 } },
+      { type: 'blocked', ids: ['r'] },
       { type: 'drag-commit', point: { x: 260, y: 100 } },
     ]);
   });

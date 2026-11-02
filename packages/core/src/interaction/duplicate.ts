@@ -1,6 +1,6 @@
 import type { DrawingHost } from '../host';
-import { anchorToPoint, pointToAnchor } from '../projection';
-import type { Anchor, Drawing } from '../types';
+import type { Drawing } from '../types';
+import { nudgeAnchors } from './move';
 
 /** How far down the screen (CSS px) a duplicate lies from its original (FR-INT-024). */
 export const DUPLICATE_OFFSET_PX = 10;
@@ -20,13 +20,6 @@ export const DUPLICATE_OFFSET_PX = 10;
  * ```
  */
 export function duplicateDrawing(drawing: Drawing, id: string, host: DrawingHost): Drawing | null {
-  const interval = host.barInterval();
-  const anchors: Anchor[] = [];
-  for (const anchor of drawing.anchors) {
-    const here = anchorToPoint(anchor, host);
-    const shifted = pointToAnchor({ x: here.x, y: here.y + DUPLICATE_OFFSET_PX }, anchor.yAxisId, host);
-    if (shifted === null) return null;
-    anchors.push({ time: anchor.time + interval, price: shifted.price, yAxisId: anchor.yAxisId });
-  }
-  return { ...drawing, id, anchors, locked: false };
+  const anchors = nudgeAnchors(drawing, 1, DUPLICATE_OFFSET_PX, host);
+  return anchors === null ? null : { ...drawing, id, anchors, locked: false };
 }

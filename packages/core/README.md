@@ -37,6 +37,8 @@ geometry of every drawing kind.
 | `reducePlacement`, `placementPreview`, `PLACEMENT_START`, `ZERO_LENGTH_PX`, `PlacementProgress`, `PlacementInput`, `PlacementResult` | Pure placement of new drawings: one-anchor click, two-anchor click-click and drag, preview, pane rules |
 | `cursorFor`, `CursorSync` | The cursor for what is under the pointer, and a setter that calls `host.setCursor` only on a change |
 | `duplicateDrawing`, `DUPLICATE_OFFSET_PX` | The copy Ctrl/Cmd+D adds: one bar later, 10 px down, unlocked |
+| `dragHandle`, `moveDrawings`, `nudgeAnchors`, `MovedDrawing`, `constrainMove`, `constrainAngle`, `SHIFT_STEP_FACTOR` | New anchors for a handle drag, a body move and an arrow-key nudge, and the Shift rules |
+| `keyboardCursorStart`, `moveKeyboardCursor`, `KEYBOARD_CURSOR_INSET_PX` | The keyboard cursor for placing without a pointer |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -318,7 +320,8 @@ host.onPointer((event) => {
   note starts `editing-text`.
 - **Effects** (what the caller does): `remove`, `blocked` (locked drawings were asked to change),
   `drag-start`, `drag-update`, `drag-commit`, `drag-revert`, `edit-text`, `apply-text`, `cancel-placement`,
-  `select-all`, `duplicate` (see [Selection, cursors and duplicate](#selection-cursors-and-duplicate)).
+  `select-all`, `duplicate` (see [Selection, cursors and duplicate](#selection-cursors-and-duplicate)),
+  `nudge`, `keyboard-move`, `keyboard-place` (see [Move, resize and nudge](#move-resize-and-nudge)).
 - `reduceInteraction` never throws. An input that means nothing in a state returns the same state object
   with `ignored: true` and no effects. Send `{ type: 'sync' }` after every store change so selected, hovered
   and edited drawings that were removed are dropped.
@@ -404,6 +407,64 @@ function perform(effect) {
 - **`duplicateDrawing(drawing, id, host)`**: the same drawing under a new id, each anchor one `barInterval()`
   later and `DUPLICATE_OFFSET_PX` (10) px down on its own y-axis, never locked. Null when an anchor's y-axis
   has no pane.
+
+## Move, resize and nudge
+
+The move functions are pure: they take the drawings as they were at pointer down, the press origin and
+the current point, and return new anchors. The controller applies them, so a drag needs no state of its own.
+
+```ts
+import { dragHandle, moveDrawings, nudgeAnchors } from 'keystone-financial-tools-core';
+
+let session; // { handle, originals, origin, tx }
+function perform(effect) {
+  if (effect.type === 'drag-start') {
+    const originals = (effect.mode === 'handle' ? [effect.drawingId] : effect.ids).flatMap((id) => store.get(id) ?? []);
+    session = { handle: effect.mode === 'handle' ? effect.handle : null, originals, origin: effect.origin, tx: history.transaction('drag') };
+  }
+  if (effect.type === 'drag-update' || effect.type === 'drag-commit') {
+    store.batch(() => {
+      if (session.handle !== null) {
+        const anchors = dragHandle(session.originals[0], session.handle, session.origin, effect.point, shift, host);
+        if (anchors !== null) store.update(session.originals[0].id, { anchors });
+      } else {
+        for (const m of moveDrawings(session.originals, session.origin, effect.point, shift, host)) store.update(m.id, { anchors: m.anchors });
+      }
+    });
+    if (effect.type === 'drag-commit') session.tx.commit(); // one history entry
+  }
+  if (effect.type === 'drag-revert') session.tx.cancel(); // no entry, listeners see the restore
+  if (effect.type === 'nudge') {
+    const tx = history.transaction('nudge'); // quick nudges coalesce (500 ms)
+    store.batch(() => effect.ids.forEach((id) => store.update(id, { anchors: nudgeAnchors(store.get(id), effect.bars, effect.pixels, host) })));
+    tx.commit();
+  }
+}
+
+host.onKey((event) => !apply({ type: 'key', key: event.key, ctrl: event.ctrlKey || event.metaKey, shift: event.shiftKey }).ignored);
+```
+
+- **Drag a handle** (`dragHandle(drawing, handle, origin, point, shift, host)`): the pointer's travel is
+  applied to that anchor, so the grab offset is kept. Rectangle handles `handle:0..3` are corners and
+  `handle:4..7` edges that change one coordinate (x1, x2, y1, y2). A horizontal line changes only its price,
+  time zones only the time. Returns null when nothing can move (unknown handle, a pane is gone).
+- **Move** (`moveDrawings(drawings, origin, point, shift, host)`): every anchor moves by the same time delta
+  and by its own pane's price delta for the same pointer travel, so drawings on other panes follow. A
+  drawing whose pane is gone is left out. Locked drawings in the selection are not moved; the machine raises
+  one `blocked` effect for them when the drag starts, and a handle of a locked drawing is `blocked` and
+  starts nothing.
+- **Shift**: `constrainMove` locks a move to the axis with the larger delta; on a trend-line or fan handle
+  `constrainAngle` rounds the line to a multiple of 45 degrees in pixels around the other anchor, keeping its
+  length. Shift is read at every move, so releasing it frees the next move.
+- **Escape** (or a pointer cancel) during a drag gives `drag-revert`: cancel the history transaction.
+- **Arrow keys** with a selection give `nudge` (`ids` of the unlocked drawings, `bars`, `pixels`): one bar left
+  or right, one pixel up or down on the drawing's pane, ten with Shift. Locked drawings give `blocked`.
+  `nudgeAnchors(drawing, bars, pixels, host)` is also what duplicate uses.
+- **Keyboard placement**: with a tool active, `keyboardCursorStart(yAxisId, host)` is the centre of the pane;
+  arrows give `keyboard-move` and `moveKeyboardCursor(cursor, bars, pixels, yAxisId, host)` moves it (one bar
+  at its position, Shift ten, kept `KEYBOARD_CURSOR_INSET_PX` inside the pane); Enter gives `keyboard-place`,
+  which you pass to `reducePlacement` as a `click` at the cursor, and Escape gives `cancel-placement`. Keys
+  the machine does nothing with return `ignored: true`, so only a key that changed something is handled.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

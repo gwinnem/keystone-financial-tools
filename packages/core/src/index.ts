@@ -44,6 +44,8 @@ export type { PlacementInput, PlacementProgress, PlacementResult } from './inter
 export { PLACEMENT_START, placementPreview, reducePlacement, ZERO_LENGTH_PX } from './interaction/placement';
 export { cursorFor, CursorSync } from './interaction/cursor';
 export { DUPLICATE_OFFSET_PX, duplicateDrawing } from './interaction/duplicate';
+export type { MovedDrawing } from './interaction/move';
+export { constrainAngle, constrainMove, dragHandle, KEYBOARD_CURSOR_INSET_PX, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeAnchors, SHIFT_STEP_FACTOR } from './interaction/move';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';

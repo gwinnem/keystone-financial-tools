@@ -988,7 +988,8 @@
                 "Shift while moving locks to horizontal or vertical (whichever delta is larger).",
                 "Releasing Shift mid-drag removes the constraint on the next move."
               ],
-              "tasks": ["Implement constraints.", "Tests."]
+              "tasks": ["Implement constraints.", "Tests."],
+              "status": "done"
             },
             {
               "id": "E04-F04-S04",

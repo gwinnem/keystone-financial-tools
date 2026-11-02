@@ -173,7 +173,6 @@ describe('placing', () => {
 
   it('ignores other keys and left clicks (placement is handled by the placement inputs)', () => {
     expectIgnored(placing(), key('Delete'));
-    expectIgnored(placing(), key('Enter'));
     expectIgnored(placing(), click(null));
     expectIgnored(placing(), click(null, { button: 1 }));
     expectIgnored(placing(), { type: 'hover', id: 'a' });
@@ -319,7 +318,11 @@ describe('selected: moving (FR-INT-030)', () => {
       { type: 'moving', ids, selection },
       [{ type: 'drag-start', mode: 'move', ids, origin: { x: 5, y: 6 } }],
     ];
-    expectGo(selected(['a', 'lk', 'b']), dragStart(hit('a')), ...expected(['a', 'b'], ['a', 'lk', 'b']));
+    expectGo(selected(['a', 'lk', 'b']), dragStart(hit('a')), { type: 'moving', ids: ['a', 'b'], selection: ['a', 'lk', 'b'] }, [
+      { type: 'drag-start', mode: 'move', ids: ['a', 'b'], origin: { x: 5, y: 6 } },
+      { type: 'blocked', ids: ['lk'] },
+    ]);
+    expectGo(selected(['a', 'b']), dragStart(hit('a')), ...expected(['a', 'b'], ['a', 'b']));
     expectGo(selected(['a']), dragStart(hit('a', 'level:0.5')), ...expected(['a'], ['a']));
     expectGo(selected(['a']), dragStart(hit('a', 'label')), ...expected(['a'], ['a']));
   });

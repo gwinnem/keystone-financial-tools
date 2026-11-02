@@ -94,6 +94,15 @@
   unchanged) and Ctrl/Cmd+A and Ctrl/Cmd+D as `key` inputs with `ctrl`, answered with the effects
   `select-all` and `duplicate`. `duplicateDrawing` builds the copy: one bar later, `DUPLICATE_OFFSET_PX`
   (10) px down, unlocked.
+- Core (E04-F04): `dragHandle`, `moveDrawings` and `nudgeAnchors` compute new anchors for a handle
+  drag, a body move and an arrow-key nudge from the pointer travel (same time delta everywhere, each
+  pane's own price delta; rectangle edge handles change one coordinate); `constrainMove` and
+  `constrainAngle` are the Shift rules (axis lock, 45° steps for trend-line and fan anchors).
+  `keyboardCursorStart` and `moveKeyboardCursor` give keyboard placement. The machine takes `shift` on
+  `key` inputs and answers arrow keys with `nudge` (Shift: ten steps), arrows, Enter and Escape while
+  placing with `keyboard-move`, `keyboard-place` and `cancel-placement`; a move or nudge that includes
+  locked drawings emits one `blocked` effect for them. Escape and pointer cancel revert a drag (the
+  controller cancels the history transaction). `duplicateDrawing` now uses `nudgeAnchors`.
 
 ### Specification and backlog
 

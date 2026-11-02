@@ -1,11 +1,21 @@
 import type { DrawingKind } from '../types';
+import { SHIFT_STEP_FACTOR } from './move';
 import type { InteractionContext, InteractionEffect, InteractionInput, InteractionResult, InteractionState } from './types';
 
 const NO_EFFECTS: readonly InteractionEffect[] = Object.freeze([]);
 const CANCEL_PLACEMENT: InteractionEffect = Object.freeze({ type: 'cancel-placement' });
 const DRAG_REVERT: InteractionEffect = Object.freeze({ type: 'drag-revert' });
 const SELECT_ALL: InteractionEffect = Object.freeze({ type: 'select-all' });
+const KEYBOARD_PLACE: InteractionEffect = Object.freeze({ type: 'keyboard-place' });
 const HANDLE_PREFIX = 'handle:';
+
+/** What each arrow key moves: bars right and pixels down. */
+const ARROW_STEPS: ReadonlyMap<string, readonly [bars: number, pixels: number]> = new Map<string, readonly [bars: number, pixels: number]>([
+  ['ArrowLeft', [-1, 0]],
+  ['ArrowRight', [1, 0]],
+  ['ArrowUp', [0, -1]],
+  ['ArrowDown', [0, 1]],
+]);
 
 type Selected = Extract<InteractionState, { type: 'selected' }>;
 type Idle = Extract<InteractionState, { type: 'idle' }>;
@@ -26,6 +36,26 @@ const exists = (ctx: InteractionContext, id: string): boolean => ctx.lookup(id) 
 
 /** Ctrl or Cmd with this letter (any case). */
 const isShortcut = (input: Extract<InteractionInput, { type: 'key' }>, letter: string): boolean => input.ctrl === true && input.key.toLowerCase() === letter;
+
+/** The bars and pixels an arrow key asks for, ten times as many with Shift; null for any other key and with Ctrl or Cmd. */
+function arrowStep(input: Extract<InteractionInput, { type: 'key' }>): { readonly bars: number; readonly pixels: number } | null {
+  const step = input.ctrl === true ? undefined : ARROW_STEPS.get(input.key);
+  if (step === undefined) return null;
+  const factor = input.shift === true ? SHIFT_STEP_FACTOR : 1;
+  return { bars: step[0] * factor, pixels: step[1] * factor };
+}
+
+/** The existing drawings of `ids`, split into the unlocked and the locked ones; drawings that are gone are left out. */
+function partitionByLock(ids: readonly string[], ctx: InteractionContext): { readonly unlocked: string[]; readonly locked: string[] } {
+  const unlocked: string[] = [];
+  const locked: string[] = [];
+  for (const id of ids) {
+    const drawing = ctx.lookup(id);
+    if (drawing === undefined) continue;
+    (drawing.locked ? locked : unlocked).push(id);
+  }
+  return { unlocked, locked };
+}
 
 /** Select exactly these drawings, those that exist, in the given order; the same state when that is the selection already. */
 function select(state: Idle | Selected, ids: readonly string[], ctx: InteractionContext): InteractionResult {
@@ -88,17 +118,20 @@ function clickSelected(state: Selected, input: Extract<InteractionInput, { type:
 }
 
 function removeSelected(state: Selected, ctx: InteractionContext): InteractionResult {
-  const removable: string[] = [];
-  const locked: string[] = [];
-  for (const id of state.ids) {
-    const drawing = ctx.lookup(id);
-    if (drawing === undefined) continue;
-    (drawing.locked ? locked : removable).push(id);
-  }
+  const { unlocked, locked } = partitionByLock(state.ids, ctx);
   const effects: InteractionEffect[] = [];
-  if (removable.length > 0) effects.push({ type: 'remove', ids: removable });
+  if (unlocked.length > 0) effects.push({ type: 'remove', ids: unlocked });
   if (locked.length > 0) effects.push({ type: 'blocked', ids: locked });
   return go(selection(locked, null), effects);
+}
+
+/** An arrow key: nudge the unlocked selected drawings, and report the locked ones as blocked; ignored when none of them exists. */
+function nudgeSelected(state: Selected, step: { readonly bars: number; readonly pixels: number }, ctx: InteractionContext): InteractionResult {
+  const { unlocked, locked } = partitionByLock(state.ids, ctx);
+  const effects: InteractionEffect[] = [];
+  if (unlocked.length > 0) effects.push({ type: 'nudge', ids: unlocked, bars: step.bars, pixels: step.pixels });
+  if (locked.length > 0) effects.push({ type: 'blocked', ids: locked });
+  return effects.length === 0 ? ignore(state) : go(state, effects);
 }
 
 function startDrag(state: Selected, input: Extract<InteractionInput, { type: 'drag-start' }>, ctx: InteractionContext): InteractionResult {
@@ -109,8 +142,10 @@ function startDrag(state: Selected, input: Extract<InteractionInput, { type: 'dr
     const handle = Number(target.part.slice(HANDLE_PREFIX.length));
     return go({ type: 'dragging-handle', drawingId: target.id, handle, selection: state.ids }, [{ type: 'drag-start', mode: 'handle', drawingId: target.id, handle, origin: input.origin }]);
   }
-  const ids = state.ids.filter((id) => ctx.lookup(id)?.locked === false);
-  return go({ type: 'moving', ids, selection: state.ids }, [{ type: 'drag-start', mode: 'move', ids, origin: input.origin }]);
+  const { unlocked: ids, locked } = partitionByLock(state.ids, ctx);
+  const effects: InteractionEffect[] = [{ type: 'drag-start', mode: 'move', ids, origin: input.origin }];
+  if (locked.length > 0) effects.push({ type: 'blocked', ids: locked });
+  return go({ type: 'moving', ids, selection: state.ids }, effects);
 }
 
 function syncSelected(state: Selected, ctx: InteractionContext): InteractionResult {
@@ -149,6 +184,8 @@ function duplicateSelected(state: Selected, ctx: InteractionContext): Interactio
 function reduceSelectedKey(state: Selected, input: Extract<InteractionInput, { type: 'key' }>, ctx: InteractionContext): InteractionResult {
   if (isShortcut(input, 'a')) return go(state, [SELECT_ALL]);
   if (isShortcut(input, 'd')) return duplicateSelected(state, ctx);
+  const step = arrowStep(input);
+  if (step !== null) return nudgeSelected(state, step, ctx);
   switch (input.key) {
     case 'Escape':
       return go({ type: 'idle', hover: state.hover });
@@ -164,10 +201,18 @@ function reduceSelectedKey(state: Selected, input: Extract<InteractionInput, { t
   }
 }
 
+/** While placing: Escape cancels; Enter and the arrow keys place with the keyboard cursor. */
+function reducePlacingKey(state: Placing, input: Extract<InteractionInput, { type: 'key' }>): InteractionResult {
+  if (input.key === 'Escape') return go({ type: 'idle', hover: null }, [CANCEL_PLACEMENT]);
+  if (input.key === 'Enter') return go(state, [KEYBOARD_PLACE]);
+  const step = arrowStep(input);
+  return step === null ? ignore(state) : go(state, [{ type: 'keyboard-move', bars: step.bars, pixels: step.pixels }]);
+}
+
 function reducePlacing(state: Placing, input: InteractionInput): InteractionResult {
   switch (input.type) {
     case 'key':
-      return input.key === 'Escape' ? go({ type: 'idle', hover: null }, [CANCEL_PLACEMENT]) : ignore(state);
+      return reducePlacingKey(state, input);
     case 'click':
       return input.button === 2 ? go({ type: 'idle', hover: null }, [CANCEL_PLACEMENT]) : ignore(state);
     case 'placement-complete':
@@ -231,16 +276,18 @@ function reduceEditing(state: EditingText, input: InteractionInput, ctx: Interac
  * | idle, selected | `activate` | placing |
  * | placing | `activate` | placing (`cancel-placement`) |
  * | placing | `deactivate`, Escape, right click | idle (`cancel-placement`) |
+ * | placing | arrow keys, Enter | same (`keyboard-move`, `keyboard-place`) |
  * | placing | `placement-complete` | placing when `stay`, else selected; with `edit`: editing-text (`edit-text`), which returns to placing when `stay` |
  * | idle | left click on a drawing | selected |
  * | idle, selected | `select` | selected with those that exist (idle when none); the same state when unchanged |
  * | idle, selected | Ctrl/Cmd+A | same state (`select-all`: answer with a `select` of the visible drawings) |
  * | selected | Ctrl/Cmd+D | same state (`duplicate`: add the copies, answer with a `select` of them) |
  * | selected | click on a drawing; shift-click | selected (only it; toggled); a click on empty space is idle |
+ * | selected | arrow keys (Shift: ten times as far) | same state (`nudge` the unlocked drawings one bar or one pixel, `blocked` the locked ones) |
  * | selected | Escape | idle |
  * | selected | Delete, Backspace | idle, or selected with the locked drawings (`remove`, `blocked`) |
  * | selected | drag from a handle of an unlocked selected drawing | dragging-handle (`drag-start`) |
- * | selected | drag from the body of a selected drawing | moving the unlocked selected drawings (`drag-start`) |
+ * | selected | drag from the body of a selected drawing | moving the unlocked selected drawings (`drag-start`, and `blocked` for the locked ones) |
  * | selected | drag from a locked drawing | selected (`blocked`) |
  * | selected | double-click, Enter on an unlocked text note | editing-text (`edit-text`) |
  * | dragging-handle, moving | `drag` | same (`drag-update`) |
