@@ -2,6 +2,7 @@ import { ANCHOR_COUNT } from '../kinds';
 import type { DrawingHost, Point } from '../host';
 import { anchorToPoint, pointToAnchor } from '../projection';
 import type { Anchor, Drawing, DrawingKind } from '../types';
+import { snapAnchor, type MagnetMode } from './snap';
 
 /** Two anchors closer than this in both x and y (CSS px) are one point: no drawing is created from them (FR-INT-011). */
 export const ZERO_LENGTH_PX = 1;
@@ -49,22 +50,28 @@ export interface PlacementResult {
 const ignore = (progress: PlacementProgress): PlacementResult => ({ progress, anchors: null, ignored: true });
 const go = (progress: PlacementProgress, anchors: readonly Anchor[] | null = null): PlacementResult => ({ progress, anchors, ignored: false });
 
-/** The anchor under a point, or null outside every pane (FR-INT-012). */
-function anchorAt(point: Point, host: DrawingHost): Anchor | null {
-  const yAxisId = host.yAxisAt(point.x, point.y);
-  return yAxisId === null ? null : pointToAnchor(point, yAxisId, host);
+/** The anchor at a point on a y-axis, snapped by the magnet (FR-INT-040), or null when the y-axis has no pane. */
+function anchorOn(point: Point, yAxisId: string, magnet: MagnetMode, host: DrawingHost): Anchor | null {
+  const anchor = pointToAnchor(point, yAxisId, host);
+  return anchor === null ? null : (snapAnchor(anchor, magnet, host)?.anchor ?? anchor);
 }
 
-function reduceWaiting(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, host: DrawingHost): PlacementResult {
+/** The anchor under a point, or null outside every pane (FR-INT-012). */
+function anchorAt(point: Point, magnet: MagnetMode, host: DrawingHost): Anchor | null {
+  const yAxisId = host.yAxisAt(point.x, point.y);
+  return yAxisId === null ? null : anchorOn(point, yAxisId, magnet, host);
+}
+
+function reduceWaiting(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, magnet: MagnetMode, host: DrawingHost): PlacementResult {
   const oneAnchor = ANCHOR_COUNT[tool] === 1;
   switch (input.type) {
     case 'click': {
-      const anchor = input.button === 0 ? anchorAt(input.point, host) : null;
+      const anchor = input.button === 0 ? anchorAt(input.point, magnet, host) : null;
       if (anchor === null) return ignore(progress);
       return oneAnchor ? go(progress, [anchor]) : go({ type: 'anchored', first: anchor, pointer: anchor, dragging: false });
     }
     case 'drag-start': {
-      const anchor = input.button === 0 && !oneAnchor ? anchorAt(input.origin, host) : null;
+      const anchor = input.button === 0 && !oneAnchor ? anchorAt(input.origin, magnet, host) : null;
       return anchor === null ? ignore(progress) : go({ type: 'anchored', first: anchor, pointer: anchor, dragging: true });
     }
     default:
@@ -73,8 +80,8 @@ function reduceWaiting(tool: DrawingKind, progress: PlacementProgress, input: Pl
 }
 
 /** The preview follows the pointer, projected onto the first anchor's y-axis wherever the pointer is. */
-function follow(progress: Anchored, point: Point, host: DrawingHost): PlacementResult {
-  const pointer = pointToAnchor(point, progress.first.yAxisId, host);
+function follow(progress: Anchored, point: Point, magnet: MagnetMode, host: DrawingHost): PlacementResult {
+  const pointer = anchorOn(point, progress.first.yAxisId, magnet, host);
   return pointer === null ? ignore(progress) : go({ type: 'anchored', first: progress.first, pointer, dragging: progress.dragging });
 }
 
@@ -88,24 +95,24 @@ function isZeroLength(first: Anchor, second: Anchor, host: DrawingHost): boolean
  * The second anchor arrives. A zero-length drawing is not created: a drag that ends where it began
  * starts over, a second click on the first anchor is ignored and waits for another.
  */
-function finish(progress: Anchored, point: Point, host: DrawingHost): PlacementResult {
-  const second = pointToAnchor(point, progress.first.yAxisId, host);
+function finish(progress: Anchored, point: Point, magnet: MagnetMode, host: DrawingHost): PlacementResult {
+  const second = anchorOn(point, progress.first.yAxisId, magnet, host);
   if (second === null) return ignore(progress);
   if (isZeroLength(progress.first, second, host)) return progress.dragging ? go(PLACEMENT_START) : ignore(progress);
   return go(PLACEMENT_START, [progress.first, second]);
 }
 
-function reduceAnchored(progress: Anchored, input: PlacementInput, host: DrawingHost): PlacementResult {
+function reduceAnchored(progress: Anchored, input: PlacementInput, magnet: MagnetMode, host: DrawingHost): PlacementResult {
   switch (input.type) {
     case 'move':
     case 'drag':
-      return follow(progress, input.point, host);
+      return follow(progress, input.point, magnet, host);
     case 'click':
-      return input.button === 0 ? finish(progress, input.point, host) : ignore(progress);
+      return input.button === 0 ? finish(progress, input.point, magnet, host) : ignore(progress);
     case 'drag-start':
       return input.button === 0 && !progress.dragging ? go({ type: 'anchored', first: progress.first, pointer: progress.pointer, dragging: true }) : ignore(progress);
     case 'drag-end':
-      return finish(progress, input.point, host);
+      return finish(progress, input.point, magnet, host);
     case 'cancel':
       return go(PLACEMENT_START);
   }
@@ -124,6 +131,9 @@ function reduceAnchored(progress: Anchored, input: PlacementInput, host: Drawing
  * - A pointer `cancel` while a drag is in progress starts over. Escape, the right button and
  *   deactivating the tool belong to `reduceInteraction`; when it reports `cancel-placement`, the
  *   caller resets the progress to `PLACEMENT_START`.
+ * - With a `magnet` other than `off` every anchor, and the preview, snaps to the nearest bar's
+ *   open, high, low or close (`snapAnchor`, FR-INT-040); pass `effectiveMagnet` for the Ctrl/Cmd
+ *   inversion. Keyboard placement goes through the same inputs, so it snaps too.
  *
  * @example
  * ```ts
@@ -133,8 +143,24 @@ function reduceAnchored(progress: Anchored, input: PlacementInput, host: Drawing
  * if (result.anchors !== null) store.add({ id: createId(), kind: 'trend-line', anchors: result.anchors });
  * ```
  */
-export function reducePlacement(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, host: DrawingHost): PlacementResult {
-  return progress.type === 'waiting' ? reduceWaiting(tool, progress, input, host) : reduceAnchored(progress, input, host);
+export function reducePlacement(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, host: DrawingHost, magnet: MagnetMode = 'off'): PlacementResult {
+  return progress.type === 'waiting' ? reduceWaiting(tool, progress, input, magnet, host) : reduceAnchored(progress, input, magnet, host);
+}
+
+/**
+ * Where the pointer would snap during a placement (the `snap` option of the scene, FR-INT-043): the
+ * plot point of the snapped anchor, or null when nothing snaps. It uses the y-axis `reducePlacement`
+ * would use: the pane under the pointer before the first anchor, the first anchor's y-axis after.
+ *
+ * @example
+ * ```ts
+ * const snap = placementSnap(progress, event.point, magnet, host); // buildScene(host, { ..., snap })
+ * ```
+ */
+export function placementSnap(progress: PlacementProgress, point: Point, magnet: MagnetMode, host: DrawingHost): Point | null {
+  // The unsnapped anchor: on the first anchor's y-axis once placing, else under the pointer (null outside every pane).
+  const anchor = progress.type === 'anchored' ? pointToAnchor(point, progress.first.yAxisId, host) : anchorAt(point, 'off', host);
+  return anchor === null ? null : (snapAnchor(anchor, magnet, host)?.point ?? null);
 }
 
 /**

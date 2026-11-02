@@ -103,6 +103,13 @@
   placing with `keyboard-move`, `keyboard-place` and `cancel-placement`; a move or nudge that includes
   locked drawings emits one `blocked` effect for them. Escape and pointer cancel revert a drag (the
   controller cancels the history transaction). `duplicateDrawing` now uses `nudgeAnchors`.
+- Core (E04-F05): magnet snapping (SDS 9.5). `snapAnchor(anchor, magnet, host)` snaps to the open, high,
+  low or close of the nearest bar (time within half a bar interval, otherwise no snapping, so future
+  space stays free); `MagnetMode` is `off`, `weak` (within `WEAK_MAGNET_PX`, 12 px) or `strong`.
+  `reducePlacement` and `dragHandle` take the effective magnet as a last argument (default `off`);
+  `effectiveMagnet(mode, invert)` is the Ctrl/Cmd inversion; `placementSnap` and `handleSnap` return the
+  point for the scene's `snap` indicator. Rectangle edge handles, horizontal lines, time zones, body
+  moves and Shift angle drags do not snap.
 
 ### Specification and backlog
 

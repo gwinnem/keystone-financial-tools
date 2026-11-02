@@ -1,6 +1,7 @@
 import type { DrawingHost, Point } from '../host';
 import { anchorToPoint, pointToAnchor } from '../projection';
 import type { Anchor, Drawing, DrawingKind } from '../types';
+import { snapAnchor, type MagnetMode } from './snap';
 
 /** What Shift multiplies an arrow key step by (FR-INT-034). */
 export const SHIFT_STEP_FACTOR = 10;
@@ -120,8 +121,14 @@ function editsOf(drawing: Drawing, handle: number): readonly Edit[] | undefined 
   return [{ index: handle, ...change }];
 }
 
-/** Shift on a trend-line or fan anchor: the dragged anchor goes to the 45 degree direction nearest to where the pointer took it. */
-function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point: Point, host: DrawingHost): readonly Anchor[] | null {
+/** A handle drag: the new anchors and, when the dragged anchor snapped, the plot point it snapped to. */
+interface HandleDrag {
+  readonly anchors: readonly Anchor[];
+  readonly snap: Point | null;
+}
+
+/** Shift on a trend-line or fan anchor: the dragged anchor goes to the 45 degree direction nearest to where the pointer took it. It never snaps. */
+function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point: Point, host: DrawingHost): HandleDrag | null {
   const moving = drawing.anchors[handle];
   const fixed = drawing.anchors[1 - handle];
   // Both anchors need a pane: without one their pixel position is NaN.
@@ -130,7 +137,25 @@ function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point:
   const target = constrainAngle(anchorToPoint(fixed, host), { x: from.x + point.x - origin.x, y: from.y + point.y - origin.y });
   // The pane of the moving anchor exists (checked above), so the projection cannot be null.
   const anchor = pointToAnchor(target, moving.yAxisId, host) as Anchor;
-  return drawing.anchors.map((existing, index) => (index === handle ? anchor : existing));
+  return { anchors: drawing.anchors.map((existing, index) => (index === handle ? anchor : existing)), snap: null };
+}
+
+function dragHandleResult(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, magnet: MagnetMode, host: DrawingHost): HandleDrag | null {
+  if (shift && ANGLE_KINDS.has(drawing.kind)) return dragAngleHandle(drawing, handle, origin, point, host);
+  const edits = editsOf(drawing, handle);
+  if (edits === undefined) return null;
+  const anchors = [...drawing.anchors];
+  let snap: Point | null = null;
+  for (const edit of edits) {
+    const anchor = anchors[edit.index];
+    const next = anchor === undefined ? null : dragged(anchor, origin, point, host, edit);
+    if (next === null) return null;
+    // Only a handle that moves a whole anchor snaps: a half-moved anchor has no point to snap.
+    const snapped = edit.time && edit.price ? snapAnchor(next, magnet, host) : null;
+    anchors[edit.index] = snapped === null ? next : snapped.anchor;
+    snap = snapped === null ? null : snapped.point;
+  }
+  return { anchors, snap };
 }
 
 /**
@@ -142,24 +167,33 @@ function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point:
  * `shift`, the anchors of a trend line and of fans keep to multiples of 45 degrees in pixel space
  * (FR-INT-031).
  *
+ * With a `magnet` other than `off` (pass `effectiveMagnet` for the Ctrl/Cmd inversion) a handle that
+ * moves a whole anchor snaps it to the nearest bar's open, high, low or close (`snapAnchor`,
+ * FR-INT-040): every handle of the other kinds and the corners `handle:0` and `handle:1` of a
+ * rectangle. Edge handles, the corners `handle:2` and `handle:3`, horizontal lines and time zones
+ * move one coordinate of an anchor and do not snap, and neither does an angle-constrained drag.
+ *
  * @example
  * ```ts
- * const anchors = dragHandle(original, 1, origin, event.point, event.shiftKey, host);
+ * const anchors = dragHandle(original, 1, origin, event.point, event.shiftKey, host, magnet);
  * if (anchors !== null) store.update(original.id, { anchors });
  * ```
  */
-export function dragHandle(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, host: DrawingHost): readonly Anchor[] | null {
-  if (shift && ANGLE_KINDS.has(drawing.kind)) return dragAngleHandle(drawing, handle, origin, point, host);
-  const edits = editsOf(drawing, handle);
-  if (edits === undefined) return null;
-  const anchors = [...drawing.anchors];
-  for (const edit of edits) {
-    const anchor = anchors[edit.index];
-    const next = anchor === undefined ? null : dragged(anchor, origin, point, host, edit);
-    if (next === null) return null;
-    anchors[edit.index] = next;
-  }
-  return anchors;
+export function dragHandle(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, host: DrawingHost, magnet: MagnetMode = 'off'): readonly Anchor[] | null {
+  return dragHandleResult(drawing, handle, origin, point, shift, magnet, host)?.anchors ?? null;
+}
+
+/**
+ * Where the dragged handle snapped to (the `snap` option of the scene, FR-INT-043): the plot point,
+ * or null when the drag does not snap or cannot happen. Takes the same arguments as `dragHandle`.
+ *
+ * @example
+ * ```ts
+ * const snap = handleSnap(original, 1, origin, event.point, event.shiftKey, host, magnet);
+ * ```
+ */
+export function handleSnap(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, host: DrawingHost, magnet: MagnetMode = 'off'): Point | null {
+  return dragHandleResult(drawing, handle, origin, point, shift, magnet, host)?.snap ?? null;
 }
 
 /**

@@ -39,6 +39,7 @@ geometry of every drawing kind.
 | `duplicateDrawing`, `DUPLICATE_OFFSET_PX` | The copy Ctrl/Cmd+D adds: one bar later, 10 px down, unlocked |
 | `dragHandle`, `moveDrawings`, `nudgeAnchors`, `MovedDrawing`, `constrainMove`, `constrainAngle`, `SHIFT_STEP_FACTOR` | New anchors for a handle drag, a body move and an arrow-key nudge, and the Shift rules |
 | `keyboardCursorStart`, `moveKeyboardCursor`, `KEYBOARD_CURSOR_INSET_PX` | The keyboard cursor for placing without a pointer |
+| `snapAnchor`, `effectiveMagnet`, `placementSnap`, `handleSnap`, `MagnetMode`, `SnapResult`, `WEAK_MAGNET_PX` | Magnet snapping to the open, high, low or close of the nearest bar, the Ctrl/Cmd inversion and the point for the snap indicator |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
 listeners. A failed change throws `DrawingError` and leaves the store and the listeners untouched.
@@ -465,6 +466,48 @@ host.onKey((event) => !apply({ type: 'key', key: event.key, ctrl: event.ctrlKey 
   at its position, Shift ten, kept `KEYBOARD_CURSOR_INSET_PX` inside the pane); Enter gives `keyboard-place`,
   which you pass to `reducePlacement` as a `click` at the cursor, and Escape gives `cancel-placement`. Keys
   the machine does nothing with return `ignored: true`, so only a key that changed something is handled.
+
+## Magnet snapping
+
+The magnet snaps an anchor to the open, high, low or close of the nearest bar. `reducePlacement` and
+`dragHandle` take the effective magnet as a last argument (default `'off'`, so nothing changes for callers
+that do not pass it); `placementSnap` and `handleSnap` return the point the pointer will snap to, for the
+scene's `snap` option.
+
+```ts
+import { buildScene, effectiveMagnet, placementSnap, reducePlacement } from 'keystone-financial-tools-core';
+
+let magnet = 'weak'; // the stored mode (setMagnet); never changed by Ctrl/Cmd
+host.onPointer((event) => {
+  const mode = effectiveMagnet(magnet, event.ctrlKey || event.metaKey); // read at every event
+  const result = reducePlacement(tool, progress, input, host, mode);
+  progress = result.progress;
+  snap = placementSnap(progress, input.point, mode, host); // null: no indicator
+  host.requestRender();
+});
+// in the overlay render pass: buildScene(host, { drawings, cache, preview, snap })
+```
+
+| Mode | Behaviour |
+|---|---|
+| `off` | Nothing snaps (the default) |
+| `weak` | Snaps the whole point (time and price) only when the nearest value is within `WEAK_MAGNET_PX` (12) px of the pointer, otherwise the anchor stays free |
+| `strong` | Always snaps where a bar is found |
+
+- **Time**: the time snaps to the nearest bar when it lies within half a `barInterval()` of it. Beyond that
+  (future space, a gap in the data) nothing snaps, neither time nor price.
+- **Price**: the nearest of the bar's open, high, low and close in pixels on the anchor's own y-axis; the
+  first of them in that order on a tie. A second anchor snaps on the first anchor's y-axis.
+- **Ctrl/Cmd**: `effectiveMagnet(mode, invert)` turns `off` into `strong` and `weak` or `strong` into `off`.
+  The stored mode is not changed.
+- **`snapAnchor(anchor, magnet, host)`**: the snapped `{ anchor, point }` or null where nothing snaps (magnet
+  off, no pane, no bar, too far from a bar, outside the weak reach).
+- **Placement**: both anchors of a two-anchor tool, the drag mode and a keyboard cursor placement snap; the
+  preview follows the snapped anchor.
+- **Handle drags**: `dragHandle(..., magnet)` snaps the handles that set both time and price (trend line,
+  fans, arcs, retracements, rectangle corners, text note). Rectangle edge handles, horizontal lines, time
+  zones and body moves do not snap, and a Shift angle-locked drag keeps its angle. `handleSnap` takes the same
+  arguments as `dragHandle`.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

@@ -41,11 +41,24 @@ export type { InteractionContext, InteractionEffect, InteractionInput, Interacti
 export { IDLE_STATE } from './interaction/types';
 export { reduceInteraction } from './interaction/machine';
 export type { PlacementInput, PlacementProgress, PlacementResult } from './interaction/placement';
-export { PLACEMENT_START, placementPreview, reducePlacement, ZERO_LENGTH_PX } from './interaction/placement';
+export { PLACEMENT_START, placementPreview, placementSnap, reducePlacement, ZERO_LENGTH_PX } from './interaction/placement';
+export type { MagnetMode, SnapResult } from './interaction/snap';
+export { effectiveMagnet, snapAnchor, WEAK_MAGNET_PX } from './interaction/snap';
 export { cursorFor, CursorSync } from './interaction/cursor';
 export { DUPLICATE_OFFSET_PX, duplicateDrawing } from './interaction/duplicate';
 export type { MovedDrawing } from './interaction/move';
-export { constrainAngle, constrainMove, dragHandle, KEYBOARD_CURSOR_INSET_PX, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeAnchors, SHIFT_STEP_FACTOR } from './interaction/move';
+export {
+  constrainAngle,
+  constrainMove,
+  dragHandle,
+  handleSnap,
+  KEYBOARD_CURSOR_INSET_PX,
+  keyboardCursorStart,
+  moveDrawings,
+  moveKeyboardCursor,
+  nudgeAnchors,
+  SHIFT_STEP_FACTOR,
+} from './interaction/move';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';

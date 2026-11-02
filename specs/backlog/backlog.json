@@ -1034,7 +1034,8 @@
                 "Anchor time snaps to the nearest bar time; no snapping in future space.",
                 "Snapping applies to placement, handle drags and keyboard placement."
               ],
-              "tasks": ["Implement `snap.ts` using `host.nearestBar`.", "Tests per mode."]
+              "tasks": ["Implement `snap.ts` using `host.nearestBar`.", "Tests per mode."],
+              "status": "done"
             },
             {
               "id": "E04-F05-S02",
@@ -1050,7 +1051,8 @@
               "userStory": "As a trader, I want to see where the anchor will snap so that there are no surprises.",
               "sds": ["FR-INT-043", "FR-SC-002"],
               "acceptance": ["When snapping applies, the scene contains a snap indicator at the snapped point.", "No indicator when snapping is off or not applicable."],
-              "tasks": ["Feed snap results to the scene builder.", "Tests."]
+              "tasks": ["Feed snap results to the scene builder.", "Tests."],
+              "status": "done"
             }
           ]
         },

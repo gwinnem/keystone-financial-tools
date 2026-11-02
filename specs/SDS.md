@@ -608,6 +608,28 @@ position. An arrow key with nothing selected, or only drawings that are gone, is
 - FR-INT-042: Holding Ctrl/Cmd inverts the magnet temporarily (off becomes strong, on becomes off).
 - FR-INT-043: The snapped point is shown in the preview and handle (snap indicator in the scene).
 
+The pure part is in `snap.ts`: `snapAnchor(anchor, magnet, host)` returns the snapped anchor and its
+point in the plot, or `null` where nothing snaps; `effectiveMagnet(mode, invert)` applies the
+Ctrl/Cmd inversion. `reducePlacement` and `dragHandle` take the effective magnet as a last argument
+(default `off`, so callers that do not use the magnet are unchanged) and snap the anchors they
+produce. `placementSnap(progress, point, magnet, host)` and `handleSnap(drawing, handle, origin,
+point, shift, host, magnet)` return the point the pointer will snap to, which the controller passes
+to `buildScene` as `snap` (FR-SC-002). The controller reads Ctrl/Cmd from each pointer or key event,
+so the stored mode (`setMagnet`) never changes.
+
+Decisions made while implementing (E04-F05): the time snaps to the nearest bar when it lies within
+half a `barInterval` of it; further away (future space, or a gap in the data) there is no snapping
+at all, neither time nor price, so the anchor stays free. The price snaps to the open, high, low or
+close of that bar nearest to the pointer in pixels on the anchor's own y-axis (the first of open,
+high, low, close on a tie). `strong` always snaps where a bar is found; `weak` snaps the whole point,
+time and price together, only when the nearest value is within `WEAK_MAGNET_PX` (12, exactly 12
+snaps) Euclidean pixels of the pointer, otherwise the anchor stays free. A second anchor snaps on
+the y-axis of the first (FR-INT-012). Handle drags snap the handles that set both time and price
+(trend line, fans, arcs, retracements, rectangle corners, a text note); rectangle edge handles,
+horizontal lines and time zones set one coordinate and do not snap, a body move does not snap, and
+a Shift angle-locked drag keeps its angle and does not snap. A keyboard cursor snaps like a
+pointer. The indicator is absent when the magnet is off, outside a pane or where nothing snaps.
+
 ### 9.6 Text editing
 
 - FR-INT-050: Text notes are edited with `host.editText` when present, otherwise through the
