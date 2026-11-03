@@ -128,6 +128,17 @@ describe('IndexedDbRepository corrupt records (FR-PER-004)', () => {
     expect(await rawGet(db, KEY)).toStrictEqual(value);
   });
 
+  it('resolves to an empty document plus the KFT-E-SCOPE issue for a record of another scope, and leaves the record in place', async () => {
+    const factory = newFactory();
+    const db = await rawOpen(factory, 'db', 1, withDrawingsStore);
+    await rawPut(db, KEY, documentOf('MSFT', line('a')));
+    expect(await new IndexedDbRepository({ dbName: 'db', factory }).load(AAPL)).toStrictEqual({
+      document: EMPTY,
+      issue: { code: 'KFT-E-SCOPE', message: 'The document belongs to MSFT, not to AAPL.' },
+    });
+    expect(await rawGet(db, KEY)).toStrictEqual(documentOf('MSFT', line('a')));
+  });
+
   it('migrates a version 1 record', async () => {
     const factory = newFactory();
     const db = await rawOpen(factory, 'db', 1, withDrawingsStore);

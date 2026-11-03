@@ -87,6 +87,29 @@ export function describeRepositoryContract(name: string, create: () => DrawingRe
       await expect(create().remove(AAPL)).resolves.toBeUndefined();
     });
 
+    it('resolves an empty document plus the KFT-E-SCOPE issue for a document that belongs to another symbol (E06-F03-S02)', async () => {
+      const repository = create();
+      await repository.save(AAPL, documentOf('MSFT', line('a')));
+      expect(await repository.load(AAPL)).toStrictEqual({
+        document: { version: 2, drawings: [] },
+        issue: { code: 'KFT-E-SCOPE', message: 'The document belongs to MSFT, not to AAPL.' },
+      });
+    });
+
+    it('resolves the issue for a document that belongs to another timeframe', async () => {
+      const repository = create();
+      await repository.save(AAPL_1H, { version: 2, scope: { symbol: 'AAPL', timeframe: '4h' }, drawings: [line('a')] });
+      expect((await repository.load(AAPL_1H)).issue).toStrictEqual({ code: 'KFT-E-SCOPE', message: 'The document belongs to AAPL:4h, not to AAPL:1h.' });
+    });
+
+    it('loads a document without a scope, and a timeframe independent one under a timeframe scope', async () => {
+      const repository = create();
+      await repository.save(AAPL_1H, { version: 2, drawings: [line('a')] });
+      expect(await repository.load(AAPL_1H)).toStrictEqual({ document: { version: 2, drawings: [line('a')] } });
+      await repository.save(AAPL_1H, documentOf('AAPL', line('b')));
+      expect(await repository.load(AAPL_1H)).toStrictEqual({ document: documentOf('AAPL', line('b')) });
+    });
+
     it('does not validate the drawings: the document comes back as stored, for loadStore and importDocument to report on', async () => {
       const repository = create();
       const document = { version: 2, drawings: [line('a'), { id: 'broken' }] } as unknown as DrawingDocument;

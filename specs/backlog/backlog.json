@@ -1490,7 +1490,8 @@
                 "`flush()` saves pending changes immediately and resolves when written; `stop()` flushes then unsubscribes.",
                 "Save errors call `onError` and retry on the next change; they never throw into the store."
               ],
-              "tasks": ["Implement with an injectable scheduler.", "Tests with fake timers."]
+              "tasks": ["Implement with an injectable scheduler.", "Tests with fake timers."],
+              "status": "done"
             },
             {
               "id": "E06-F03-S02",
@@ -1501,7 +1502,8 @@
                 "`scopeKey({ symbol, timeframe? })` returns `keystone-drawings:<symbol>[:<timeframe>]` with symbols URL-encoded.",
                 "Documents store their scope; loading checks it matches and reports a mismatch issue otherwise."
               ],
-              "tasks": ["Implement `scope.ts`.", "Tests."]
+              "tasks": ["Implement `scope.ts`.", "Tests."],
+              "status": "done"
             }
           ]
         },

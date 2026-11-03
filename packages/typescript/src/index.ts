@@ -1,9 +1,11 @@
 export * from 'keystone-financial-tools-core';
 export type { DrawingStorage } from './persistence';
-export { autoSave, loadDrawings, saveDrawings } from './persistence';
+export { loadDrawings, saveDrawings } from './persistence';
+export type { AutoSaveOptions, AutoSaveScheduler, AutoSaver } from './auto-save';
+export { autoSave } from './auto-save';
 export type { DrawingRepository, DrawingScope, RepositoryAction, RepositoryKind, RepositoryLoad, RepositoryTier } from './repository';
 export { readStored, REPOSITORY_TIERS, RepositoryError } from './repository';
-export { scopeKey } from './scope';
+export { checkScope, scopeKey } from './scope';
 export { MemoryRepository } from './memory-repository';
 export type { RepositoryStorage } from './web-storage-repository';
 export { WebStorageRepository } from './web-storage-repository';

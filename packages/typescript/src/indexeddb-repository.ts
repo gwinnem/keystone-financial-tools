@@ -37,7 +37,8 @@ export interface IndexedDbRepositoryOptions {
  * IndexedDB database. The database is opened on first use, at version 1 (created or upgraded as
  * needed), and kept open.
  *
- * - A corrupt record loads as an empty document plus the issue and is left in place.
+ * - A corrupt record, or one that belongs to another scope, loads as an empty document plus the
+ *   issue and is left in place.
  * - Every failure (no IndexedDB, a newer database version, a blocked or aborted transaction, a
  *   document that cannot be stored) rejects with a `RepositoryError`; a failed open is retried by
  *   the next call.
@@ -60,7 +61,7 @@ export class IndexedDbRepository implements DrawingRepository {
 
   async load(scope: DrawingScope): Promise<RepositoryLoad> {
     const key = scopeKey(scope);
-    return readStored(await this.run('read', key, 'readonly', (store) => store.get(key)));
+    return readStored(await this.run('read', key, 'readonly', (store) => store.get(key)), scope);
   }
 
   async save(scope: DrawingScope, document: DrawingDocument): Promise<void> {

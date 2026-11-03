@@ -189,6 +189,14 @@
   they share the repository's text format, key rules and `KFT-E-JSON` issue (`serializeDocument`,
   `invalidJsonIssue`) instead of calling `WebStorageRepository`; a document saved under `scopeKey(scope)`
   loads in either direction. The README has a migration section.
+- Core (E06-F03): new issue code `KFT-E-SCOPE` in `DrawingIssueCode`.
+- TypeScript (E06-F03): `autoSave(store, repository, scope, { debounceMs = 500, onError, scheduler })` saves
+  once changes settle and returns `{ flush(), stop() }`; saves run in order, a failed save calls `onError`
+  and is retried by the next change, `flush()` or `stop()`, and nothing throws into the store. It is an
+  overload of the existing `autoSave(store, storage, key)`, which keeps working. `checkScope(document,
+  scope)` reports a document of another symbol or timeframe as `KFT-E-SCOPE`; the three repositories (and
+  `readStored(value, scope)`) use it, so `load` resolves an empty document plus the issue and leaves the
+  entry in place.
 
 ### Specification and backlog
 

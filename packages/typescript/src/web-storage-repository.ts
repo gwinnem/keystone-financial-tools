@@ -13,7 +13,8 @@ export interface RepositoryStorage {
  * Stores each document as JSON text under `<prefix>:<symbol>[:<timeframe>]` in `localStorage`,
  * `sessionStorage` or any object with the same three methods.
  *
- * - A corrupt entry loads as an empty document plus the issue and is left in place.
+ * - A corrupt entry, or one that belongs to another scope, loads as an empty document plus the
+ *   issue and is left in place.
  * - A storage that refuses a write (quota, private mode) makes `save` reject with a
  *   `RepositoryError`; the document is written with one `setItem`, so nothing partial is stored and
  *   the previous document stays.
@@ -42,7 +43,7 @@ export class WebStorageRepository implements DrawingRepository {
     } catch (error) {
       throw repositoryFailure('read', key, error);
     }
-    return parseStored(text, key);
+    return parseStored(text, key, scope);
   }
 
   async save(scope: DrawingScope, document: DrawingDocument): Promise<void> {

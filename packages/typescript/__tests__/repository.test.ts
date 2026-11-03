@@ -47,6 +47,25 @@ describe('readStored', () => {
   it('reports why a document could not be read', () => {
     expect(readStored({ version: 3, drawings: [] }).issue).toStrictEqual({ code: 'KFT-E-JSON', message: NOT_A_DOCUMENT });
   });
+
+  it('checks the document against the scope it is given (E06-F03-S02)', () => {
+    const document = documentOf('AAPL', line('a'));
+    expect(readStored(document, { symbol: 'AAPL' })).toStrictEqual({ document });
+    expect(readStored(document, { symbol: 'MSFT' })).toStrictEqual({
+      document: { version: 2, drawings: [] },
+      issue: { code: 'KFT-E-SCOPE', message: 'The document belongs to AAPL, not to MSFT.' },
+    });
+  });
+
+  it('does not check the scope when none is given', () => {
+    const document = documentOf('AAPL', line('a'));
+    expect(readStored(document)).toStrictEqual({ document });
+  });
+
+  it('reports an unreadable document before a scope mismatch, and nothing stored without an issue, whatever the scope', () => {
+    expect(readStored({ version: 3, drawings: [] }, { symbol: 'AAPL' }).issue?.code).toBe('KFT-E-JSON');
+    expect(readStored(undefined, { symbol: 'AAPL' })).toStrictEqual({ document: { version: 2, drawings: [] } });
+  });
 });
 
 describe('parseStored', () => {
@@ -64,6 +83,12 @@ describe('parseStored', () => {
       document: { version: 2, drawings: [] },
       issue: { code: 'KFT-E-JSON', message: 'The drawings saved under keystone-drawings:AAPL are not valid JSON.' },
     });
+  });
+
+  it('passes the scope on to the check', () => {
+    const text = JSON.stringify(documentOf('AAPL', line('a')));
+    expect(parseStored(text, 'key', { symbol: 'AAPL' })).toStrictEqual({ document: documentOf('AAPL', line('a')) });
+    expect(parseStored(text, 'key', { symbol: 'MSFT' }).issue).toStrictEqual({ code: 'KFT-E-SCOPE', message: 'The document belongs to AAPL, not to MSFT.' });
   });
 
   it('reports JSON that is not a document', () => {

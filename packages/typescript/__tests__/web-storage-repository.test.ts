@@ -90,6 +90,17 @@ describe('WebStorageRepository corrupt entries (FR-PER-004)', () => {
     expect(storage.items.get(key)).toBe(text);
   });
 
+  it('resolves to an empty document plus the KFT-E-SCOPE issue for an entry of another scope, and leaves the entry in place', async () => {
+    const storage = new FakeStorage();
+    const text = JSON.stringify(documentOf('MSFT', line('a')));
+    storage.items.set(key, text);
+    expect(await new WebStorageRepository(storage).load(AAPL)).toStrictEqual({
+      document: EMPTY,
+      issue: { code: 'KFT-E-SCOPE', message: 'The document belongs to MSFT, not to AAPL.' },
+    });
+    expect(storage.items.get(key)).toBe(text);
+  });
+
   it('loads the valid part of a document and leaves the broken drawings for loadStore', async () => {
     const storage = new FakeStorage();
     storage.items.set(key, JSON.stringify({ version: 2, drawings: [line('a'), { id: 'broken' }] }));

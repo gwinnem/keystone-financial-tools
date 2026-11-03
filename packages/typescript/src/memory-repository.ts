@@ -18,7 +18,7 @@ export class MemoryRepository implements DrawingRepository {
 
   async load(scope: DrawingScope): Promise<RepositoryLoad> {
     const key = scopeKey(scope);
-    return parseStored(this.items.get(key) ?? null, key);
+    return parseStored(this.items.get(key) ?? null, key, scope);
   }
 
   async save(scope: DrawingScope, document: DrawingDocument): Promise<void> {

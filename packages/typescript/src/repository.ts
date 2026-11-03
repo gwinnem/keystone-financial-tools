@@ -1,4 +1,5 @@
 import { DOCUMENT_VERSION, readDocument, type DrawingDocument, type DrawingError, type DrawingIssue } from 'keystone-financial-tools-core';
+import { checkScope } from './scope';
 
 /**
  * What a document is stored for: a symbol and, optionally, a timeframe. Drawings are timeframe
@@ -14,7 +15,7 @@ export interface DrawingScope {
 export interface RepositoryLoad {
   /** The stored document (version 2, older versions are migrated); an empty document when nothing is stored or the entry is unreadable. */
   readonly document: DrawingDocument;
-  /** Why the stored entry could not be read (`KFT-E-JSON`); absent when it was read or nothing was stored. */
+  /** Why the stored entry was not used (`KFT-E-JSON`: not a drawing document; `KFT-E-SCOPE`: it belongs to another scope); absent when it was read or nothing was stored. */
   readonly issue?: DrawingIssue;
 }
 
@@ -22,8 +23,9 @@ export interface RepositoryLoad {
  * Where drawings live. All three methods are asynchronous and take the scope of the document.
  *
  * - `load` resolves in every case where the backend itself works: an empty document when nothing is
- *   stored, and an empty document plus the issue when the stored entry is corrupt. It does not
- *   validate the drawings; `loadStore` and `importDocument` do that and report the ones they skip.
+ *   stored, and an empty document plus the issue when the stored entry is corrupt or belongs to
+ *   another scope (`checkScope`). It does not validate the drawings; `loadStore` and `importDocument`
+ *   do that and report the ones they skip.
  * - `save` replaces the document of the scope as a whole.
  * - `remove` deletes it; removing a scope that was never saved resolves too.
  *
@@ -94,22 +96,28 @@ export function emptyDocument(): DrawingDocument {
  * `KFT-E-JSON` issue when the value is not a drawing document. Never throws. Use it in your own
  * repository so that it follows the same rules.
  *
+ * Pass the `scope` that was loaded to also have the document checked against it (`checkScope`): a
+ * document of another scope gives an empty document plus the `KFT-E-SCOPE` issue.
+ *
  * @example
  * ```ts
- * return readStored(await response.json());
+ * return readStored(await response.json(), scope);
  * ```
  */
-export function readStored(value: unknown): RepositoryLoad {
+export function readStored(value: unknown, scope?: DrawingScope): RepositoryLoad {
   if (value === undefined) return { document: emptyDocument() };
+  let document: DrawingDocument;
   try {
-    return { document: readDocument(value) };
+    document = readDocument(value);
   } catch (error) {
     return { document: emptyDocument(), issue: (error as DrawingError).issues[0] };
   }
+  const issue = scope === undefined ? undefined : checkScope(document, scope);
+  return issue === undefined ? { document } : { document: emptyDocument(), issue };
 }
 
 /** Like `readStored` for stored text: `null` means nothing is stored, text that is not JSON is reported as `KFT-E-JSON`. */
-export function parseStored(text: string | null, key: string): RepositoryLoad {
+export function parseStored(text: string | null, key: string, scope?: DrawingScope): RepositoryLoad {
   if (text === null) return readStored(undefined);
   let value: unknown;
   try {
@@ -117,7 +125,7 @@ export function parseStored(text: string | null, key: string): RepositoryLoad {
   } catch {
     return { document: emptyDocument(), issue: invalidJsonIssue(key) };
   }
-  return readStored(value);
+  return readStored(value, scope);
 }
 
 /** The repositories of this package. */

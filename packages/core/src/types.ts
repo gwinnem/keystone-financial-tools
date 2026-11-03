@@ -160,6 +160,7 @@ export type DrawingIssueCode =
   | 'KFT-E-META'
   | 'KFT-E-MISSING'
   | 'KFT-E-JSON'
+  | 'KFT-E-SCOPE'
   | 'KFT-E-HOST';
 
 export interface DrawingIssue {

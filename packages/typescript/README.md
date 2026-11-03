@@ -24,7 +24,9 @@ interface DrawingRepository {
 | `WebStorageRepository(storage, prefix?)` | `localStorage`, `sessionStorage` or any `getItem`/`setItem`/`removeItem` object | Community |
 | `IndexedDbRepository({ dbName, factory? })` | One IndexedDB record per scope, for many drawings per symbol | Professional |
 | `scopeKey(scope, prefix?)` | The storage key of a scope: `keystone-drawings:<symbol>[:<timeframe>]`, URL-encoded | |
-| `readStored(value)` | For your own repository: turns what you stored into the result of `load` | |
+| `checkScope(document, scope)` | The `KFT-E-SCOPE` issue when a document belongs to another symbol or timeframe, otherwise `undefined` | |
+| `autoSave(store, repository, scope, options?)` | Debounced saving with `flush()` and `stop()` (see Auto-save) | |
+| `readStored(value, scope?)` | For your own repository: turns what you stored into the result of `load`, checking the scope | |
 | `RepositoryError` | What a failing backend rejects with; `reason` is what it threw | |
 | `REPOSITORY_TIERS` | The tier of each repository under the proposed split | |
 
@@ -45,6 +47,10 @@ const { document, issue } = await repository.load({ symbol: 'AAPL' });
   stored entry that is not a drawing document (text that is not JSON, a newer version, an invalid
   scope) gives an empty document plus the `KFT-E-JSON` issue, and the entry is left in place. Older
   documents (version 1) are migrated.
+- A document that names another symbol or timeframe than the scope it is loaded for (for example a
+  value copied between keys) gives an empty document plus the `KFT-E-SCOPE` issue, and is left in
+  place. A document without a scope matches every scope, and one that names no timeframe matches
+  every timeframe. `checkScope` does this check.
 - `load` does not validate the drawings; `importDocument` skips the invalid ones and reports them.
 - `save` replaces the document of the scope as a whole; the stored document is a copy. `remove`
   deletes it, and removing a scope that was never saved resolves too.
@@ -55,9 +61,37 @@ const { document, issue } = await repository.load({ symbol: 'AAPL' });
   and keeps it open. It rejects when IndexedDB is missing (for example on the server) or the database
   has a newer version, and tries again on the next call.
 
+### Auto-save
+
+`autoSave` saves the store to a repository once its changes have settled, so dragging a drawing
+writes once instead of on every frame.
+
+```ts
+import { autoSave, WebStorageRepository } from 'keystone-financial-tools-typescript';
+
+const saver = autoSave(store, new WebStorageRepository(localStorage), { symbol: 'AAPL' }, {
+  debounceMs: 300, // default 500
+  onError: (error) => console.warn('Drawings were not saved', error),
+});
+
+await saver.flush(); // save pending changes now and wait until they are written
+await saver.stop(); // flush, then stop watching the store
+```
+
+- Nothing is saved until the store changes; every change restarts the timer.
+- Saves run one after the other, so an older document never overwrites a newer one; a change made
+  while a save runs is saved afterwards.
+- A failed save calls `onError` and never throws into the store. The changes stay pending: the next
+  change, `flush()` or `stop()` tries again. `flush()` and `stop()` resolve either way.
+- `scheduler` (`{ setTimeout, clearTimeout }`) replaces the global timer, for tests that run time by
+  hand.
+- `autoSave(store, storage, key)` with a string key is the 0.1 form (deprecated, below); it saves at
+  once after every change and returns a function.
+
 ### Your own backend
 
-Implement the three methods and use `readStored` so that corrupt data follows the same rules. A REST
+Implement the three methods and use `readStored(value, scope)` so that corrupt data and documents of
+another scope follow the same rules. A REST
 repository:
 
 ```ts
@@ -68,7 +102,7 @@ class RestRepository implements DrawingRepository {
 
   async load(scope: DrawingScope) {
     const response = await fetch(this.url(scope));
-    return response.status === 404 ? readStored(undefined) : readStored(await response.json());
+    return response.status === 404 ? readStored(undefined) : readStored(await response.json(), scope);
   }
   async save(scope: DrawingScope, document: DrawingDocument) {
     await fetch(this.url(scope), { method: 'PUT', body: JSON.stringify(document) });
@@ -121,8 +155,9 @@ const { document, issue } = await repository.load({ symbol: 'AAPL' });
 
 - Data saved under a custom key is not found by the repository (it uses `scopeKey`). Move it once:
   read it with `loadDrawings(localStorage, 'chart-aapl')`, then `repository.save` it.
-- `autoSave(store, repository, scope)` (debounced) replaces the storage form of `autoSave`, and
-  `loadStore(repository, scope)` replaces `loadDrawings`; both arrive with the rest of E06.
+- `autoSave(store, repository, scope)` (debounced, see Auto-save) replaces the storage form of
+  `autoSave`, and `loadStore(repository, scope)` replaces `loadDrawings`; `loadStore` arrives with
+  the rest of E06.
 
 The core's `importDocument(store, json, { mode })` is also available here for importing a file
 while keeping the valid drawings of a partly broken document.

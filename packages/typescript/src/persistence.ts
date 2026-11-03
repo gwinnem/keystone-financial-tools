@@ -61,8 +61,10 @@ export function loadDrawings(storage: DrawingStorage, key: string): DrawingStore
 /**
  * Saves the store after every change; returns the function that stops saving.
  *
- * @deprecated Use the repository form of `autoSave` (E06-F03): `autoSave(store, repository, scope)`
- * saves once changes settle instead of on every change.
+ * Exported from the package index as the storage form of `autoSave`, which also accepts a repository.
+ *
+ * @deprecated Use `autoSave(store, repository, scope)`: it saves once changes settle instead of on
+ * every change, reports failures and can be flushed.
  *
  * @example Migrating
  * ```ts

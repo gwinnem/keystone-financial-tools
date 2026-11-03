@@ -238,6 +238,7 @@ interface DrawingDocument {
 | `KFT-E-MISSING` | Update or remove of a drawing that is not in the store |
 | `KFT-E-LOCKED` | Interaction tried to change a locked drawing (reported as an event, not thrown) |
 | `KFT-E-JSON` | A document that is not valid JSON or has an unsupported version |
+| `KFT-E-SCOPE` | A loaded document belongs to another symbol or timeframe than the one it was loaded for (reported, not thrown) |
 | `KFT-E-HOST` | The host does not satisfy the contract (wrong `apiVersion`, missing member) |
 | `KFT-E-LICENSE` | A tool or feature is not included in the active license tier (§12) |
 
@@ -786,9 +787,28 @@ Decisions of E06-F01 (0.1 helpers):
   delegate to the asynchronous `WebStorageRepository`; they share its codec instead
   (`serializeDocument`, `invalidJsonIssue`). A document saved under `scopeKey(scope)` loads in either
   direction.
-- The repository form of `autoSave(store, repository, scope, options)` (E06-F03) will be an overload of
+- The repository form of `autoSave(store, repository, scope, options)` (E06-F03) is an overload of
   the same export, told apart by its third argument (a string key versus a scope); the helper that
   takes a storage keeps working.
+
+Decisions of E06-F03 (auto-save and scopes):
+
+- `autoSave(store, repository, scope, { debounceMs = 500, onError, scheduler })` returns
+  `{ flush(), stop() }`. Every store change restarts the timer; nothing is saved until the store
+  changes. Saves run one after the other (a queue), so an older document never lands after a newer
+  one, and a change made during a save is saved afterwards. `flush()` saves pending changes at once
+  and resolves when written, also after a save that was already running; `stop()` flushes, then
+  unsubscribes, and can be called twice.
+- A failed save calls `onError` and never throws into the store; `flush()` and `stop()` still resolve.
+  The changes stay pending, so the next change, `flush()` or `stop()` tries again. An error thrown by
+  `onError` itself is ignored. The `scheduler` (`setTimeout`/`clearTimeout`) is injectable; the default
+  is the global timer.
+- `checkScope(document, scope)` returns the `KFT-E-SCOPE` issue when a document names a symbol or a
+  timeframe other than the ones it was loaded for. A document without a scope (version 1, written by
+  hand) matches every scope, and a document that names no timeframe is timeframe independent and matches
+  every timeframe. The repositories call it in `load` (through `readStored(value, scope)`): a mismatch
+  resolves like a corrupt entry, with an empty document plus the issue, and the entry is left in place.
+- `KFT-E-SCOPE` is a new issue code (§5.6); `DrawingIssueCode` in the core gains it.
 
 ## 11. Integration with keystone-charts-financial
 

@@ -959,6 +959,7 @@ options, locked, hidden, zIndex, meta) and never throws.
 | `KFT-E-META` | `meta` is not a plain object, or holds a value that is not JSON-safe (the message names its path, e.g. `meta.a.b[3]`) |
 | `KFT-E-MISSING` | Update or reorder of a drawing that is not in the store |
 | `KFT-E-JSON` | Not valid JSON, or not a document of version 1 or 2, or an invalid scope |
+| `KFT-E-SCOPE` | A loaded document belongs to another symbol or timeframe than the one it was loaded for (reported by the repositories of `keystone-financial-tools-typescript`, not thrown) |
 | `KFT-E-HOST` | The host does not satisfy contract version 2 |
 
 ```ts
