@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Vue controller adapter (E07-F02): `useDrawingTools(host, options?)` returns the controller, the store,
+  the refs `state`, `drawings` and `textEdit` and the actions, and destroys the tools with the scope;
+  `KeystoneTextEditor` is the default text editor (textarea, Ctrl or Cmd with Enter confirms, Escape
+  cancels, blur confirms; keys and pointer events do not reach the chart). Core: `TextEditor`,
+  `TextEditSession`, `textEditorKeyAction`, `TEXT_EDITOR_LABEL`, and the option
+  `DrawingToolsOptions.editText`, the editor for a host that has none.
 - Playground and e2e (pulled forward from E08, QA-006, QA-008): `apps/playground` is a minimal canvas
   chart that implements `DrawingHost` v2 (`createPlotHost`, one pane, candles, a toolbar, undo and redo,
   magnet, persistence to `localStorage`) and passes `runHostConformance`; `e2e/` holds the Playwright

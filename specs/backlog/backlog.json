@@ -1608,7 +1608,8 @@
                 "No business logic in the adapter: it only maps controller state and events to framework reactivity (AR-2).",
                 "Tests cover creation, state updates on controller events and cleanup."
               ],
-              "tasks": ["Implement the adapter.", "Tests with the mock host.", "README section and example."]
+              "tasks": ["Implement the adapter.", "Tests with the mock host.", "README section and example."],
+              "status": "done"
             },
             {
               "id": "E07-F02-S02",
@@ -1621,7 +1622,8 @@
                 "Text is set with `textContent`/bindings only, never as HTML (NFR-SEC-002)."
               ],
               "tasks": ["Implement the editor.", "Tests.", "a11y check (label, focus management)."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             }
           ],
           "labels": ["area:vue"]

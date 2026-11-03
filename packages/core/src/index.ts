@@ -60,6 +60,8 @@ export {
   nudgeAnchors,
   SHIFT_STEP_FACTOR,
 } from './interaction/move';
+export type { TextEditorKeyAction, TextEditorKeyEvent, TextEditorListener, TextEditSession } from './text-editor';
+export { TEXT_EDITOR_LABEL, TextEditor, textEditorKeyAction } from './text-editor';
 export type {
   DrawingTools,
   DrawingToolsBlocked,

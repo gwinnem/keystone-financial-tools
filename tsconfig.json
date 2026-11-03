@@ -16,6 +16,7 @@
     "noImplicitReturns": true,
     "noImplicitOverride": true,
     "paths": {
+      "keystone-financial-tools-core/testing": ["./packages/core/src/testing/index.ts"],
       "keystone-financial-tools-core": ["./packages/core/src"],
       "keystone-financial-tools-typescript": ["./packages/typescript/src"],
       "keystone-financial-tools-vue": ["./packages/vue/src"],

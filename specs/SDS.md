@@ -834,6 +834,34 @@ Decisions of E06-F04 (import, export and safe loading):
   packages do not share them); the same shapes (version 1, version 2 with scope, a broken drawing, a
   repeated id) are covered.
 
+Decisions of E07-F02 (Vue controller adapter):
+
+- AR-2 (no business logic in adapters) decides where the default text editor lives. The editing
+  session is the core's: `TextEditor` holds the open `TextEditSession` (`request`, `confirm(text)`,
+  `cancel()`), settles it once, replaces an open one (the first resolves with null) and tells its
+  subscribers when the session changes. `textEditorKeyAction` maps a key to `confirm` (Ctrl or Cmd with
+  Enter), `cancel` (Escape) or nothing, and nothing while an input method is composing. Vue, React and
+  Angular only show the session, so they cannot differ in behaviour.
+- `DrawingToolsOptions.editText` is a new core option: the editor for a host that has no `editText`.
+  A host's own editor wins. This lets an adapter offer an editor without wrapping the host (a proxy
+  would break hosts that are classes with private fields). The controller's rules for the answer are
+  unchanged: null removes a new note without a history entry, an unavailable or failing editor keeps
+  the empty note and reports `text-editor`, and an answer after `destroy()` is dropped.
+- `useDrawingTools(host, options?)` takes the options of `createDrawingTools`, except that `editText`
+  can also be `false`. Left out it is the default `TextEditor`, a function replaces it and `false`
+  means no editor. It returns the controller, the store (`useDrawings`), the refs `state`, `drawings`
+  and `textEdit`, and the controller's actions. The refs are shallow and are replaced, never mutated.
+  When the scope is disposed it unsubscribes, destroys the controller, then cancels an open editor, so
+  that answer is dropped and not applied.
+- `KeystoneTextEditor` renders a textarea for `textEdit` at `request.x`, `request.y` and
+  `request.fontSize`, inside the chart's positioned element. Ctrl or Cmd with Enter confirms, Escape
+  cancels and leaving the textarea confirms (once: the session ignores later answers). Keydown and the
+  pointer events stop at the textarea, so Delete, Backspace and clicks do not reach the host's
+  listeners. The text is a `value`, never HTML (NFR-SEC-002). Focus moves into the textarea and back to
+  the element that had it. Each session gets its own textarea (its own text, selection and focus).
+  `TEXT_EDITOR_LABEL` is the default accessible name; `label` replaces it until E07-F06 adds the
+  message table.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

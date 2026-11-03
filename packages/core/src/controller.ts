@@ -56,6 +56,12 @@ export interface DrawingToolsOptions {
   readonly createId?: () => string;
   /** Called with a message for every input the state machine ignores (debug level only). */
   readonly debug?: (message: string) => void;
+  /**
+   * The editor of text notes for a host that has no `editText` (FR-INT-050); a host's own editor is
+   * used when it has one. It resolves with the new text, or null when the editing is cancelled. The
+   * adapters pass the `edit` of a `TextEditor` here.
+   */
+  readonly editText?: (request: TextEditRequest) => Promise<string | null>;
 }
 
 /** The options `setOptions` can change while the tools run. */
@@ -235,6 +241,7 @@ class DrawingToolsController implements DrawingTools {
   private readonly newId: () => string;
   private readonly defaultYAxisId: string;
   private readonly debug: ((message: string) => void) | undefined;
+  private readonly fallbackEditText: ((request: TextEditRequest) => Promise<string | null>) | undefined;
   private readonly context: InteractionContext;
   private readonly selectedFor = memoOne((ids: readonly string[]): ReadonlySet<string> => new Set(ids));
   private readonly activeFor = memoOne((state: InteractionState) => (state.type === 'dragging-handle' ? { drawingId: state.drawingId, index: state.handle } : null));
@@ -276,6 +283,7 @@ class DrawingToolsController implements DrawingTools {
     this.newId = options.createId ?? defaultCreateId;
     this.defaultYAxisId = options.defaultYAxisId ?? 'price';
     this.debug = options.debug;
+    this.fallbackEditText = options.editText;
     this.store = options.store ?? new DrawingStore();
     this.context = {
       lookup: (id) => {
@@ -819,7 +827,7 @@ class DrawingToolsController implements DrawingTools {
       const drawing = this.store.get(drawingId) as Drawing;
       const origin = anchorToPoint(drawing.anchors[0] as Anchor, this.host);
       const request: TextEditRequest = { drawingId, text: drawing.text as string, x: origin.x, y: origin.y, fontSize: resolveStyle(drawing, this.theme).fontSize };
-      answer = await this.host.editText?.(request);
+      answer = this.host.editText === undefined ? await this.fallbackEditText?.(request) : await this.host.editText(request);
     } catch (error) {
       this.fail('text-editor', error);
     }
