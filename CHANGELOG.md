@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Playground and e2e (pulled forward from E08, QA-006, QA-008): `apps/playground` is a minimal canvas
+  chart that implements `DrawingHost` v2 (`createPlotHost`, one pane, candles, a toolbar, undo and redo,
+  magnet, persistence to `localStorage`) and passes `runHostConformance`; `e2e/` holds the Playwright
+  tests (place, magnet snap, select, move, resize, delete, undo and redo, reload) for Chromium, Firefox
+  and WebKit, run by the CI job `e2e`. The workspace now includes `apps/*` and `e2e`.
+
 - Initial monorepo: core, typescript, vue, react and angular packages.
 - Core: drawing model (`Anchor`, `Drawing`, `DrawingKind` with eight kinds), `ANCHOR_COUNT`,
   `DRAWING_KINDS`, `isDrawingKind`, `isValidAnchor`, `validateDrawing` and `DrawingError`.

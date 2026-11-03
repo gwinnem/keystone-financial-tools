@@ -844,6 +844,26 @@ Decisions of E06-F04 (import, export and safe loading):
 - FR-INTG-004: This repo's `apps/playground` contains a minimal canvas reference host (not the
   chart) so e2e tests do not depend on the chart's release cycle.
 
+Decisions of the playground slice (pulled forward from E08-F01-S01 and E08-F02-S01 so the e2e suite
+can start while E07 is still open):
+
+- `apps/playground` is a workspace app (`apps/*` in `pnpm-workspace.yaml`) and `e2e/` a workspace
+  package with the Playwright tests (`pnpm --filter keystone-financial-tools-e2e test:e2e`). The
+  playground resolves the packages from their sources, so neither needs a build first.
+- The host logic has no DOM: `createPlotHost` (scales, `nearestBar`, listener registries,
+  `dispatchPointer`, `dispatchKey`, `changeViewport`) is unit tested under Node with 100% coverage
+  and passes `runHostConformance` (QA-008). `main.ts`, `dom.ts` and `render.ts` only wire it to the
+  DOM and the canvas; the e2e tests cover them and they are left out of the coverage gate.
+- Pulled forward: one pane (`price`), a fixed viewport (100 candles and 20 empty slots), candles from
+  a seeded generator, a simple Fibonacci renderer, a toolbar of all eight kinds, undo, redo, delete
+  and magnet, persistence to `localStorage` through `WebStorageRepository`, `loadStore` and
+  `autoSave`. The page exposes `window.playground` (`host`, `tools`, `store`, `bars`) for the tests.
+- Still in E08: the second pane, zoom and scroll, the text editor (`editText`), the toolbar from
+  `TOOL_CATALOG` (E07), the Vue, React and Angular demo pages, the keyboard-only and axe tests,
+  multi-select, per-tool coverage of the e2e flows and the touch profile.
+- The e2e suite runs in Chromium, Firefox and WebKit (CI job `e2e`); it is not part of the
+  pre-commit hook.
+
 ## 12. Licensing
 
 - FR-LIC-001: Tools and features are gated by a `LicenseContext` from keystone-license; without a

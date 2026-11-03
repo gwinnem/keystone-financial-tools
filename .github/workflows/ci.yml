@@ -55,6 +55,44 @@ jobs:
       - name: Build all packages
         run: pnpm build
 
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers (Chromium, Firefox, WebKit)
+        run: pnpm --filter keystone-financial-tools-e2e test:e2e:install
+
+      - name: End-to-end tests
+        # Starts the playground (apps/playground) itself, see e2e/playwright.config.ts.
+        run: pnpm --filter keystone-financial-tools-e2e test:e2e
+
+      - name: Upload report and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
   mutation:
     name: Mutation (${{ matrix.package }})
     # Mutation testing is slow, so it only runs for changes headed to main: pull requests into main, and pushes to main.

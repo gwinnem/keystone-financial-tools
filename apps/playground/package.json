@@ -1,0 +1,29 @@
+{
+  "name": "keystone-financial-tools-playground",
+  "version": "0.1.0",
+  "description": "Minimal canvas chart that implements DrawingHost v2: the reference host for the drawing tools and the target of the end-to-end tests",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "keystone-financial-tools-core": "workspace:*",
+    "keystone-financial-tools-typescript": "workspace:*"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src __tests__",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

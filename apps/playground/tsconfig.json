@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "keystone-financial-tools-core/testing": ["../../packages/core/src/testing/index.ts"],
+      "keystone-financial-tools-core": ["../../packages/core/src/index.ts"],
+      "keystone-financial-tools-typescript": ["../../packages/typescript/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "__tests__/**/*", "vite.config.ts"]
+}

@@ -30,6 +30,8 @@ SDS first, then `backlog.json`, then re-run the script with `-UpdateExisting`.
   saved document format and the `DrawingHost` contract. All logic lives here.
 - `packages/typescript` (`keystone-financial-tools-typescript`): framework-free API for plain
   TypeScript/JavaScript apps (re-exports the core, adds Web Storage persistence helpers).
+- `apps/playground` (`keystone-financial-tools-playground`): a minimal canvas chart that implements
+  `DrawingHost` v2. `e2e/` (`keystone-financial-tools-e2e`): Playwright tests that run against it.
 - `packages/vue`, `packages/react`, `packages/angular`: thin adapters (composables, hooks,
   services). No business logic in framework packages: they adapt the core's public contracts only.
 
@@ -58,6 +60,7 @@ pnpm test
 pnpm test:coverage
 pnpm test:mutation
 pnpm build
+pnpm --filter keystone-financial-tools-e2e test:e2e   # Playwright, needs test:e2e:install once
 ```
 
 ## Quality gates

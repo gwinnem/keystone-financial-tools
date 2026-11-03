@@ -17,6 +17,21 @@ the chart package itself.
 | `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |
 | `keystone-financial-tools-angular` | `packages/angular` | Angular service (`KeystoneDrawingService`) |
 
+## Apps and end-to-end tests
+
+| Name | Folder | Purpose |
+|---|---|---|
+| `keystone-financial-tools-playground` | `apps/playground` | A minimal canvas chart that implements `DrawingHost` v2: the reference host to try the tools and the target of the e2e tests |
+| `keystone-financial-tools-e2e` | `e2e` | Playwright tests of the drawing flows on the playground, in Chromium, Firefox and WebKit |
+
+```bash
+pnpm --filter keystone-financial-tools-playground dev        # http://localhost:4173
+pnpm --filter keystone-financial-tools-e2e test:e2e:install  # once: the browsers
+pnpm --filter keystone-financial-tools-e2e test:e2e
+```
+
+See the [playground README](apps/playground/README.md).
+
 ## Quick start
 
 ```ts
@@ -76,6 +91,7 @@ pnpm install
 pnpm build
 pnpm test:coverage
 pnpm test:mutation
+pnpm --filter keystone-financial-tools-e2e test:e2e
 ```
 
 Requirements: Node 22.22.3+ or 24.15+ (Node 24 recommended), pnpm 12+.

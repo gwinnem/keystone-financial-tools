@@ -1,0 +1,20 @@
+{
+  "name": "keystone-financial-tools-e2e",
+  "version": "0.1.0",
+  "description": "Playwright end-to-end tests of the drawing tools on the playground host (apps/playground)",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps",
+    "lint": "eslint tests playwright.config.ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf test-results playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3"
+  }
+}
