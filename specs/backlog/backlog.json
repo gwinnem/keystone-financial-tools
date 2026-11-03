@@ -1309,7 +1309,8 @@
                 "Placement by two anchors; half circles by default, `fullCircles` option.",
                 "Arc lines are hittable; fixture and scenario tests cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F06-S02",
@@ -1320,7 +1321,8 @@
                 "Docs explain that arcs keep their on-screen shape (pixel radius) and therefore change in data space with the aspect ratio.",
                 "A regression test zooms vertically and horizontally and asserts the documented behaviour."
               ],
-              "tasks": ["Write docs section.", "Regression test."]
+              "tasks": ["Write docs section.", "Regression test."],
+              "status": "done"
             }
           ],
           "labels": ["tool:fibonacci"],

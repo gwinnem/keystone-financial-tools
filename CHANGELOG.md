@@ -155,6 +155,12 @@
   placing (click-click, drag, undo, Escape), the `fibonacci` scene item with resolved options and handles,
   selecting by `level:<ratio>` and by the label, resize, move, delete, hidden levels (neither drawn nor hit),
   `levels`, `reverse`, `extendLeft` and `extendRight` (one history entry each) and the label texts.
+- Core (E05-F06): scenario tests for the Fibonacci arcs tool through the controller (placing by click-click and
+  drag with anchor 2 as the centre, half circles opening away from anchor 1 and `fullCircles`, hit-testing by
+  `level:<ratio>` on the circle, resize, move, delete, undo, hidden and zero-radius levels). The README documents
+  the zoom rule: the radius is the ratio times the pixel distance between the anchors, so an arc keeps its
+  shape on the screen and changes in data space when the axes are zoomed; regression tests zoom the price axis
+  and the time axis. No source change: the behaviour was already implemented.
 
 ### Specification and backlog
 

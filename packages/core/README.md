@@ -719,6 +719,41 @@ store.update(id, { options: { reverse: true, extendRight: true } });
   default 2 decimals, and the formatter is only called for a label that shows a price. The label also has
   `ratio`, `price`, `showRatio` and `showPrice`, so a host with its own renderer can format them itself.
 
+## Fibonacci arcs
+
+`fibonacci-arcs` has two anchors. Anchor 2 is the centre of every arc and the distance to anchor 1 is the
+base length: each visible level draws a circle around anchor 2 with the radius `ratio × distance`.
+By default the arcs are half circles that open away from anchor 1, so the curve faces it. Set the option
+`fullCircles: true` to draw whole circles. Levels with a ratio of 0 or less, and hidden levels, are neither
+drawn nor hit; a ratio above 1 reaches beyond anchor 1.
+
+```ts
+store.add({
+  id: 'arcs-1',
+  kind: 'fibonacci-arcs',
+  anchors: [
+    { time: 1_700_000_000_000, price: 150, yAxisId: 'price' },
+    { time: 1_700_600_000_000, price: 100, yAxisId: 'price' },
+  ],
+  options: { fullCircles: false },
+});
+```
+
+Clicking an arc selects the drawing (part `level:<ratio>`); the handles sit on both anchors. The scene has a
+`fibonacci` item in data space for the host's overlay, and the geometry has `arc` shapes in pixels.
+
+### Zoom rule
+
+The distance and the radius are measured **in pixels**, not in time and price. An arc is therefore always a
+circle on the screen, and it follows the anchors when you zoom or scroll:
+
+- Zooming the time axis moves the anchors apart (or together) horizontally, so the pixel distance and the
+  radius change with it.
+- Zooming the price axis does the same vertically.
+- Because the radius is one number for both directions, the same arc covers a different range of time and
+  price after a zoom: it changes in data space with the aspect ratio of the pane. Zooming back restores the
+  original arc, as only the anchors are stored.
+
 ## Testing entry: `keystone-financial-tools-core/testing`
 
 Test helpers live in a separate entry so they never end up in production bundles.
