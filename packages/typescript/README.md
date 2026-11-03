@@ -83,7 +83,11 @@ The package's `__tests__/repository-contract.ts` is the contract every repositor
 round trip, copies, scopes kept apart, remove); run it against your own implementation the same way
 the three repositories here do.
 
-## Synchronous Web Storage helpers (0.1)
+## Synchronous Web Storage helpers (0.1, deprecated)
+
+The helpers keep working with unchanged signatures and behaviour, and are marked `@deprecated`.
+They are synchronous and take a raw storage key, so they cannot call the asynchronous
+`WebStorageRepository`; they share its text format, key rules and `KFT-E-JSON` issue instead.
 
 | Export | Purpose |
 |---|---|
@@ -101,6 +105,24 @@ const stopSaving = autoSave(store, localStorage, 'chart-aapl');
 
 Under the key `keystone-drawings:AAPL` they read and write the same entry as
 `WebStorageRepository(localStorage)` does for `{ symbol: 'AAPL' }`.
+
+### Migrating to repositories
+
+```ts
+// before
+saveDrawings(store, localStorage, 'chart-aapl');
+const restored = loadDrawings(localStorage, 'chart-aapl');
+
+// after
+const repository = new WebStorageRepository(localStorage);
+await repository.save({ symbol: 'AAPL' }, store.toJSON());
+const { document, issue } = await repository.load({ symbol: 'AAPL' });
+```
+
+- Data saved under a custom key is not found by the repository (it uses `scopeKey`). Move it once:
+  read it with `loadDrawings(localStorage, 'chart-aapl')`, then `repository.save` it.
+- `autoSave(store, repository, scope)` (debounced) replaces the storage form of `autoSave`, and
+  `loadStore(repository, scope)` replaces `loadDrawings`; both arrive with the rest of E06.
 
 The core's `importDocument(store, json, { mode })` is also available here for importing a file
 while keeping the valid drawings of a partly broken document.

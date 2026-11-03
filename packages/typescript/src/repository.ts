@@ -73,6 +73,16 @@ export function repositoryFailure(action: RepositoryAction, key: string, reason:
   return new RepositoryError(`Could not ${action} the drawings under ${key}: ${detail}`, reason);
 }
 
+/** The text a document is stored as. The repositories and the 0.1 helpers share it, so what one writes the other reads. */
+export function serializeDocument(document: DrawingDocument): string {
+  return JSON.stringify(document);
+}
+
+/** The issue for stored text that is not JSON. The repositories and the 0.1 helpers report it the same way. */
+export function invalidJsonIssue(key: string): DrawingIssue {
+  return { code: 'KFT-E-JSON', message: `The drawings saved under ${key} are not valid JSON.` };
+}
+
 /** A document without drawings; a new object on every call. */
 export function emptyDocument(): DrawingDocument {
   return { version: DOCUMENT_VERSION, drawings: [] };
@@ -105,7 +115,7 @@ export function parseStored(text: string | null, key: string): RepositoryLoad {
   try {
     value = JSON.parse(text);
   } catch {
-    return { document: emptyDocument(), issue: { code: 'KFT-E-JSON', message: `The drawings saved under ${key} are not valid JSON.` } };
+    return { document: emptyDocument(), issue: invalidJsonIssue(key) };
   }
   return readStored(value);
 }

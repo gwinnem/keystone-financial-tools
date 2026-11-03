@@ -184,6 +184,11 @@
   URL-encoded; `readStored` helps custom backends follow the same rules (the README shows a REST
   repository); `REPOSITORY_TIERS` records IndexedDB as Professional and the others as Community (OD-2 open).
   New dev dependency `fake-indexeddb` for the IndexedDB tests.
+- TypeScript (E06-F01), **deprecation**: `saveDrawings`, `loadDrawings` and `autoSave` (storage form) are marked
+  `@deprecated` with migration examples; signatures and behaviour are unchanged. They are synchronous, so
+  they share the repository's text format, key rules and `KFT-E-JSON` issue (`serializeDocument`,
+  `invalidJsonIssue`) instead of calling `WebStorageRepository`; a document saved under `scopeKey(scope)`
+  loads in either direction. The README has a migration section.
 
 ### Specification and backlog
 

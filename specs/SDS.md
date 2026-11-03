@@ -779,6 +779,17 @@ Decisions of E06-F02 (repositories):
   Professional, following the proposal of FR-LIC-002; OD-2 stays open and `TOOL_CATALOG` (E07) will
   carry the final split.
 
+Decisions of E06-F01 (0.1 helpers):
+
+- `saveDrawings`, `loadDrawings` and `autoSave(store, storage, key)` stay with unchanged signatures and
+  behaviour and are marked `@deprecated`. They are synchronous and take a raw key, so they cannot
+  delegate to the asynchronous `WebStorageRepository`; they share its codec instead
+  (`serializeDocument`, `invalidJsonIssue`). A document saved under `scopeKey(scope)` loads in either
+  direction.
+- The repository form of `autoSave(store, repository, scope, options)` (E06-F03) will be an overload of
+  the same export, told apart by its third argument (a string key versus a scope); the helper that
+  takes a storage keeps working.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

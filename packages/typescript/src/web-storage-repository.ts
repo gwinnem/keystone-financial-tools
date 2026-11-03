@@ -1,5 +1,5 @@
 import type { DrawingDocument } from 'keystone-financial-tools-core';
-import { parseStored, repositoryFailure, type DrawingRepository, type DrawingScope, type RepositoryLoad } from './repository';
+import { parseStored, repositoryFailure, serializeDocument, type DrawingRepository, type DrawingScope, type RepositoryLoad } from './repository';
 import { DEFAULT_KEY_PREFIX, scopeKey } from './scope';
 
 /** The part of the Web Storage API the repository uses; `localStorage` and `sessionStorage` fit. */
@@ -48,7 +48,7 @@ export class WebStorageRepository implements DrawingRepository {
   async save(scope: DrawingScope, document: DrawingDocument): Promise<void> {
     const key = scopeKey(scope, this.prefix);
     try {
-      this.storage.setItem(key, JSON.stringify(document));
+      this.storage.setItem(key, serializeDocument(document));
     } catch (error) {
       throw repositoryFailure('save', key, error);
     }

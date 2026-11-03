@@ -1420,7 +1420,8 @@
                 "The 0.1 helpers delegate to `WebStorageRepository` and are marked `@deprecated` in TSDoc with the replacement.",
                 "Behaviour and signatures are unchanged; existing tests still pass."
               ],
-              "tasks": ["Reimplement on top of the repository.", "Docs migration note."]
+              "tasks": ["Reimplement on top of the repository.", "Docs migration note."],
+              "status": "done"
             }
           ]
         },

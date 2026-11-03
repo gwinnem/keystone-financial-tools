@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { DrawingError, DrawingStore, type Drawing } from 'keystone-financial-tools-core';
 import { autoSave, loadDrawings, saveDrawings, type DrawingStorage } from '../src/persistence';
+import { invalidJsonIssue, serializeDocument } from '../src/repository';
+import { scopeKey } from '../src/scope';
+import { WebStorageRepository } from '../src/web-storage-repository';
 
 class MemoryStorage implements DrawingStorage {
   readonly items = new Map<string, string>();
@@ -9,6 +12,9 @@ class MemoryStorage implements DrawingStorage {
   }
   setItem(key: string, value: string): void {
     this.items.set(key, value);
+  }
+  removeItem(key: string): void {
+    this.items.delete(key);
   }
 }
 
@@ -53,6 +59,59 @@ describe('saveDrawings and loadDrawings', () => {
     const storage = new MemoryStorage();
     storage.setItem('chart-1', '{"version":9}');
     expect(() => loadDrawings(storage, 'chart-1')).toThrow(DrawingError);
+  });
+});
+
+describe('shared format with WebStorageRepository (E06-F01-S02)', () => {
+  const scope = { symbol: 'AAPL', timeframe: '1h' };
+
+  it('writes the text the repository writes', async () => {
+    const helper = new MemoryStorage();
+    const repo = new MemoryStorage();
+    const store = new DrawingStore([line('a'), line('b')]);
+    saveDrawings(store, helper, scopeKey(scope));
+    await new WebStorageRepository(repo).save(scope, store.toJSON());
+    expect(helper.items.get(scopeKey(scope))).toBe(repo.items.get(scopeKey(scope)));
+  });
+
+  it('loads what the repository saved', async () => {
+    const storage = new MemoryStorage();
+    await new WebStorageRepository(storage).save(scope, new DrawingStore([line('a')]).toJSON());
+    expect(loadDrawings(storage, scopeKey(scope)).list()).toEqual([line('a')]);
+  });
+
+  it('lets the repository load what saveDrawings saved', async () => {
+    const storage = new MemoryStorage();
+    saveDrawings(new DrawingStore([line('a')]), storage, scopeKey(scope));
+    const loaded = await new WebStorageRepository(storage).load(scope);
+    expect(loaded.issue).toBeUndefined();
+    expect(loaded.document.drawings).toEqual([line('a')]);
+  });
+
+  it('reports corrupt text with the issue the repository reports', async () => {
+    const storage = new MemoryStorage();
+    const key = scopeKey(scope);
+    storage.setItem(key, '{oops');
+    const loaded = await new WebStorageRepository(storage).load(scope);
+    let caught: unknown;
+    try {
+      loadDrawings(storage, key);
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as DrawingError).issues).toEqual([loaded.issue]);
+  });
+});
+
+describe('serializeDocument and invalidJsonIssue', () => {
+  it('serializes a document as JSON text', () => {
+    const document = new DrawingStore([line('a')]).toJSON();
+    expect(serializeDocument(document)).toBe(JSON.stringify(document));
+    expect(JSON.parse(serializeDocument(document))).toEqual(document);
+  });
+
+  it('names the key in the invalid JSON issue', () => {
+    expect(invalidJsonIssue('k:1')).toEqual({ code: 'KFT-E-JSON', message: 'The drawings saved under k:1 are not valid JSON.' });
   });
 });
 
