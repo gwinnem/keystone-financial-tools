@@ -148,6 +148,13 @@
   entry. Scenario tests cover placing and cancelling (also with `stayInTool` and the keyboard), editing,
   plain text (`<b>` stays literal), the multi-line box (line breaks, the longest line, long words, font
   size and text colour from the style) and hit-testing on the box.
+- Core (E05-F05): the Fibonacci retracement tool. `LabelShape` gains `text`: the ratio, the price or both
+  (`0.618 (111.80)`), with the price formatted by `priceFormatter(price, yAxisId)` like the label of a
+  horizontal line (2 decimals by default) and only when `showPrices` is on; `retracementShapes` takes the
+  price formatter as its last argument. The README has a Fibonacci retracement section. Scenario tests cover
+  placing (click-click, drag, undo, Escape), the `fibonacci` scene item with resolved options and handles,
+  selecting by `level:<ratio>` and by the label, resize, move, delete, hidden levels (neither drawn nor hit),
+  `levels`, `reverse`, `extendLeft` and `extendRight` (one history entry each) and the label texts.
 
 ### Specification and backlog
 

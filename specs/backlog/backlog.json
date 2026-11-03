@@ -1268,7 +1268,8 @@
                 "Clicking a level line selects the drawing (part `level:<ratio>`).",
                 "Fixture and scenario tests cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F05-S02",
@@ -1276,7 +1277,8 @@
               "userStory": "As a trader, I want to choose levels, reverse the direction and extend the lines so that the tool matches my method.",
               "sds": ["FR-DM-020", "FR-GEO-003"],
               "acceptance": ["Updating `levels`, `reverse`, `extendLeft`, `extendRight` re-renders immediately and is one history entry each.", "Hidden levels are neither rendered nor hit."],
-              "tasks": ["Wire options.", "Tests."]
+              "tasks": ["Wire options.", "Tests."],
+              "status": "done"
             },
             {
               "id": "E05-F05-S03",
@@ -1284,7 +1286,8 @@
               "userStory": "As a trader, I want each level labelled with its ratio and price so that I can read levels at a glance.",
               "sds": ["§5.2"],
               "acceptance": ["`showLabels` adds ratio text, `showPrices` adds the price (formatted like E05-F02-S02).", "Labels are part of the resolved Fibonacci item options for the host."],
-              "tasks": ["Add label options to the item.", "Tests."]
+              "tasks": ["Add label options to the item.", "Tests."],
+              "status": "done"
             }
           ],
           "labels": ["tool:fibonacci"],

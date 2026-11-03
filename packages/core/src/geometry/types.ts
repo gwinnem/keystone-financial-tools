@@ -54,8 +54,10 @@ export interface TextShape {
 }
 
 /**
- * Where the label of a Fibonacci level goes (CSS px): the left end of the level line. The renderer
- * formats the text: the ratio when `showRatio`, the price when `showPrice`.
+ * Where the label of a Fibonacci level goes (CSS px): the left end of the level line. `text` is
+ * what it says: the ratio when `showRatio` (`0.618`), the price when `showPrice` (formatted by
+ * `GeometryOptions.priceFormatter`, 2 decimals by default), both as `0.618 (111.80)`. A host with its own
+ * Fibonacci renderer can format `ratio` and `price` itself.
  */
 export interface LabelShape {
   readonly type: 'label';
@@ -66,6 +68,7 @@ export interface LabelShape {
   readonly price: number;
   readonly showRatio: boolean;
   readonly showPrice: boolean;
+  readonly text: string;
 }
 
 export type Shape = LineShape | RectShape | ArcShape | TextShape | LabelShape;

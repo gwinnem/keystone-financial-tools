@@ -118,7 +118,7 @@ describe('distanceToShape', () => {
   const rect: Shape = { type: 'rect', part: 'body', ...RECT };
   const arc: Shape = { type: 'arc', part: 'level:1', center: { x: 100, y: 100 }, radius: 50, startAngle: 0, endAngle: 2 * Math.PI };
   const text: Shape = { type: 'text', part: 'body', ...RECT, lines: ['a'], fontSize: 10, lineHeight: 13 };
-  const label: Shape = { type: 'label', part: 'label', x: 30, y: 40, ratio: 0.5, price: 1, showRatio: true, showPrice: true };
+  const label: Shape = { type: 'label', part: 'label', x: 30, y: 40, ratio: 0.5, price: 1, showRatio: true, showPrice: true, text: '0.5 (1.00)' };
 
   it('measures each kind of shape', () => {
     const never = vi.fn(() => false);

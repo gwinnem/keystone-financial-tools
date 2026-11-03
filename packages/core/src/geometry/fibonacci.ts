@@ -18,13 +18,20 @@ export interface RetracementOptions {
   readonly showPrices: boolean;
 }
 
+/** The text of a level label: the ratio, the price, or both as `0.618 (111.80)`. Needs `showLabels` or `showPrices`. */
+function labelText(ratio: number, price: number, options: RetracementOptions, formatPrice: (price: number) => string): string {
+  if (!options.showPrices) return String(ratio);
+  return options.showLabels ? `${ratio} (${formatPrice(price)})` : formatPrice(price);
+}
+
 /**
  * Fibonacci retracement (FR-GEO-003): one horizontal line per visible level at
  * `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2), from the left to the right anchor, or to the
  * pane edge on an extended side. With `showLabels` or `showPrices` each line is followed by its
- * label at the left end.
+ * label at the left end, with its text: the ratio (`showLabels`), the price formatted by
+ * `formatPrice` (`showPrices`), or both. `formatPrice` is only called for a label with a price.
  */
-export function retracementShapes(a1: Anchor, a2: Anchor, rect: Rect, host: DrawingHost, options: RetracementOptions): (LineShape | LabelShape)[] {
+export function retracementShapes(a1: Anchor, a2: Anchor, rect: Rect, host: DrawingHost, options: RetracementOptions, formatPrice: (price: number) => string): (LineShape | LabelShape)[] {
   const [from, to] = options.reverse ? [a2.price, a1.price] : [a1.price, a2.price];
   const x1 = host.timeToX(a1.time);
   const x2 = host.timeToX(a2.time);
@@ -37,7 +44,19 @@ export function retracementShapes(a1: Anchor, a2: Anchor, rect: Rect, host: Draw
     const price = from + (to - from) * ratio;
     const y = host.priceToY(price, a1.yAxisId);
     shapes.push({ type: 'line', part: levelPart(ratio), from: { x: left, y }, to: { x: right, y } });
-    if (labelled) shapes.push({ type: 'label', part: 'label', x: left, y, ratio, price, showRatio: options.showLabels, showPrice: options.showPrices });
+    if (labelled) {
+      shapes.push({
+        type: 'label',
+        part: 'label',
+        x: left,
+        y,
+        ratio,
+        price,
+        showRatio: options.showLabels,
+        showPrice: options.showPrices,
+        text: labelText(ratio, price, options, formatPrice),
+      });
+    }
   }
   return shapes;
 }

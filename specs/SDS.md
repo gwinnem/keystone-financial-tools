@@ -366,8 +366,12 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
   the segment; a line that misses the pane, or has zero length, is not extended.
 - FR-GEO-003: Retracement level price = `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2);
   level lines span from the left to the right anchor, or to the pane edge when extended (never
-  shorter). With `showLabels` or `showPrices` each visible level has a label position at the left
-  end of its line; the renderer formats the ratio and/or price.
+  shorter). With `showLabels` or `showPrices` each visible level has a label at the left end of its
+  line, whose `text` is the ratio (`0.618`), the price (`111.80`) or both (`0.618 (111.80)`); the
+  price is formatted by `priceFormatter(price, yAxisId)` like the label of a horizontal line
+  (FR-SC-001, default 2 decimals) and only when it is shown. The label also keeps `ratio`, `price`
+  and the two flags, so a host with its own Fibonacci renderer can format them itself. Hidden
+  levels (`visible: false`) have neither a line nor a label, and are not hit (FR-HIT-003).
 - FR-GEO-004: Fans: rays from anchor 1 through `(t2, p2 + (p1 - p2) * ratio)`, clipped to the pane.
   Rays without a direction or outside the pane are left out.
 - FR-GEO-005: Arcs: centre at anchor 2, radius = `ratio` times the **pixel** distance between the

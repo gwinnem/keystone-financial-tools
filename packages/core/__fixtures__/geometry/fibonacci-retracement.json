@@ -22,11 +22,11 @@
       "expected": {
         "shapes": [
           { "type": "line", "part": "level:0", "from": { "x": 100, "y": 300 }, "to": { "x": 300, "y": 300 } },
-          { "type": "label", "part": "label", "x": 100, "y": 300, "ratio": 0, "price": 50, "showRatio": true, "showPrice": true },
+          { "type": "label", "part": "label", "x": 100, "y": 300, "ratio": 0, "price": 50, "showRatio": true, "showPrice": true, "text": "0 (50.00)" },
           { "type": "line", "part": "level:0.5", "from": { "x": 100, "y": 200 }, "to": { "x": 300, "y": 200 } },
-          { "type": "label", "part": "label", "x": 100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": true },
+          { "type": "label", "part": "label", "x": 100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": true, "text": "0.5 (100.00)" },
           { "type": "line", "part": "level:1", "from": { "x": 100, "y": 100 }, "to": { "x": 300, "y": 100 } },
-          { "type": "label", "part": "label", "x": 100, "y": 100, "ratio": 1, "price": 150, "showRatio": true, "showPrice": true }
+          { "type": "label", "part": "label", "x": 100, "y": 100, "ratio": 1, "price": 150, "showRatio": true, "showPrice": true, "text": "1 (150.00)" }
         ],
         "handles": [
           { "id": "handle:0", "x": 100, "y": 300 },
@@ -107,7 +107,7 @@
       "expected": {
         "shapes": [
           { "type": "line", "part": "level:0.5", "from": { "x": 0, "y": 200 }, "to": { "x": 800, "y": 200 } },
-          { "type": "label", "part": "label", "x": 0, "y": 200, "ratio": 0.5, "price": 100, "showRatio": false, "showPrice": true }
+          { "type": "label", "part": "label", "x": 0, "y": 200, "ratio": 0.5, "price": 100, "showRatio": false, "showPrice": true, "text": "100.00" }
         ],
         "handles": [
           { "id": "handle:0", "x": 100, "y": 300 },
@@ -129,7 +129,7 @@
       "expected": {
         "shapes": [
           { "type": "line", "part": "level:0.5", "from": { "x": -100, "y": 200 }, "to": { "x": 300, "y": 200 } },
-          { "type": "label", "part": "label", "x": -100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": false }
+          { "type": "label", "part": "label", "x": -100, "y": 200, "ratio": 0.5, "price": 100, "showRatio": true, "showPrice": false, "text": "0.5" }
         ],
         "handles": [
           { "id": "handle:0", "x": -100, "y": 300 },

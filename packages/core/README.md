@@ -165,7 +165,7 @@ geometry is recomputed whenever the viewport changes.
 | `horizontal-line` | One `line` across the pane, then its price `label`: a `text` shape of the part `label` ([Horizontal line](#horizontal-line)) |
 | `rectangle` | One `rect`, normalised to `x`, `y`, `width`, `height` |
 | `text-note` | One `text` box with its top left corner at the anchor; lines split on `\n`, `fontSize * TEXT_CHAR_WIDTH` (0.6) per character and `fontSize * TEXT_LINE_HEIGHT` (1.3) per line unless `measureText` is given; at least one character wide |
-| `fibonacci-retracement` | Per visible level a `line` (`level:<ratio>`) at `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2), then its `label` position when `showLabels` or `showPrices` |
+| `fibonacci-retracement` | Per visible level a `line` (`level:<ratio>`) at `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2), then its `label` (with its `text`) when `showLabels` or `showPrices`; lines span the anchors, or the pane on an extended side ([Fibonacci retracement](#fibonacci-retracement)) |
 | `fibonacci-fans` | Per visible level a `line` from anchor 1 through `(t2, p2 + (p1 - p2) * ratio)`, clipped to the pane |
 | `fibonacci-arcs` | Per visible level an `arc` around anchor 2 with radius `ratio` times the pixel distance between the anchors: half circles curving towards anchor 1, full circles with `fullCircles` |
 | `fibonacci-time-zones` | Per sequence value a vertical `line` (`level:<n>`) at `t1 + n * (t2 - t1)` across the pane; lines outside the pane are left out, prices play no part |
@@ -541,7 +541,7 @@ tools.destroy(); // when the chart goes away
 | `stayInTool` | Keep the tool active after a placement | `false` |
 | `tools` | The kinds that can be activated | all kinds |
 | `gestures` | `GestureOptions` (thresholds, clock) | defaults |
-| `priceFormatter` | `(price, yAxisId) => string` for the price label of a horizontal line | 2 decimals |
+| `priceFormatter` | `(price, yAxisId) => string` for the price label of a horizontal line and the price in a retracement level label | 2 decimals |
 | `defaultYAxisId` | The pane keyboard placement starts in when no anchor is set | `price` |
 | `createId` | Id of a new drawing | `createId` |
 | `debug` | Receives a message for every input the state machine ignores | none |
@@ -679,6 +679,45 @@ const editText = ({ drawingId, text, x, y, fontSize }: TextEditRequest): Promise
   and the text colour come from the resolved style (`style.fontSize`, `style.textColor`, the theme).
 - **Hit rules**: the whole box is solid, so any point inside it hits, and so does a point within the tolerance of it
   (6 px, 12 for touch); the box follows the text when it changes.
+
+## Fibonacci retracement
+
+`fibonacci-retracement` has two anchors, normally the swing low and the swing high. The host draws it with its
+own Fibonacci overlay from the `fibonacci` scene item; the core supplies the pixel geometry for hit-testing
+and for hosts that draw it themselves:
+
+```ts
+const tools = createDrawingTools(host, { store });
+tools.activate('fibonacci-retracement');
+// click, move, click  or  press, drag, release
+
+// later: choose levels, reverse, extend, label (each call is one history entry)
+store.update(id, { options: { levels: [{ ratio: 0.5, visible: true }, { ratio: 0.618, visible: true }] } });
+store.update(id, { options: { reverse: true, extendRight: true } });
+```
+
+- **Placing**: click-click or press-drag-release, in either direction. Two anchors on one point create
+  nothing. Escape and the right button cancel without a store change; undo removes the drawing. While it is
+  placed the preview item shows the level lines and labels.
+- **Scene** (FR-SC-004): the `fibonacci` item carries `kind`, `anchors` and every option resolved (all levels,
+  including the hidden ones with `visible: false`, `reverse`, `extendLeft`, `extendRight`, `showLabels`,
+  `showPrices`), plus `style`, `opacity` and `state`. A selected retracement also has a `handles` item with a
+  handle per anchor. An `update` of the options changes the item at once.
+- **Editing**: dragging a handle resizes, dragging a level line or a label moves the drawing, Delete removes
+  it; each gesture is one history entry and Escape puts a drag back.
+- **Levels** (FR-DM-020, FR-GEO-003): the default levels are 0, 0.236, 0.382, 0.5, 0.618, 0.786 and 1, shown;
+  1.272, 1.618, 2.618 and 4.236 are present but hidden. The price of a level is `p1 + (p2 - p1) * ratio`,
+  measured from anchor 2 back to anchor 1 with `reverse`. A level line runs from the left to the right anchor,
+  or to the pane edge with `extendLeft` / `extendRight`; it never gets shorter. A hidden level has no line
+  and no label, and `hitTest` does not find it.
+- **Hit-testing** (FR-HIT-003): a click within 6 CSS px (12 for touch) of a level line selects the drawing and
+  `hitTest` reports the part `level:<ratio>`, for example `level:0.618`. On the label anchor at the left end
+  of a line the part is `label`.
+- **Labels**: with `showLabels` or `showPrices` (both default true) each visible level has a `label` shape
+  after its line, at the left end. Its `text` is the ratio (`0.618`), the price (`111.80`) or both
+  (`0.618 (111.80)`). The price is `priceFormatter(price, yAxisId)` like the label of a horizontal line, by
+  default 2 decimals, and the formatter is only called for a label that shows a price. The label also has
+  `ratio`, `price`, `showRatio` and `showPrice`, so a host with its own renderer can format them itself.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

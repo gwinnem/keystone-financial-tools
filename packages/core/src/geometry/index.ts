@@ -27,7 +27,7 @@ function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: 
     case 'text-note':
       return textNoteShapes(p1, drawing.text ?? '', resolveStyle(drawing, options.theme).fontSize, options.measureText);
     case 'fibonacci-retracement':
-      return retracementShapes(a1, a2, rect, host, kindOptions as RetracementOptions);
+      return retracementShapes(a1, a2, rect, host, kindOptions as RetracementOptions, (price) => (options.priceFormatter ?? formatPrice)(price, a1.yAxisId));
     case 'fibonacci-fans':
       return fanShapes(a1, a2, rect, host, levels);
     case 'fibonacci-arcs':
@@ -49,7 +49,7 @@ function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: 
  * | `horizontal-line` | One line across the pane, then its price label (a `text` shape of the part `label`, formatted by `priceFormatter`) |
  * | `rectangle` | One rect, normalised |
  * | `text-note` | One text box with its top left corner at the anchor |
- * | `fibonacci-retracement` | Per visible level a line (`level:<ratio>`), then its label when shown |
+ * | `fibonacci-retracement` | Per visible level a line (`level:<ratio>`), then its label (with its text, the price formatted by `priceFormatter`) when shown |
  * | `fibonacci-fans` | Per visible level a ray clipped to the pane |
  * | `fibonacci-arcs` | Per visible level with a positive radius an arc around anchor 2 |
  * | `fibonacci-time-zones` | Per sequence value inside the pane a vertical line (`level:<n>`) |
