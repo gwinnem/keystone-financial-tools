@@ -254,6 +254,8 @@ class DrawingToolsController implements DrawingTools {
   private snap: Point | null = null;
   private keyboardCursor: Point | null = null;
   private session: DragSession | null = null;
+  // The history transaction of the last new text note: it is open while the editor is, so the note and its text are one entry and a cancelled editor takes the note back without one.
+  private note: HistoryTransaction | null = null;
   // Set from every pointer and key event before anything reads it.
   private modifiers = {} as { shift: boolean; invert: boolean };
   private state: DrawingToolsState;
@@ -709,11 +711,19 @@ class DrawingToolsController implements DrawingTools {
     if (result.anchors !== null) this.create(tool, result.anchors);
   }
 
-  /** The placement is complete: the drawing goes into the store (one change, one history entry). */
+  /** The placement is complete: the drawing goes into the store (one change, one history entry; a text note's entry is closed when its editor is). */
   private create(tool: DrawingKind, anchors: readonly Anchor[]): void {
     const id = this.newId();
-    this.store.add(tool === 'text-note' ? { id, kind: tool, anchors, text: '' } : { id, kind: tool, anchors });
-    this.feed({ type: 'placement-complete', id, stay: this.stayInTool, edit: tool === 'text-note' });
+    const note = tool === 'text-note';
+    this.note = note ? this.history.transaction() : null;
+    try {
+      this.store.add(note ? { id, kind: tool, anchors, text: '' } : { id, kind: tool, anchors });
+    } catch (error) {
+      // Nothing was added: the entry only needs closing.
+      this.note?.cancel();
+      throw error;
+    }
+    this.feed({ type: 'placement-complete', id, stay: this.stayInTool, edit: note });
   }
 
   /** The y-axis of a keyboard cursor: the one of the first anchor once there is one. */
@@ -801,18 +811,32 @@ class DrawingToolsController implements DrawingTools {
     this.feed({ type: 'select', ids: copies.map((copy) => copy.id) });
   }
 
-  /** Edits a note's text with the host's editor; without one (or when it fails) the text is left as it is. */
+  /** Edits a note's text with the host's editor; without one (or when it fails) the text is left as it is. Cancelling the editor of a new note removes the note. */
   private async edit(drawingId: string): Promise<void> {
-    let text: string | null = null;
+    // What the editor answered: the text, null when it was cancelled, undefined when the host has no editor or it failed.
+    let answer: string | null | undefined;
     try {
       const drawing = this.store.get(drawingId) as Drawing;
       const origin = anchorToPoint(drawing.anchors[0] as Anchor, this.host);
       const request: TextEditRequest = { drawingId, text: drawing.text as string, x: origin.x, y: origin.y, fontSize: resolveStyle(drawing, this.theme).fontSize };
-      text = (await this.host.editText?.(request)) ?? null;
+      answer = await this.host.editText?.(request);
     } catch (error) {
       this.fail('text-editor', error);
     }
-    this.run('text-editor', () => this.feed({ type: 'edit-result', text }), undefined);
+    this.run(
+      'text-editor',
+      () => {
+        this.feed({ type: 'edit-result', text: answer ?? null });
+        this.endNote(answer === null);
+      },
+      undefined
+    );
+  }
+
+  /** The editor of a note closed: a new note keeps its text as one history entry, or is taken back without one when `cancel` (a note that is being edited again has no open entry: nothing happens). */
+  private endNote(cancel: boolean): void {
+    if (cancel) this.note?.cancel();
+    else this.note?.commit();
   }
 
   // ---- scene ------------------------------------------------------------------------------------------

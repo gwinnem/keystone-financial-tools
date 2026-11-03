@@ -120,12 +120,13 @@ describe('placing', () => {
     expect(tools.getState().interaction.type).toBe('selected');
   });
 
-  it('keeps the empty text when the editor is cancelled, and when the host has no editor', async () => {
+  it('takes a new note back when the editor is cancelled, and keeps the empty text when the host has no editor', async () => {
     const cancelled = rig({}, { editText: () => Promise.resolve(null) });
     cancelled.tools.activate('text-note');
     cancelled.click(100, 200);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(cancelled.store.get('d1')?.text).toBe('');
+    expect(cancelled.store.list()).toEqual([]);
+    expect(cancelled.tools.getState()).toMatchObject({ canUndo: false, interaction: { type: 'idle' } });
 
     const plain = rig();
     plain.tools.activate('text-note');

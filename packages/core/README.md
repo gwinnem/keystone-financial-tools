@@ -562,7 +562,8 @@ tools.destroy(); // when the chart goes away
   left as it was. A listener that throws does not stop the other listeners.
 - **Magnet**: Ctrl/Cmd inverts the mode for the event it comes with; the stored mode never changes.
 - **Text notes**: a new note is created with empty text and `host.editText` (when the host has it) is asked
-  for the text; a cancelled or failed editor keeps the empty text.
+  for the text. A cancelled editor (it resolves with `null`) removes the new note without a history entry; a host
+  without an editor and an editor that fails keep the empty note. See [Text note](#text-note).
 - **`destroy()`**: reverts a drag in progress, resets the cursor, unsubscribes from the host and the store and
   clears the listeners. It is idempotent; afterwards every call does nothing and emits nothing, `getScene()`
   returns an empty scene and `hitTest` returns null.
@@ -646,6 +647,38 @@ store.update(id, { style: { fillOpacity: 0 } });
 - **Editing**: dragging a handle resizes, dragging the box moves it; each gesture is one history entry,
   Escape puts a drag back, Delete removes it. A second corner on the first one (within 1 px) creates
   nothing.
+
+## Text note
+
+`text-note` has one anchor: the top left corner of its text box. A click inside a pane places it.
+
+```ts
+const tools = createDrawingTools(host);
+tools.activate('text-note');
+// one click places the note; the editor is asked for its text at once
+
+// in the host (editText is optional): resolve with the text, or with null to cancel
+const editText = ({ drawingId, text, x, y, fontSize }: TextEditRequest): Promise<string | null> => myEditor.open({ text, x, y, fontSize });
+```
+
+- **Editor** (FR-INT-050): the tools call `host.editText(request)` with the note's `drawingId`, its current `text`, the
+  `x` and `y` of its box and its `fontSize`; the core only requests and applies the result. The editor resolves with
+  the new text, or with `null` when the user cancels.
+- **New note**: it is placed with empty text. A cancelled editor removes it without a history entry (undo and redo are
+  as they were); a confirmed one stores the text, and the note with its text is one history entry. While the editor
+  of a new note is open `undo()` and `redo()` return false, and changes made to the store meanwhile belong to that
+  entry. A host without `editText`, and an editor that fails (an `error` event with the source `text-editor`), keep the
+  empty note; an empty answer (`''`) is not a cancel.
+- **Existing note**: a double-click on its box, or Enter while it is the only selected drawing and is unlocked, opens
+  the editor with its text. The change is one history entry; a cancel changes nothing. A locked note is not edited.
+- **Plain text** (FR-INT-051, NFR-SEC-002): the text is never interpreted as HTML; `<b>x</b>` is stored, measured and
+  drawn as those characters, and handed back to the editor as they are.
+- **Box** (FR-GEO-007): the text splits on line breaks (an empty line and a trailing line break count); the box is as
+  wide as the widest line and as high as the line count (at least one character wide, so an empty note stays
+  clickable). A line is never wrapped or cut: a long word makes the box wider. The font size (14 in both presets)
+  and the text colour come from the resolved style (`style.fontSize`, `style.textColor`, the theme).
+- **Hit rules**: the whole box is solid, so any point inside it hits, and so does a point within the tolerance of it
+  (6 px, 12 for touch); the box follows the text when it changes.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

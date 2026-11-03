@@ -381,7 +381,9 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
 - FR-GEO-007: Text note box: top left corner at its anchor, lines split on `\n`, text measured by a
   host-independent estimate (`fontSize * 0.6` per character, line height `fontSize * 1.3`) unless
   the host supplies `measureText` in the options; at least one character wide, so an empty note
-  stays clickable.
+  stays clickable. A line is never wrapped or cut: the box is as wide as the widest line, however
+  long a word is, and as high as the number of lines (an empty line and a trailing line break count).
+  The font size and the text colour are those of the resolved style (the scene item's `style`).
 
 ### 8.2 Hit-testing
 
@@ -645,7 +647,11 @@ pointer. The indicator is absent when the magnet is off, outside a pane or where
 ### 9.6 Text editing
 
 - FR-INT-050: Text notes are edited with `host.editText` when present, otherwise through the
-  adapter's default editor (§10); the core only requests and applies the result.
+  adapter's default editor (§10); the core only requests and applies the result. A new note is
+  placed with empty text and its editor is opened at once. Cancelling that editor (it answers
+  `null`) removes the note and leaves no history entry; confirming it stores the text, and the note
+  with its text is one history entry (undo removes both). Editing an existing note (double-click, or
+  Enter on a selected, unlocked note) is one history entry; cancelling it changes nothing.
 - FR-INT-051: Text is plain text; it is never interpreted as HTML (NFR-SEC-002).
 
 ### 9.7 Controller API
@@ -696,9 +702,11 @@ to `selected`. After every handled input the controller publishes the state and 
 `host.requestRender()`. `activate` and `deactivate` set the `crosshair` or `default` cursor. Undo and
 redo are API actions (there is no Ctrl+Z binding; the host or adapter binds shortcuts, FR-FW-041).
 Keyboard placement needs a pane; it uses the pane of the first anchor, otherwise `defaultYAxisId`
-(default `price`). A text note is created with `text: ''`, the editor (`host.editText`) is opened when
-the host has one, and a cancelled or failed editor keeps the empty text; the answer of an editor that
-arrives after `destroy()` is dropped. `destroy()` reverts an open drag, resets the cursor and releases
+(default `price`). A text note is created with `text: ''` and the editor (`host.editText`) is opened when
+the host has one. A cancelled editor removes the new note without a history entry (FR-INT-050); a host
+without an editor, and an editor that fails, keep the empty note. The history entry of a new note stays
+open while its editor is: `undo()` and `redo()` return false then, and changes made to the store
+meanwhile belong to that entry. The answer of an editor that arrives after `destroy()` is dropped. `destroy()` reverts an open drag, resets the cursor and releases
 every subscription. The `license` option belongs to E10 and is not implemented here.
 
 ## 10. Framework packages

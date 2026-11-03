@@ -1233,7 +1233,8 @@
                 "Double-click or Enter on a selected note edits it; the change is one history entry.",
                 "Text is plain text only; `<b>` stays literal text in the scene (NFR-SEC-002)."
               ],
-              "tasks": ["Implement edit requests and cancellation.", "Tests and docs."]
+              "tasks": ["Implement edit requests and cancellation.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F04-S02",
@@ -1245,7 +1246,8 @@
                 "Font size and text color follow the style; long words are not cut.",
                 "Hit-testing uses the box."
               ],
-              "tasks": ["Implement box layout.", "Fixtures."]
+              "tasks": ["Implement box layout.", "Fixtures."],
+              "status": "done"
             }
           ]
         },

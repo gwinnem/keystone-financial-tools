@@ -140,6 +140,14 @@
   corners in all four directions, click-click and drag, the eight handles with their cursors and
   one-coordinate edge handles, resize, move, delete, undo, and the fill and border hit rules with the
   default fill opacity of 0.15). No source change: the behaviour was already implemented.
+- Core (E05-F04): the text note tool. Cancelling the editor of a new note (`host.editText` resolves with
+  `null`) now removes the note without a history entry; before, the empty note stayed. A confirmed note
+  and its text are one history entry (undo removes both), and `undo()` and `redo()` return false while
+  the editor of a new note is open. A host without `editText` and an editor that fails still keep the empty
+  note. Editing an existing note (double-click, or Enter on a selected unlocked note) is one history
+  entry. Scenario tests cover placing and cancelling (also with `stayInTool` and the keyboard), editing,
+  plain text (`<b>` stays literal), the multi-line box (line breaks, the longest line, long words, font
+  size and text colour from the style) and hit-testing on the box.
 
 ### Specification and backlog
 
