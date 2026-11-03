@@ -136,6 +136,10 @@
   like its handle, and `cursorFor` shows `ns-resize` over the body, label and handle of a horizontal
   line that is not locked. Scenario tests cover placing across the pane, price-only moves, delete,
   undo and the label following the line.
+- Core (E05-F03): scenario tests for the rectangle through the controller (placing by two opposite
+  corners in all four directions, click-click and drag, the eight handles with their cursors and
+  one-coordinate edge handles, resize, move, delete, undo, and the fill and border hit rules with the
+  default fill opacity of 0.15). No source change: the behaviour was already implemented.
 
 ### Specification and backlog
 

@@ -1202,7 +1202,8 @@
                 "Eight handles (corners and edge midpoints); edge handles change one coordinate.",
                 "Fixture and scenario tests cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F03-S02",
@@ -1210,7 +1211,8 @@
               "userStory": "As a trader, I want filled zones clickable anywhere but empty boxes only on the border so that boxes do not block clicks on drawings inside them.",
               "sds": ["FR-HIT-003"],
               "acceptance": ["With `fillOpacity > 0` any point inside hits; otherwise only the border within tolerance.", "Default theme fill opacity for rectangles is 0.15."],
-              "tasks": ["Implement rule in hit-testing.", "Tests."]
+              "tasks": ["Implement rule in hit-testing.", "Tests."],
+              "status": "done"
             }
           ]
         },

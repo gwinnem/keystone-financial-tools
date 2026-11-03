@@ -622,6 +622,31 @@ tools.activate('horizontal-line');
   label follows the line while it is dragged, `hitTest` reports it as `label` and the placement preview
   uses the same formatter.
 
+## Rectangle
+
+`rectangle` has two anchors, opposite corners in any direction; the geometry is one normalised `rect`.
+
+```ts
+tools.activate('rectangle');
+// click, move, click  or  press, drag, release: any pair of opposite corners gives the same box
+
+// an empty box that only its border hits (the theme default fill is 0.15)
+store.update(id, { style: { fillOpacity: 0 } });
+```
+
+- **Handles**: a selected rectangle has eight: the corners `handle:0` (anchor 1), `handle:1` (anchor 2),
+  `handle:2` (x1, y2) and `handle:3` (x2, y1), and the edge midpoints `handle:4` (x1), `handle:5` (x2),
+  `handle:6` (y1) and `handle:7` (y2). A corner changes time and price of its anchor, an edge handle one
+  coordinate (`handle:4` and `handle:5` the time of anchor 1 and 2, `handle:6` and `handle:7` the price).
+  The cursor shows the diagonal of a corner (`nwse-resize`, `nesw-resize`) or the axis of an edge
+  (`ew-resize`, `ns-resize`), also after the anchors are dragged past each other.
+- **Hit rules** (FR-HIT-003): with a resolved `fillOpacity` above 0 (the theme default for a rectangle is
+  0.15 in `LIGHT_THEME`, 0.2 in `DARK_THEME`) any point inside hits; otherwise only the border within the
+  tolerance does, so an empty box does not block clicks on drawings inside it.
+- **Editing**: dragging a handle resizes, dragging the box moves it; each gesture is one history entry,
+  Escape puts a drag back, Delete removes it. A second corner on the first one (within 1 px) creates
+  nothing.
+
 ## Testing entry: `keystone-financial-tools-core/testing`
 
 Test helpers live in a separate entry so they never end up in production bundles.
