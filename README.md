@@ -12,7 +12,7 @@ the chart package itself.
 | Package | Folder | Purpose |
 |---|---|---|
 | `keystone-financial-tools-core` | `packages/core` | Drawing model, validation, `DrawingStore`, history, saved document format, `DrawingHost` contract, pixel geometry per kind (`geometryOf`), hit-testing (`hitTest`, `GeometryCache`), the scene a host draws (`buildScene`, `SceneCache`); `/testing` entry with a mock host and the host conformance kit |
-| `keystone-financial-tools-typescript` | `packages/typescript` | Framework-free API: the core plus Web Storage persistence (`saveDrawings`, `loadDrawings`, `autoSave`) |
+| `keystone-financial-tools-typescript` | `packages/typescript` | Framework-free API: the core plus persistence: async repositories (`MemoryRepository`, `WebStorageRepository`, `IndexedDbRepository`) and the 0.1 Web Storage helpers (`saveDrawings`, `loadDrawings`, `autoSave`) |
 | `keystone-financial-tools-vue` | `packages/vue` | Vue 3 composable (`useDrawings`) |
 | `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |
 | `keystone-financial-tools-angular` | `packages/angular` | Angular service (`KeystoneDrawingService`) |

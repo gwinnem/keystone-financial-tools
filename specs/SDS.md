@@ -760,6 +760,25 @@ every subscription. The `license` option belongs to E10 and is not implemented h
 - FR-PER-004: Loading never throws on a bad stored document: it returns an empty store plus the
   `ImportReport` / `KFT-E-JSON` issue.
 
+Decisions of E06-F02 (repositories):
+
+- `DrawingScope` is `{ symbol, timeframe? }` (the symbol is required; `DocumentScope` keeps both optional).
+  `load(scope)` resolves `{ document, issue? }`: the stored document migrated to version 2, an empty
+  document when nothing is stored, and an empty document plus the `KFT-E-JSON` issue when the entry is
+  not a drawing document (the entry is left in place). It does not validate the drawings; `loadStore`
+  (E06-F04) and `importDocument` do, and report the skipped ones. `readStored` is exported so that a
+  custom backend follows the same rules.
+- A failing backend rejects with `RepositoryError` (`Could not <read|save|remove> the drawings under
+  <key>: <reason>`, `reason` holds what the backend threw); the sync `DrawingError` codes are not
+  used for storage failures.
+- Keys are `scopeKey(scope, prefix = 'keystone-drawings')`; the Web Storage repository writes with a
+  single `setItem`, so a refused write leaves the previous document and nothing partial. The
+  IndexedDB repository keeps one record per scope in the `drawings` object store of a version 1
+  database (`UPGRADES[n]` takes version n to n + 1) and retries a failed open on the next call.
+- Tiers: `REPOSITORY_TIERS` records Web Storage and memory as Community and IndexedDB as
+  Professional, following the proposal of FR-LIC-002; OD-2 stays open and `TOOL_CATALOG` (E07) will
+  carry the final split.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

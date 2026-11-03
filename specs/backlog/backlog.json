@@ -1441,7 +1441,8 @@
                 "`MemoryRepository` implements it for tests and SSR.",
                 "A shared repository contract test suite runs against every implementation."
               ],
-              "tasks": ["Define the interface.", "Implement `MemoryRepository`.", "Write the contract suite."]
+              "tasks": ["Define the interface.", "Implement `MemoryRepository`.", "Write the contract suite."],
+              "status": "done"
             },
             {
               "id": "E06-F02-S02",
@@ -1453,7 +1454,8 @@
                 "Quota errors are reported as rejected promises with a clear message; nothing partial is written.",
                 "Loading a corrupt entry resolves to an empty document plus the issue (FR-PER-004)."
               ],
-              "tasks": ["Implement.", "Contract and error tests."]
+              "tasks": ["Implement.", "Contract and error tests."],
+              "status": "done"
             },
             {
               "id": "E06-F02-S03",
@@ -1465,7 +1467,8 @@
                 "Opening handles version upgrades; failures reject with a clear message.",
                 "Feature is marked Professional tier in `TOOL_CATALOG`/feature map (OD-2)."
               ],
-              "tasks": ["Implement with a small promise wrapper.", "Contract tests."]
+              "tasks": ["Implement with a small promise wrapper.", "Contract tests."],
+              "status": "done"
             }
           ]
         },

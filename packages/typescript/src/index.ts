@@ -1,3 +1,11 @@
 export * from 'keystone-financial-tools-core';
 export type { DrawingStorage } from './persistence';
 export { autoSave, loadDrawings, saveDrawings } from './persistence';
+export type { DrawingRepository, DrawingScope, RepositoryAction, RepositoryKind, RepositoryLoad, RepositoryTier } from './repository';
+export { readStored, REPOSITORY_TIERS, RepositoryError } from './repository';
+export { scopeKey } from './scope';
+export { MemoryRepository } from './memory-repository';
+export type { RepositoryStorage } from './web-storage-repository';
+export { WebStorageRepository } from './web-storage-repository';
+export type { IndexedDbRepositoryOptions } from './indexeddb-repository';
+export { IndexedDbRepository } from './indexeddb-repository';

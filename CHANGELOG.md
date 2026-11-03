@@ -173,6 +173,17 @@
   `level:<n>`, resize and move in time only (no snapping to a bar), delete, undo, and the `sequence` option
   (updates re-render at once as one history entry; invalid sequences are rejected with `KFT-E-OPTIONS` and leave
   the drawing unchanged). The README has a Fibonacci time zones section.
+- TypeScript (E06-F02): asynchronous repositories. `DrawingRepository` (`load`, `save`, `remove` per
+  `DrawingScope`, `{ symbol, timeframe? }`) with `MemoryRepository`, `WebStorageRepository(storage, prefix?)`
+  and `IndexedDbRepository({ dbName, factory? })`, all passing one contract suite. `load` resolves
+  `{ document, issue? }`: an empty document when nothing is stored, and an empty document plus the
+  `KFT-E-JSON` issue when the entry is corrupt (the entry stays); the drawings are not validated, so
+  `importDocument` can report the skipped ones. A failing backend (storage full, IndexedDB missing, a newer
+  database version, an aborted transaction) rejects with `RepositoryError`; a refused Web Storage write keeps
+  the previous document. `scopeKey(scope, prefix?)` gives `keystone-drawings:<symbol>[:<timeframe>]`,
+  URL-encoded; `readStored` helps custom backends follow the same rules (the README shows a REST
+  repository); `REPOSITORY_TIERS` records IndexedDB as Professional and the others as Community (OD-2 open).
+  New dev dependency `fake-indexeddb` for the IndexedDB tests.
 
 ### Specification and backlog
 
