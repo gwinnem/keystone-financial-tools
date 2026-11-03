@@ -161,6 +161,11 @@
   the zoom rule: the radius is the ratio times the pixel distance between the anchors, so an arc keeps its
   shape on the screen and changes in data space when the axes are zoomed; regression tests zoom the price axis
   and the time axis. No source change: the behaviour was already implemented.
+- Core (E05-F07): scenario tests for the Fibonacci fans tool through the controller (placing by click-click and
+  drag, Shift locking anchor 2 to 45 degree steps while placing and while dragging its handle, rays from anchor 1
+  through `(t2, p2 + (p1 - p2) * ratio)` clipped to the pane, hit-testing by `level:<ratio>` also in future
+  space, resize, move, delete, undo, hidden levels and rays that leave the pane). The README has a Fibonacci fans
+  section. No source change: the behaviour was already implemented.
 
 ### Specification and backlog
 

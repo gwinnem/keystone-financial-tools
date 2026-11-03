@@ -1345,7 +1345,8 @@
                 "Shift locks anchor 2 angle to 45° steps like the trend line.",
                 "Fixture and scenario tests cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             }
           ],
           "labels": ["tool:fibonacci"],

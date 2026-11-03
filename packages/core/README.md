@@ -754,6 +754,33 @@ circle on the screen, and it follows the anchors when you zoom or scroll:
   price after a zoom: it changes in data space with the aspect ratio of the pane. Zooming back restores the
   original arc, as only the anchors are stored.
 
+## Fibonacci fans
+
+`fibonacci-fans` has two anchors. For each visible level a ray starts at anchor 1 and passes through the point
+`(t2, p2 + (p1 - p2) * ratio)`: at the time of anchor 2, and at the price `ratio` of the way from anchor 2 back to
+anchor 1. The level 0 therefore goes through anchor 2 and the level 1 runs horizontally at the price of anchor 1.
+The rays continue to the edge of the pane, also through the future space right of the last bar; a ray that
+misses the pane, or has no direction, is left out. The default levels are 0.382, 0.5 and 0.618 (`levels`).
+
+```ts
+store.add({
+  id: 'fans-1',
+  kind: 'fibonacci-fans',
+  anchors: [
+    { time: 1_700_000_000_000, price: 100, yAxisId: 'price' },
+    { time: 1_700_600_000_000, price: 150, yAxisId: 'price' },
+  ],
+  options: { levels: [{ ratio: 0.5, visible: true }] },
+});
+```
+
+Clicking a ray selects the drawing (part `level:<ratio>`); where the rays meet, at anchor 1, the first level is
+reported. Hidden levels are neither drawn nor hit. The scene has a `fibonacci` item in data space for the host's
+overlay (`levels` and `showLabels`), and the geometry has `line` shapes in pixels.
+
+Holding Shift while placing the second anchor, or while dragging its handle, locks it to multiples of 45 degrees
+around anchor 1, at the distance of the pointer, like the trend line; the locked anchor does not snap.
+
 ## Testing entry: `keystone-financial-tools-core/testing`
 
 Test helpers live in a separate entry so they never end up in production bundles.
