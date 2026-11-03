@@ -2,6 +2,7 @@ import { Disposables } from './disposables';
 import { DrawingError } from './errors';
 import { assertHost } from './host-check';
 import { connectHost } from './host-connection';
+import type { PriceFormatter } from './geometry/types';
 import { GeometryCache } from './hit/geometry-cache';
 import { hitTest, type HitResult } from './hit/hit-test';
 import type { DrawingHost, HostKeyEvent, HostPointerEvent, Point, PointerType, TextEditRequest } from './host';
@@ -47,6 +48,8 @@ export interface DrawingToolsOptions {
   readonly tools?: readonly DrawingKind[];
   /** Thresholds and clock of the gesture recogniser. */
   readonly gestures?: GestureOptions;
+  /** Formats the price on the label of a horizontal line (FR-SC-001). Default: 2 decimals. */
+  readonly priceFormatter?: PriceFormatter;
   /** The y-axis a keyboard cursor starts on before the first anchor is placed. Default `price`. */
   readonly defaultYAxisId?: string;
   /** Makes the ids of new drawings. Default `createId`. */
@@ -242,6 +245,7 @@ class DrawingToolsController implements DrawingTools {
   });
   private cache: GeometryCache;
   private theme: DrawingTheme | undefined;
+  private readonly priceFormatter: PriceFormatter | undefined;
   private magnet: MagnetMode;
   private stayInTool: boolean;
   private allowed: ReadonlySet<DrawingKind>;
@@ -266,6 +270,7 @@ class DrawingToolsController implements DrawingTools {
     this.allowed = options.tools === undefined ? new Set(DRAWING_KINDS) : toolSet(options.tools);
     this.stayInTool = options.stayInTool === true;
     this.theme = options.theme;
+    this.priceFormatter = options.priceFormatter;
     this.newId = options.createId ?? defaultCreateId;
     this.defaultYAxisId = options.defaultYAxisId ?? 'price';
     this.debug = options.debug;
@@ -277,7 +282,7 @@ class DrawingToolsController implements DrawingTools {
       },
     };
     this.history = new History(this.store, options.history);
-    this.cache = new GeometryCache(host, { store: this.store, theme: this.theme });
+    this.cache = new GeometryCache(host, { store: this.store, theme: this.theme, priceFormatter: this.priceFormatter });
     this.scenes = new SceneCache(host);
     this.recogniser = new GestureRecogniser(options.gestures);
     this.cursors = new CursorSync(host);
@@ -355,7 +360,7 @@ class DrawingToolsController implements DrawingTools {
       () => {
         this.theme = theme;
         this.cache.destroy();
-        this.cache = new GeometryCache(this.host, { store: this.store, theme });
+        this.cache = new GeometryCache(this.host, { store: this.store, theme, priceFormatter: this.priceFormatter });
       },
       undefined
     );

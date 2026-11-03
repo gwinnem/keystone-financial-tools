@@ -84,7 +84,7 @@ export function buildScene(host: DrawingHost, options: SceneOptions): SceneItem[
     if (isSelected(drawing, options)) handles.push(handlesItem(drawing, geometry, options, theme));
   }
   if (options.preview != null) {
-    const preview = geometryOf(options.preview, host, { theme });
+    const preview = geometryOf(options.preview, host, { theme, priceFormatter: options.cache.priceFormatter });
     if (preview !== null) items.push({ type: 'preview', shapes: preview.shapes, style: resolveStyle(options.preview, theme) });
   }
   if (options.snap != null) {

@@ -39,7 +39,6 @@ describe('cursorFor (FR-INT-020)', () => {
   it.each<[DrawingKind, number]>([
     ['trend-line', 0],
     ['trend-line', 1],
-    ['horizontal-line', 0],
     ['text-note', 0],
     ['fibonacci-retracement', 1],
     ['fibonacci-arcs', 0],
@@ -48,6 +47,24 @@ describe('cursorFor (FR-INT-020)', () => {
   ])('is move over handle %s:%s', (kind, handle) => {
     const drawing: Drawing = { id: 'd', kind, anchors: [A(100, 100), A(300, 200)] };
     expect(cursorFor(null, hit(`handle:${handle}`), drawing, host)).toBe('move');
+  });
+
+  describe('horizontal line (FR-INT-010)', () => {
+    const line: Drawing = { id: 'd', kind: 'horizontal-line', anchors: [A(100, 100)] };
+
+    it.each(['body', 'label', 'handle:0'] as const)('is ns-resize over its %s, as dragging it changes only the price', (part) => {
+      expect(cursorFor(null, hit(part), line, host)).toBe('ns-resize');
+    });
+
+    it('is a pointer over the body and label of a locked line, and not-allowed over its handle', () => {
+      expect(cursorFor(null, hit('body', true), line, host)).toBe('pointer');
+      expect(cursorFor(null, hit('label', true), line, host)).toBe('pointer');
+      expect(cursorFor(null, hit('handle:0', true), line, host)).toBe('not-allowed');
+    });
+
+    it('is the crosshair with a tool active, as for every kind', () => {
+      expect(cursorFor('horizontal-line', hit('handle:0'), line, host)).toBe('crosshair');
+    });
   });
 
   it('is move over a handle of a drawing it knows nothing about', () => {

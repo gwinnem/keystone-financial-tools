@@ -246,14 +246,15 @@ describe('moving the selection (FR-INT-030)', () => {
     d.host.pointer('move', 205, 110);
     d.host.pointer('move', 210, 120);
     d.host.pointer('up', 210, 120);
-    // 10 px right is 60 000 ms; 20 px down is 10 price on the price pane and 200 volume on the volume pane.
+    // 10 px right is 60 000 ms (not for the horizontal line); 20 px down is 10 price on the price pane and 200 volume on the volume pane.
     for (const id of ['l', 'u']) {
       anchorsOf(d, id).forEach((anchor, index) => {
         expect(anchor.time).toBe((original(id)[index]?.time ?? 0) + 60_000);
         expect(anchor.price).toBeCloseTo((original(id)[index]?.price ?? 0) - 10, 9);
       });
     }
-    expect(anchorsOf(d, 'v')[0]?.time).toBe(150 * 6000 + 60_000);
+    // A horizontal line changes only its price: its time stays.
+    expect(anchorsOf(d, 'v')[0]?.time).toBe(150 * 6000);
     expect(anchorsOf(d, 'v')[0]?.price).toBeCloseTo(300, 9);
     expect(anchorsOf(d, 'r')).toEqual(original('r'));
     expect(d.blocked).toEqual([['r']]);

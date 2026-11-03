@@ -2,10 +2,13 @@
   "description": "Horizontal lines, rectangles and text notes on the default mock host (800 x 400 px, x = time / 6000, y = 400 - 2 * price) (FR-GEO-001, FR-GEO-007).",
   "cases": [
     {
-      "name": "horizontal line across the pane, handle at the pane's horizontal centre",
-      "drawing": { "id": "h", "kind": "horizontal-line", "anchors": [{ "time": 600000, "price": 75, "yAxisId": "price" }] },
+      "name": "horizontal line across the pane with its price label at the right end, handle at the pane's horizontal centre",
+      "drawing": { "id": "h", "kind": "horizontal-line", "anchors": [{ "time": 600000, "price": 75, "yAxisId": "price" }], "style": { "fontSize": 10 } },
       "expected": {
-        "shapes": [{ "type": "line", "part": "body", "from": { "x": 0, "y": 250 }, "to": { "x": 800, "y": 250 } }],
+        "shapes": [
+          { "type": "line", "part": "body", "from": { "x": 0, "y": 250 }, "to": { "x": 800, "y": 250 } },
+          { "type": "text", "part": "label", "x": 770, "y": 237, "width": 30, "height": 13, "lines": ["75.00"], "fontSize": 10, "lineHeight": 13 }
+        ],
         "handles": [{ "id": "handle:0", "x": 400, "y": 250 }]
       }
     },

@@ -200,7 +200,8 @@ export function handleSnap(drawing: Drawing, handle: number, origin: Point, poin
  * The drawings moved by the pointer's travel from `origin` to `point` (FR-INT-030, FR-INT-031):
  * every anchor by the same time delta and by the price delta of its own y-axis, so drawings on
  * other panes move by the same time and their own pane's price. With `shift` the move is
- * horizontal or vertical, whichever pixel delta is larger. A drawing whose y-axis has no pane is
+ * horizontal or vertical, whichever pixel delta is larger. A horizontal line changes only its price,
+ * whatever the pointer's horizontal travel. A drawing whose y-axis has no pane is
  * left out.
  *
  * @example
@@ -215,7 +216,7 @@ export function moveDrawings(drawings: readonly Drawing[], origin: Point, point:
   return drawings.flatMap((drawing): MovedDrawing[] => {
     const anchors: Anchor[] = [];
     for (const anchor of drawing.anchors) {
-      const next = dragged(anchor, origin, target, host, BOTH);
+      const next = dragged(anchor, origin, target, host, drawing.kind === 'horizontal-line' ? PRICE_ONLY : BOTH);
       if (next === null) return [];
       anchors.push(next);
     }

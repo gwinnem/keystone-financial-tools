@@ -1168,7 +1168,8 @@
                 "Dragging the line or its handle changes only the price (cursor `ns-resize`).",
                 "Fixture and scenario tests cover place, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F02-S02",
@@ -1179,7 +1180,8 @@
                 "The scene contains a `label` text shape with the price formatted by `options.priceFormatter` (default: 2 decimals, host may supply one).",
                 "The label follows the line during drags."
               ],
-              "tasks": ["Add label shape and formatter option.", "Tests."]
+              "tasks": ["Add label shape and formatter option.", "Tests."],
+              "status": "done"
             }
           ]
         },

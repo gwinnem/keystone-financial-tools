@@ -1,6 +1,7 @@
 import type { Point, Rect } from '../host';
+import { textNoteShapes } from './boxes';
 import { at, lineRectRange } from './clip';
-import type { LineShape } from './types';
+import type { LineShape, TextShape } from './types';
 
 /**
  * The segment from `a` to `b`, extended beyond `a` (`extendStart`) and/or beyond `b` (`extendEnd`)
@@ -25,6 +26,28 @@ export function extendSegment(a: Point, b: Point, rect: Rect, extendStart: boole
 export function trendLineShapes(p1: Point, p2: Point, rect: Rect, extendLeft: boolean, extendRight: boolean): LineShape[] {
   const [left, right] = p2.x < p1.x ? [p2, p1] : [p1, p2];
   return [{ type: 'line', part: 'body', ...extendSegment(left, right, rect, extendLeft, extendRight) }];
+}
+
+/**
+ * The default price format: 2 decimals.
+ *
+ * @example
+ * ```ts
+ * formatPrice(75); // '75.00'
+ * ```
+ */
+export function formatPrice(price: number): string {
+  return price.toFixed(2);
+}
+
+/**
+ * The price label of a horizontal line (FR-SC-001): a text shape of the part `label` with its right
+ * edge at the right edge of the pane and its bottom edge on the line, so it sits on the line at the
+ * price axis. `text` is the formatted price.
+ */
+export function priceLabelShapes(p: Point, rect: Rect, text: string, fontSize: number, measureText?: (line: string, fontSize: number) => number): TextShape[] {
+  const [box] = textNoteShapes(p, text, fontSize, measureText) as [TextShape];
+  return [{ ...box, part: 'label', x: rect.x + rect.width - box.width, y: p.y - box.height }];
 }
 
 /** A horizontal line: the full width of the pane at the anchor's y. */

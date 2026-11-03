@@ -72,7 +72,8 @@ describe('geometryOf (FR-GEO-001)', () => {
   it('works on a pane below another one', () => {
     const host = createMockHost({ panes: [DEFAULT_MOCK_PANE, RSI] });
     const horizontal = geometryOf({ id: 'h', kind: 'horizontal-line', anchors: [{ time: 0, price: 50, yAxisId: 'rsi' }] }, host);
-    expect(horizontal?.shapes).toEqual([{ type: 'line', part: 'body', from: { x: 0, y: 450 }, to: { x: 800, y: 450 } }]);
+    expect(horizontal?.shapes[0]).toEqual({ type: 'line', part: 'body', from: { x: 0, y: 450 }, to: { x: 800, y: 450 } });
+    expect(horizontal?.shapes).toHaveLength(2);
     expect(horizontal?.handles).toEqual([{ id: 'handle:0', x: 400, y: 450 }]);
     const zones = geometryOf(
       {

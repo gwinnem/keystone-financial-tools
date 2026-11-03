@@ -128,6 +128,14 @@
   controller cover placing by click-click and drag, resizing, moving, deleting, undo, the
   `extendLeft`/`extendRight` rays (including future space), hit-testing along an extension and
   toggling an extension as one history entry.
+- Core (E05-F02), **breaking** for hosts that draw every shape of a horizontal line: its geometry
+  now holds a price label after the body line (a `text` shape of the part `label`, FR-SC-001)
+  formatted by the new `priceFormatter` option (`PriceFormatter`, default `formatPrice`: 2
+  decimals) of `createDrawingTools`, `GeometryCache` and `geometryOf`; scene previews use the one of
+  the scene's cache. Dragging the body of a horizontal line changes only its price (`moveDrawings`),
+  like its handle, and `cursorFor` shows `ns-resize` over the body, label and handle of a horizontal
+  line that is not locked. Scenario tests cover placing across the pane, price-only moves, delete,
+  undo and the label following the line.
 
 ### Specification and backlog
 

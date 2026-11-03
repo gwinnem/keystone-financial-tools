@@ -212,8 +212,14 @@ describe('moveDrawings (FR-INT-030, FR-INT-031)', () => {
   });
 
   it('moves a drawing on another pane by the same time and its own pane’s price delta', () => {
-    const moved = moveDrawings([line, bar], FROM, TO, false, host);
+    const volumeNote = { ...drawing('text-note', V(200, 500)), id: 'volume-note' };
+    const moved = moveDrawings([line, volumeNote], FROM, TO, false, host);
     expectAnchors(moved[1]?.anchors ?? null, [V(200 + 20, 200)]);
+  });
+
+  it('moves a horizontal line on another pane by its own pane’s price delta only (FR-INT-010)', () => {
+    const moved = moveDrawings([line, bar], FROM, TO, false, host);
+    expectAnchors(moved[1]?.anchors ?? null, [V(200, 200)]);
   });
 
   it('moves horizontally or vertically with Shift, whichever pixel delta is larger', () => {

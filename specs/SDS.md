@@ -155,7 +155,7 @@ interface Drawing {
 | Kind | Anchors | Notes |
 |---|---|---|
 | `trend-line` | 2 | Options: `extendLeft`, `extendRight` |
-| `horizontal-line` | 1 | Spans the pane width; only the price matters for geometry |
+| `horizontal-line` | 1 | Spans the pane width; only the price matters for geometry; carries a price label (FR-SC-001) |
 | `rectangle` | 2 | Opposite corners |
 | `text-note` | 1 | Requires `text` (may be empty while editing) |
 | `fibonacci-retracement` | 2 | Options: `levels`, `reverse`, `extendLeft`, `extendRight`, `showLabels`, `showPrices` |
@@ -433,6 +433,15 @@ new SceneCache(host).get(options): readonly SceneItem[]; // same array until an 
   cache, theme, selection, hover, active handle, preview, snap); `SceneCache` returns the same array
   until one of them (compared by reference) or the viewport changes, so `getScene()` costs nothing
   between changes. The controller (E04) holds the state and wraps `SceneCache` as `getScene()`.
+- FR-SC-001 (price label, E05-F02): a horizontal line's geometry holds, after its body line, a
+  `text` shape of the part `label` with the price of its anchor. The text is
+  `priceFormatter(price, yAxisId)`, by default `price.toFixed(2)`. `priceFormatter` is a runtime
+  option, not a drawing option: a function cannot be stored in `Drawing.options`, which is JSON. A
+  host passes it to `createDrawingTools`, `GeometryCache` or `geometryOf`; the placement preview
+  uses the one of the scene's cache. The label's right edge is the right edge of the pane and its
+  bottom edge is on the line, with the font size of the drawing's resolved style; it is not clamped
+  to the pane, so a line at the very top has its label above the pane. The label is part of the
+  drawing: hit-testing reports it as `label` and a drag on it moves the line.
 - FR-SC-002: The placement preview of a drawing in progress is a `preview` item with the drawing's
   shapes (the pointer is its missing anchor) and resolved style. A snapped point is a second `preview`
   item: a circle of `SNAP_INDICATOR_RADIUS` (5 px) in the theme's default style. Both are absent from
@@ -544,7 +553,8 @@ id, host)` builds one copy.
 Decisions made while implementing (E04-F03): the cursor is `crosshair` while a tool is active (over
 anything), `default` over nothing, `pointer` over a body, level or label (locked or not),
 `not-allowed` over a handle of a locked drawing, a resize cursor over a rectangle handle and `move`
-over any other handle; a rectangle corner shows the diagonal it sits on as it is on the screen (so it
+over any other handle; a horizontal line that is not locked shows `ns-resize` over its body, label
+and handle (E05-F02), as dragging any of them changes only the price; a rectangle corner shows the diagonal it sits on as it is on the screen (so it
 stays right when the anchors are dragged past each other) and an edge handle its axis. `select` keeps
 the ids that exist, once each, in the given order, keeps the hover, goes idle for none and returns
 the same state object when the selection does not change, so the controller raises `selection` when

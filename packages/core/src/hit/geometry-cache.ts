@@ -1,5 +1,5 @@
 import { geometryOf } from '../geometry/index';
-import type { DrawingGeometry, GeometryOptions } from '../geometry/types';
+import type { DrawingGeometry, GeometryOptions, PriceFormatter } from '../geometry/types';
 import type { DrawingHost } from '../host';
 import type { DrawingStore } from '../store';
 import type { Drawing } from '../types';
@@ -21,7 +21,7 @@ interface Entry {
  * while the drawing is the same object it was computed from, and the store replaces a drawing on
  * every change to it, so a changed drawing is recomputed and the others are not. A viewport change
  * (zoom, scroll, resize, pane layout, timeframe) clears everything. Geometry that depends on the
- * theme or `measureText` needs a new cache when those change.
+ * theme, `measureText` or `priceFormatter` needs a new cache when those change.
  *
  * @example
  * ```ts
@@ -39,7 +39,7 @@ export class GeometryCache {
 
   constructor(host: DrawingHost, options: GeometryCacheOptions = {}) {
     this.host = host;
-    this.options = { theme: options.theme, measureText: options.measureText };
+    this.options = { theme: options.theme, measureText: options.measureText, priceFormatter: options.priceFormatter };
     this.subscriptions.add(host.onViewportChange(() => this.clear()));
     if (options.store !== undefined) {
       this.subscriptions.add(
@@ -50,6 +50,11 @@ export class GeometryCache {
         })
       );
     }
+  }
+
+  /** The formatter of the price labels; scene previews use it so they read like the drawings. */
+  get priceFormatter(): PriceFormatter | undefined {
+    return this.options.priceFormatter;
   }
 
   /** The geometry of a drawing, or null when its y-axis has no pane. Computed once per drawing object and viewport. */

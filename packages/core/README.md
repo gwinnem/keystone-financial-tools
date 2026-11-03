@@ -29,7 +29,7 @@ geometry of every drawing kind.
 | `validateHost`, `assertHost`, `REQUIRED_HOST_MEMBERS` | Checks a host against the contract (`KFT-E-HOST`) |
 | `connectHost`, `HostHandlers`, `Disposables` | Subscribes to the host's events once and unsubscribes every one exactly once |
 | `anchorToPoint`, `pointToAnchor` | Anchors to plot points and back through the host transforms |
-| `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
+| `geometryOf`, `DrawingGeometry`, `GeometryOptions`, `Shape`, `LineShape`, `RectShape`, `ArcShape`, `TextShape`, `LabelShape`, `HandlePoint`, `GeometryPart`, `PriceFormatter`, `formatPrice`, `TEXT_CHAR_WIDTH`, `TEXT_LINE_HEIGHT` | Pixel geometry of a drawing for the current frame: shapes and handles |
 | `hitTest`, `HitResult`, `HitPart`, `HitTestOptions`, `HIT_TOLERANCE`, `GeometryCache`, `GeometryCacheOptions` | What is under a plot point (drawing id, part, locked), and the geometry cache it reads from |
 | `buildScene`, `SceneCache`, `SceneItem`, `ShapeItem`, `FibonacciItem`, `HandlesItem`, `PreviewItem`, `SceneOptions`, `ItemState`, `FibonacciKind`, `ResolvedFibonacciOptions`, `SNAP_INDICATOR_RADIUS` | The scene a host draws: items in paint order with state, resolved style, preview, snap indicator and handles |
 | `GestureRecogniser`, `Gesture`, `GestureBase`, `GestureOptions` | Pointer events to `move`, `click`, `double-click`, `drag-start`, `drag`, `drag-end`, `cancel` and `leave` gestures (3 px, 300 ms, 400 ms and 6 px by default, injectable clock) |
@@ -154,7 +154,7 @@ relative to the bars when the chart scrolls or zooms.
 
 ## Geometry
 
-`geometryOf(drawing, host, { theme?, measureText? })` computes a drawing's pixel geometry for the
+`geometryOf(drawing, host, { theme?, measureText?, priceFormatter? })` computes a drawing's pixel geometry for the
 current frame from the host transforms: `{ drawingId, kind, shapes, handles }`, or null when the
 drawing's y-axis has no pane. It is pure and deterministic; anchors stay in data space and the
 geometry is recomputed whenever the viewport changes.
@@ -162,7 +162,7 @@ geometry is recomputed whenever the viewport changes.
 | Kind | Shapes |
 |---|---|
 | `trend-line` | One `line` from left to right; `extendLeft`/`extendRight` extend the end with the smaller/larger x to the pane edge (for a vertical line: anchor 1/anchor 2). An extension never shortens the line |
-| `horizontal-line` | One `line` across the pane |
+| `horizontal-line` | One `line` across the pane, then its price `label`: a `text` shape of the part `label` ([Horizontal line](#horizontal-line)) |
 | `rectangle` | One `rect`, normalised to `x`, `y`, `width`, `height` |
 | `text-note` | One `text` box with its top left corner at the anchor; lines split on `\n`, `fontSize * TEXT_CHAR_WIDTH` (0.6) per character and `fontSize * TEXT_LINE_HEIGHT` (1.3) per line unless `measureText` is given; at least one character wide |
 | `fibonacci-retracement` | Per visible level a `line` (`level:<ratio>`) at `p1 + (p2 - p1) * ratio` (`reverse` swaps p1 and p2), then its `label` position when `showLabels` or `showPrices` |
@@ -227,12 +227,12 @@ cache.destroy(); // when the chart is torn down
   when selected), so the caller decides what a locked drawing allows. A drawing without a pane is
   never hit.
 
-`GeometryCache(host, { store?, theme?, measureText? })` keeps the geometry of each drawing between
+`GeometryCache(host, { store?, theme?, measureText?, priceFormatter? })` keeps the geometry of each drawing between
 pointer moves, so `hitTest` over many drawings does no geometry work. An entry is used only while the
 drawing is the same object it was computed from; the store replaces a drawing on every change, so a
 changed drawing is recomputed and the others are not. A viewport change clears the whole cache. With a
 `store` the entries of removed drawings are dropped (`size` says how many drawings are held). The
-theme and `measureText` are fixed per cache: create a new one when they change. `destroy()` stops
+theme, `measureText` and `priceFormatter` are fixed per cache: create a new one when they change. `destroy()` stops
 following the host and the store and is safe to call twice.
 
 `pnpm --filter keystone-financial-tools-core bench` measures `hitTest` over 500 drawings with a warm
@@ -392,7 +392,7 @@ function perform(effect) {
 
 - **Cursor** (`cursorFor(tool, hit, drawing, host)`): `crosshair` while a tool is active; `default` over
   nothing; `pointer` over a body, level or label (locked or not); `not-allowed` over a handle of a locked
-  drawing; over a rectangle handle the resize cursor of its corner (`nwse-resize` or `nesw-resize`, by the
+  drawing; `ns-resize` over the body, label and handle of a horizontal line that is not locked; over a rectangle handle the resize cursor of its corner (`nwse-resize` or `nesw-resize`, by the
   diagonal it sits on in pixels) or edge (`ew-resize`, `ns-resize`); `move` over any other handle.
   `CursorSync.set(cursor)` calls `host.setCursor` only when the cursor changes and returns whether it did;
   `reset()` makes the next `set` call the host again.
@@ -541,6 +541,7 @@ tools.destroy(); // when the chart goes away
 | `stayInTool` | Keep the tool active after a placement | `false` |
 | `tools` | The kinds that can be activated | all kinds |
 | `gestures` | `GestureOptions` (thresholds, clock) | defaults |
+| `priceFormatter` | `(price, yAxisId) => string` for the price label of a horizontal line | 2 decimals |
 | `defaultYAxisId` | The pane keyboard placement starts in when no anchor is set | `price` |
 | `createId` | Id of a new drawing | `createId` |
 | `debug` | Receives a message for every input the state machine ignores | none |
@@ -593,6 +594,33 @@ store.update(id, { options: { extendRight: true } });
   computed from the host transforms, so it stays correct in future space right of the last bar. It never
   shortens the line, and a line that misses the pane or has no length is not extended. The extension is
   part of the `body`, so `hitTest` finds the line along it, with the same tolerance.
+
+## Horizontal line
+
+`horizontal-line` has one anchor; only its price matters. One click places it:
+
+```ts
+const tools = createDrawingTools(host, {
+  store,
+  priceFormatter: (price, yAxisId) => (yAxisId === 'volume' ? price.toFixed(0) : price.toFixed(2)),
+});
+tools.activate('horizontal-line');
+// click: the line spans the full width of the pane at the price under the pointer
+```
+
+- **Placing**: one click inside a pane, one history entry (undo removes the line). A click outside every
+  pane does nothing and the tool stays active.
+- **Editing**: dragging the line, its label or its handle (at the horizontal centre of the pane) changes
+  only the price; the time stays and horizontal travel is ignored. The cursor is `ns-resize` over all
+  three (`pointer` over the body of a locked line, `not-allowed` over its handle). Each drag is one history
+  entry; Escape puts it back; Delete removes the line.
+- **Price label** (FR-SC-001): after the body line the geometry holds a `text` shape of the part `label`
+  with the formatted price. Its right edge is the right edge of the pane and its bottom edge is on the
+  line, with the font size of the drawing's style. The text is `priceFormatter(price, yAxisId)`, by default
+  `formatPrice`: 2 decimals. The formatter is a runtime option of `createDrawingTools`, `GeometryCache` and
+  `geometryOf`, not a drawing option, because a function cannot be saved in the JSON of `options`. The
+  label follows the line while it is dragged, `hitTest` reports it as `label` and the placement preview
+  uses the same formatter.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

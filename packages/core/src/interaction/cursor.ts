@@ -30,8 +30,9 @@ function rectangleHandleCursor(drawing: Drawing, handle: number, host: DrawingHo
  * The cursor to show for what is under the pointer (FR-INT-020):
  * - a tool is active: `crosshair`;
  * - nothing under the pointer: `default`;
- * - a body, level or label: `pointer`;
  * - a handle of a locked drawing: `not-allowed`;
+ * - anything of a horizontal line that is not locked (body, label or handle): `ns-resize`, as dragging it changes only its price;
+ * - a body, level or label: `pointer`;
  * - a rectangle handle: the resize cursor of its corner or edge; any other handle: `move`.
  *
  * @example
@@ -43,8 +44,10 @@ function rectangleHandleCursor(drawing: Drawing, handle: number, host: DrawingHo
 export function cursorFor(tool: DrawingKind | null, hit: HitResult | null, drawing: Drawing | undefined, host: DrawingHost): DrawingCursor {
   if (tool !== null) return 'crosshair';
   if (hit === null) return 'default';
-  if (!hit.part.startsWith(HANDLE_PREFIX)) return 'pointer';
-  if (hit.locked) return 'not-allowed';
+  const isHandle = hit.part.startsWith(HANDLE_PREFIX);
+  if (isHandle && hit.locked) return 'not-allowed';
+  if (drawing?.kind === 'horizontal-line' && !hit.locked) return 'ns-resize';
+  if (!isHandle) return 'pointer';
   if (drawing === undefined || drawing.kind !== 'rectangle') return 'move';
   return rectangleHandleCursor(drawing, Number(hit.part.slice(HANDLE_PREFIX.length)), host);
 }

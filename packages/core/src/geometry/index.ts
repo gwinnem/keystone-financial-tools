@@ -6,7 +6,7 @@ import type { Drawing, FibonacciLevel } from '../types';
 import { rectangleShapes, textNoteShapes } from './boxes';
 import { arcShapes, fanShapes, retracementShapes, timeZoneShapes, type RetracementOptions } from './fibonacci';
 import { handlesOf } from './handles';
-import { horizontalLineShapes, trendLineShapes } from './lines';
+import { formatPrice, horizontalLineShapes, priceLabelShapes, trendLineShapes } from './lines';
 import type { DrawingGeometry, GeometryOptions, Shape } from './types';
 
 function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: DrawingHost, options: GeometryOptions): Shape[] {
@@ -18,7 +18,10 @@ function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: 
     case 'trend-line':
       return trendLineShapes(p1, p2, rect, kindOptions.extendLeft as boolean, kindOptions.extendRight as boolean);
     case 'horizontal-line':
-      return horizontalLineShapes(p1, rect);
+      return [
+        ...horizontalLineShapes(p1, rect),
+        ...priceLabelShapes(p1, rect, (options.priceFormatter ?? formatPrice)(a1.price, a1.yAxisId), resolveStyle(drawing, options.theme).fontSize, options.measureText),
+      ];
     case 'rectangle':
       return rectangleShapes(p1, p2);
     case 'text-note':
@@ -43,7 +46,7 @@ function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: 
  * | Kind | Shapes |
  * |---|---|
  * | `trend-line` | One line from left to right, extended to the pane edge per `extendLeft`/`extendRight` |
- * | `horizontal-line` | One line across the pane |
+ * | `horizontal-line` | One line across the pane, then its price label (a `text` shape of the part `label`, formatted by `priceFormatter`) |
  * | `rectangle` | One rect, normalised |
  * | `text-note` | One text box with its top left corner at the anchor |
  * | `fibonacci-retracement` | Per visible level a line (`level:<ratio>`), then its label when shown |

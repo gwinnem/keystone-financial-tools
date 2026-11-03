@@ -85,6 +85,9 @@ export interface DrawingGeometry {
   readonly handles: readonly HandlePoint[];
 }
 
+/** Formats a price for a label (FR-SC-001). `yAxisId` is the y-axis the price belongs to, so a host can format each pane its own way. */
+export type PriceFormatter = (price: number, yAxisId: string) => string;
+
 /**
  * Options of `geometryOf`.
  *
@@ -101,4 +104,6 @@ export interface GeometryOptions {
    * estimated as `fontSize * TEXT_CHAR_WIDTH` per character.
    */
   readonly measureText?: (line: string, fontSize: number) => number;
+  /** Formats the price on the label of a horizontal line. Default: the price with 2 decimals. */
+  readonly priceFormatter?: PriceFormatter;
 }
