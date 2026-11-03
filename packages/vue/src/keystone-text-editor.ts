@@ -1,5 +1,5 @@
 import { defineComponent, h, type ComponentPublicInstance, type PropType } from 'vue';
-import { TEXT_EDITOR_LABEL, textEditorKeyAction, type TextEditSession } from 'keystone-financial-tools-core';
+import { shouldRestoreFocus, TEXT_EDITOR_LABEL, textEditorKeyAction, type TextEditSession } from 'keystone-financial-tools-core';
 
 /** Keeps pointer events in the editor from reaching the chart, which would take them for clicks on the plot. */
 const POINTER_EVENTS = ['onPointerdown', 'onPointermove', 'onPointerup', 'onPointercancel'] as const;
@@ -43,14 +43,17 @@ export const KeystoneTextEditor = defineComponent({
   },
   setup(props) {
     let previous: HTMLElement | null = null;
-    // Called with the textarea when it appears and with null when it goes: focus moves in, and back out.
+    let field: HTMLTextAreaElement | null = null;
+    // Called with the textarea when it appears and with null when it goes: focus moves in, and back out
+    // (unless the user has moved it to something else in the meantime).
     const attach = (element: Element | ComponentPublicInstance | null): void => {
       if (element === null) {
-        previous?.focus();
+        if (shouldRestoreFocus(document.activeElement, field, document.body)) previous?.focus();
         previous = null;
+        field = null;
         return;
       }
-      const field = element as HTMLTextAreaElement;
+      field = element as HTMLTextAreaElement;
       previous = document.activeElement as HTMLElement | null;
       field.focus();
       field.select();

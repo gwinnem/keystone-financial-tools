@@ -145,6 +145,31 @@ describe('KeystoneTextEditor', () => {
       expect(document.activeElement).toBe(other);
     });
 
+    it('goes back to the element that had the focus when the textarea was left for nothing in particular', async () => {
+      const { session, field, container } = mount(null);
+      const button = container.querySelector('button');
+      session.value = stub();
+      await nextTick();
+      field()?.blur();
+      expect(document.activeElement).toBe(document.body);
+      session.value = null;
+      await nextTick();
+      expect(document.activeElement).toBe(button);
+    });
+
+    it('leaves the focus with the element the user moved it to', async () => {
+      const { session, field, container } = mount(null);
+      const other = document.createElement('input');
+      container.append(other);
+      session.value = stub();
+      await nextTick();
+      other.focus();
+      expect(field()).not.toBeNull();
+      session.value = null;
+      await nextTick();
+      expect(document.activeElement).toBe(other);
+    });
+
     it('gives a new session a new textarea', async () => {
       const editor = new TextEditor();
       const { session, field } = mount(null);

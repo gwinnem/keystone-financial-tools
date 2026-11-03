@@ -49,6 +49,21 @@ export function textEditorKeyAction(event: TextEditorKeyEvent): TextEditorKeyAct
 }
 
 /**
+ * Whether the focus can go back to the element that had it before the note editor opened, when the
+ * editor closes: only while the focus is still in the editor or nowhere in particular (`body`, or
+ * nothing). When the user clicked something else, that element keeps it. Pass `document.activeElement`,
+ * the editor's element and `document.body`.
+ *
+ * @example
+ * ```ts
+ * if (shouldRestoreFocus(document.activeElement, textarea, document.body)) previous.focus();
+ * ```
+ */
+export function shouldRestoreFocus(active: unknown, editor: unknown, body: unknown): boolean {
+  return active === null || active === editor || active === body;
+}
+
+/**
  * The framework-neutral part of the default note editor (FR-INT-050): `edit` is an `editText` for
  * `createDrawingTools` that opens a `TextEditSession` instead of showing anything itself. An adapter
  * shows the open session (a textarea at `session.request`) and calls `confirm` or `cancel` on it.

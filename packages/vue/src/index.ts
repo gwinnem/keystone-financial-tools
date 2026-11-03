@@ -17,4 +17,4 @@ export type {
   TextEditRequest,
   TextEditSession,
 } from 'keystone-financial-tools-core';
-export { createDrawingTools, DARK_THEME, LIGHT_THEME, TextEditor, textEditorKeyAction } from 'keystone-financial-tools-core';
+export { createDrawingTools, DARK_THEME, LIGHT_THEME, shouldRestoreFocus, TextEditor, textEditorKeyAction } from 'keystone-financial-tools-core';

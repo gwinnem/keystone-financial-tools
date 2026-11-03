@@ -862,6 +862,31 @@ Decisions of E07-F02 (Vue controller adapter):
   `TEXT_EDITOR_LABEL` is the default accessible name; `label` replaces it until E07-F06 adds the
   message table.
 
+Decisions of E07-F03 (React controller adapter):
+
+- `useDrawingTools(host, options?)` takes a host that may be `null` or `undefined` (a chart is often
+  not there on the first render) and returns `tools: DrawingTools | null`. Until a host exists the
+  state is `IDLE_STATE`, the actions do nothing (`undo` and `redo` give `false`) and `drawings` is
+  empty. This is a deviation from the Vue adapter, where the host is required.
+- The controller is created in an effect, not during render, and kept in state. A StrictMode double
+  mount therefore creates and destroys one controller per mount and leaves no listeners on the host.
+  A new host (or store) destroys the old controller and creates a new one. The options are read when
+  the controller is created (through a ref), so changing them later does not rebuild it; use `setTheme`,
+  `setMagnet` and `setOptions`.
+- The state is read with `useSyncExternalStore` over the controller's `state` event and `getState()`;
+  the text-edit session the same way over `TextEditor.subscribe` and `session`. The actions are stable
+  callbacks that change only with the controller. On cleanup the controller is destroyed, then an open
+  editor is cancelled, so its answer is dropped.
+- `editText` is `undefined` (the default `TextEditor`), a function, or `false` (no editor), as in Vue.
+- `KeystoneTextEditor` is an uncontrolled textarea: its text is set once per session, so typing is
+  never overwritten by a re-render. Its listeners are native listeners on the textarea, not React
+  props: React handles events at the root, after the listeners of the chart's own elements, so
+  `stopPropagation` in a prop could not keep Delete, Backspace or pointer events from the chart.
+- `shouldRestoreFocus(active, editor, body)` (core, shared by all adapters) decides whether closing
+  the editor moves the focus back: only when nothing, the editor or the body has it. If the user moved
+  the focus to another element (a blur that confirmed the text), it stays there. The Vue editor had
+  always moved the focus back; E07-F03 fixes that with the same rule.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

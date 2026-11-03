@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- React controller adapter (E07-F03): `useDrawingTools(host, options?)` (the host may be missing until
+  the chart exists) returns the controller or null, the store, `state`, `drawings`, `textEdit` and the
+  actions; it is StrictMode safe (one controller per mount). `KeystoneTextEditor` is the default text
+  editor, the same as the Vue one. Core: `shouldRestoreFocus`. Vue: the editor no longer takes the
+  focus back from an element the user moved it to.
 - Vue controller adapter (E07-F02): `useDrawingTools(host, options?)` returns the controller, the store,
   the refs `state`, `drawings` and `textEdit` and the actions, and destroys the tools with the scope;
   `KeystoneTextEditor` is the default text editor (textarea, Ctrl or Cmd with Enter confirms, Escape

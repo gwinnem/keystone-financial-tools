@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TextEditRequest } from '../src/host';
-import { TEXT_EDITOR_LABEL, TextEditor, textEditorKeyAction, type TextEditSession } from '../src/text-editor';
+import { shouldRestoreFocus, TEXT_EDITOR_LABEL, TextEditor, textEditorKeyAction, type TextEditSession } from '../src/text-editor';
 
 const REQUEST: TextEditRequest = { drawingId: 'n1', text: 'hello', x: 10, y: 20, fontSize: 14 };
 const OTHER: TextEditRequest = { drawingId: 'n2', text: '', x: 30, y: 40, fontSize: 12 };
@@ -14,6 +14,28 @@ async function outcome(promise: Promise<string | null>): Promise<string | null |
 describe('TEXT_EDITOR_LABEL', () => {
   it('names the editor for assistive technology', () => {
     expect(TEXT_EDITOR_LABEL).toBe('Note text');
+  });
+});
+
+describe('shouldRestoreFocus', () => {
+  const editor = { id: 'editor' };
+  const body = { id: 'body' };
+  const other = { id: 'other' };
+
+  it('restores while the focus is still in the editor', () => {
+    expect(shouldRestoreFocus(editor, editor, body)).toBe(true);
+  });
+
+  it('restores when the focus is on the body', () => {
+    expect(shouldRestoreFocus(body, editor, body)).toBe(true);
+  });
+
+  it('restores when nothing has the focus', () => {
+    expect(shouldRestoreFocus(null, editor, body)).toBe(true);
+  });
+
+  it('leaves the focus where the user put it', () => {
+    expect(shouldRestoreFocus(other, editor, body)).toBe(false);
   });
 });
 

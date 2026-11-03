@@ -2,3 +2,20 @@ export type { Anchor, Drawing, DrawingDocument, DrawingIssue, DrawingKind, Drawi
 export { DrawingError, DrawingStore } from 'keystone-financial-tools-core';
 export type { UseDrawings } from './use-drawings';
 export { useDrawings } from './use-drawings';
+export type { UseDrawingTools, UseDrawingToolsOptions } from './use-drawing-tools';
+export { useDrawingTools } from './use-drawing-tools';
+export type { KeystoneTextEditorProps } from './keystone-text-editor';
+export { KeystoneTextEditor } from './keystone-text-editor';
+// What `useDrawingTools` takes and returns, so an application imports it all from this package (AR-5).
+export type {
+  DrawingHost,
+  DrawingTheme,
+  DrawingTools,
+  DrawingToolsOptions,
+  DrawingToolsRuntimeOptions,
+  DrawingToolsState,
+  MagnetMode,
+  TextEditRequest,
+  TextEditSession,
+} from 'keystone-financial-tools-core';
+export { createDrawingTools, DARK_THEME, LIGHT_THEME, shouldRestoreFocus, TextEditor, textEditorKeyAction } from 'keystone-financial-tools-core';
