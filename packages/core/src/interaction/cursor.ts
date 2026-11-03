@@ -33,6 +33,7 @@ function rectangleHandleCursor(drawing: Drawing, handle: number, host: DrawingHo
  * - a handle of a locked drawing: `not-allowed`;
  * - anything of a horizontal line that is not locked (body, label or handle): `ns-resize`, as dragging it changes only its price;
  * - a body, level or label: `pointer`;
+ * - a handle of Fibonacci time zones (not locked): `ew-resize`, as dragging it changes only a time (D-5);
  * - a rectangle handle: the resize cursor of its corner or edge; any other handle: `move`.
  *
  * @example
@@ -48,6 +49,7 @@ export function cursorFor(tool: DrawingKind | null, hit: HitResult | null, drawi
   if (isHandle && hit.locked) return 'not-allowed';
   if (drawing?.kind === 'horizontal-line' && !hit.locked) return 'ns-resize';
   if (!isHandle) return 'pointer';
+  if (drawing?.kind === 'fibonacci-time-zones') return 'ew-resize';
   if (drawing === undefined || drawing.kind !== 'rectangle') return 'move';
   return rectangleHandleCursor(drawing, Number(hit.part.slice(HANDLE_PREFIX.length)), host);
 }

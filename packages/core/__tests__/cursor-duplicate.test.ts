@@ -43,10 +43,23 @@ describe('cursorFor (FR-INT-020)', () => {
     ['fibonacci-retracement', 1],
     ['fibonacci-arcs', 0],
     ['fibonacci-fans', 1],
-    ['fibonacci-time-zones', 0],
   ])('is move over handle %s:%s', (kind, handle) => {
     const drawing: Drawing = { id: 'd', kind, anchors: [A(100, 100), A(300, 200)] };
     expect(cursorFor(null, hit(`handle:${handle}`), drawing, host)).toBe('move');
+  });
+
+  describe('time zones (E05-F08)', () => {
+    const zones: Drawing = { id: 'd', kind: 'fibonacci-time-zones', anchors: [A(100, 100), A(300, 200)] };
+
+    it.each([0, 1] as const)('is ew-resize over handle:%s, as dragging it changes only a time', (handle) => {
+      expect(cursorFor(null, hit(`handle:${handle}`), zones, host)).toBe('ew-resize');
+    });
+
+    it('is a pointer over a level, not-allowed over a handle of locked time zones and the crosshair with a tool active', () => {
+      expect(cursorFor(null, hit('level:5'), zones, host)).toBe('pointer');
+      expect(cursorFor(null, hit('handle:0', true), zones, host)).toBe('not-allowed');
+      expect(cursorFor('fibonacci-time-zones', hit('handle:0'), zones, host)).toBe('crosshair');
+    });
   });
 
   describe('horizontal line (FR-INT-010)', () => {

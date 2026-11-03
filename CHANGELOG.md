@@ -166,6 +166,13 @@
   through `(t2, p2 + (p1 - p2) * ratio)` clipped to the pane, hit-testing by `level:<ratio>` also in future
   space, resize, move, delete, undo, hidden levels and rays that leave the pane). The README has a Fibonacci fans
   section. No source change: the behaviour was already implemented.
+- Core (E05-F08): the Fibonacci time zones tool. `cursorFor` shows `ew-resize` over a handle of time zones that
+  are not locked (before: `move`), as dragging it changes only a time; a locked one still shows `not-allowed`.
+  Scenario tests cover placing (click-click, drag, undo, Escape, preview, a unit of 0), the lines (the default
+  sequence across the pane height, a negative unit, a zoom of the time axis, prices ignored), selecting by
+  `level:<n>`, resize and move in time only (no snapping to a bar), delete, undo, and the `sequence` option
+  (updates re-render at once as one history entry; invalid sequences are rejected with `KFT-E-OPTIONS` and leave
+  the drawing unchanged). The README has a Fibonacci time zones section.
 
 ### Specification and backlog
 

@@ -393,7 +393,7 @@ function perform(effect) {
 - **Cursor** (`cursorFor(tool, hit, drawing, host)`): `crosshair` while a tool is active; `default` over
   nothing; `pointer` over a body, level or label (locked or not); `not-allowed` over a handle of a locked
   drawing; `ns-resize` over the body, label and handle of a horizontal line that is not locked; over a rectangle handle the resize cursor of its corner (`nwse-resize` or `nesw-resize`, by the
-  diagonal it sits on in pixels) or edge (`ew-resize`, `ns-resize`); `move` over any other handle.
+  diagonal it sits on in pixels) or edge (`ew-resize`, `ns-resize`); `ew-resize` over a handle of time zones that are not locked, as dragging it changes only a time; `move` over any other handle.
   `CursorSync.set(cursor)` calls `host.setCursor` only when the cursor changes and returns whether it did;
   `reset()` makes the next `set` call the host again.
 - **`select` input**: selects exactly these drawings, in this order. Ids that do not exist and repeated ids
@@ -780,6 +780,36 @@ overlay (`levels` and `showLabels`), and the geometry has `line` shapes in pixel
 
 Holding Shift while placing the second anchor, or while dragging its handle, locks it to multiples of 45 degrees
 around anchor 1, at the distance of the pointer, like the trend line; the locked anchor does not snap.
+
+## Fibonacci time zones
+
+`fibonacci-time-zones` has two anchors. The distance in time between them is the unit `u = t2 - t1`, and each
+value `n` of the `sequence` draws a vertical line at `t1 + n * u`, across the full height of the pane. The
+default sequence is the Fibonacci numbers 0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89. A negative unit runs to the
+left, a unit of 0 draws nothing, and a line outside the horizontal range of the pane is left out.
+
+```ts
+store.add({
+  id: 'zones-1',
+  kind: 'fibonacci-time-zones',
+  anchors: [
+    { time: 1_700_000_000_000, price: 100, yAxisId: 'price' },
+    { time: 1_700_086_400_000, price: 100, yAxisId: 'price' },
+  ],
+  options: { sequence: [0, 3, 6, 9] },
+});
+```
+
+The prices of the anchors are stored, so the anchors stay valid, but they play no part in the geometry (D-5):
+the handles sit at the anchor times, vertically centred in the pane, and dragging a handle changes only its
+time (the cursor over it is `ew-resize`; it does not snap to a bar). Clicking a line selects the drawing (part
+`level:<n>`). The scene has a `fibonacci` item in data space for the host's overlay (`sequence` and
+`showLabels`), and the geometry has `line` shapes in pixels.
+
+The `sequence` is a list of at most 32 non-negative integers, each above the one before it. Update it with
+`store.update(id, { options: { ...drawing.options, sequence } })`: the lines follow at once and the update is
+one history entry. An invalid sequence throws a `DrawingError` with the code `KFT-E-OPTIONS` and the drawing
+stays as it was.
 
 ## Testing entry: `keystone-financial-tools-core/testing`
 

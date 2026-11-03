@@ -560,7 +560,7 @@ Decisions made while implementing (E04-F03): the cursor is `crosshair` while a t
 anything), `default` over nothing, `pointer` over a body, level or label (locked or not),
 `not-allowed` over a handle of a locked drawing, a resize cursor over a rectangle handle and `move`
 over any other handle; a horizontal line that is not locked shows `ns-resize` over its body, label
-and handle (E05-F02), as dragging any of them changes only the price; a rectangle corner shows the diagonal it sits on as it is on the screen (so it
+and handle (E05-F02), as dragging any of them changes only the price, and the handle of time zones that are not locked shows `ew-resize` (E05-F08), as dragging it changes only a time; a rectangle corner shows the diagonal it sits on as it is on the screen (so it
 stays right when the anchors are dragged past each other) and an edge handle its axis. `select` keeps
 the ids that exist, once each, in the given order, keeps the hover, goes idle for none and returns
 the same state object when the selection does not change, so the controller raises `selection` when

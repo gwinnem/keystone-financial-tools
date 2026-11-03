@@ -1369,7 +1369,8 @@
                 "Dragging handles changes only time (cursor `ew-resize`); prices are stored but ignored (D-5).",
                 "Fixture and scenario tests cover place, resize, move, delete and undo."
               ],
-              "tasks": ["Register the tool.", "Tests and docs."]
+              "tasks": ["Register the tool.", "Tests and docs."],
+              "status": "done"
             },
             {
               "id": "E05-F08-S02",
@@ -1377,7 +1378,8 @@
               "userStory": "As a trader, I want to edit the time-zone sequence so that I can use my own counts.",
               "sds": ["FR-DM-022", "FR-DM-023"],
               "acceptance": ["`sequence` updates re-render immediately and are one history entry.", "Invalid sequences are rejected with `KFT-E-OPTIONS` and the drawing is unchanged."],
-              "tasks": ["Wire options.", "Tests."]
+              "tasks": ["Wire options.", "Tests."],
+              "status": "done"
             }
           ],
           "labels": ["tool:fibonacci"],
