@@ -75,9 +75,12 @@ export function repositoryFailure(action: RepositoryAction, key: string, reason:
   return new RepositoryError(`Could not ${action} the drawings under ${key}: ${detail}`, reason);
 }
 
-/** The text a document is stored as. The repositories and the 0.1 helpers share it, so what one writes the other reads. */
-export function serializeDocument(document: DrawingDocument): string {
-  return JSON.stringify(document);
+/**
+ * The text a document is stored and exported as. The repositories, the 0.1 helpers and
+ * `exportDrawings` share it, so what one writes the others read. `pretty` indents with two spaces.
+ */
+export function serializeDocument(document: DrawingDocument, pretty?: boolean): string {
+  return JSON.stringify(document, null, pretty ? 2 : undefined);
 }
 
 /** The issue for stored text that is not JSON. The repositories and the 0.1 helpers report it the same way. */

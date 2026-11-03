@@ -1524,7 +1524,8 @@
                 "`importDrawings(store, text, { mode })` parses and returns the core `ImportReport`; unparsable text returns a report with `KFT-E-JSON` and changes nothing.",
                 "Docs show a download/upload example for the browser."
               ],
-              "tasks": ["Implement helpers.", "Tests with fixtures from E01-F04."]
+              "tasks": ["Implement helpers.", "Tests with fixtures from E01-F04."],
+              "status": "done"
             },
             {
               "id": "E06-F04-S02",
@@ -1535,7 +1536,8 @@
                 "`loadStore(repository, scope)` resolves to `{ store, report }` in every case, with an empty store on unreadable data.",
                 "Partially valid documents load their valid drawings (report lists the skipped ones)."
               ],
-              "tasks": ["Implement.", "Tests with corrupt fixtures."]
+              "tasks": ["Implement.", "Tests with corrupt fixtures."],
+              "status": "done"
             }
           ]
         }

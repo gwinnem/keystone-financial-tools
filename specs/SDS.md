@@ -810,6 +810,30 @@ Decisions of E06-F03 (auto-save and scopes):
   resolves like a corrupt entry, with an empty document plus the issue, and the entry is left in place.
 - `KFT-E-SCOPE` is a new issue code (§5.6); `DrawingIssueCode` in the core gains it.
 
+Decisions of E06-F04 (import, export and safe loading):
+
+- `exportDrawings(store, { pretty })` is `store.toJSON()` as text through the same codec the
+  repositories use (`serializeDocument`), so an export is what `WebStorageRepository` stores; `pretty`
+  indents with two spaces. `importDrawings(store, text, options)` is `importDocument` with the core
+  options (`mode`, `createId`, `history`) and one difference: a document that cannot be read does not
+  throw but returns a report.
+- The report is `DrawingsReport`: the core `ImportReport` plus an optional `issue` for the whole
+  document (`KFT-E-JSON`, or `KFT-E-SCOPE` from a repository). The core `ImportReport` has no place
+  for it and stays unchanged, because `importDocument` throws for such a document. Only a
+  `DrawingError` becomes a report; any other error (a store listener that throws) is rethrown, since
+  the store has changed by then. The scope of the store is not changed by the imported document.
+- `loadStore(repository, scope)` resolves `{ store, report }`. The store is new, holds the valid
+  drawings (loaded as `replace`, so a repeated id is skipped with `KFT-E-ID` and never renamed) and
+  has the requested scope (`{ symbol, timeframe? }`), also when nothing could be loaded, so the next
+  save stamps the document. A repository issue (`KFT-E-JSON`, `KFT-E-SCOPE`) is returned as
+  `report.issue`; a document the repository hands over that is not readable is reported the same way.
+- FR-PER-004 covers what is stored, not the backend: a repository that fails still rejects with its
+  `RepositoryError`. An empty store there would hide the saved drawings, and `autoSave` would then
+  save over them.
+- The tests build their documents inline instead of importing the core's `__fixtures__` (the
+  packages do not share them); the same shapes (version 1, version 2 with scope, a broken drawing, a
+  repeated id) are covered.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

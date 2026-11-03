@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentScope } from 'keystone-financial-tools-core';
-import { DEFAULT_KEY_PREFIX, checkScope, scopeKey } from '../src/scope';
+import { DEFAULT_KEY_PREFIX, checkScope, documentScope, scopeKey } from '../src/scope';
 
 const documentFor = (scope?: DocumentScope) => (scope === undefined ? { version: 2 as const, drawings: [] } : { version: 2 as const, scope, drawings: [] });
 const mismatch = (message: string) => ({ code: 'KFT-E-SCOPE', message });
@@ -73,5 +73,22 @@ describe('checkScope', () => {
 
   it('reports a document that differs in both', () => {
     expect(checkScope(documentFor({ symbol: 'MSFT', timeframe: '4h' }), { symbol: 'AAPL', timeframe: '1h' })).toStrictEqual(mismatch('The document belongs to MSFT:4h, not to AAPL:1h.'));
+  });
+});
+
+describe('documentScope', () => {
+  it('keeps the symbol and leaves the timeframe out when there is none', () => {
+    const scope = documentScope({ symbol: 'AAPL' });
+    expect(scope).toStrictEqual({ symbol: 'AAPL' });
+    expect(Object.keys(scope)).toStrictEqual(['symbol']);
+  });
+
+  it('keeps the timeframe when there is one', () => {
+    expect(documentScope({ symbol: 'AAPL', timeframe: '1h' })).toStrictEqual({ symbol: 'AAPL', timeframe: '1h' });
+  });
+
+  it('is a new object, not the one it was given', () => {
+    const given = { symbol: 'AAPL', timeframe: '1h' };
+    expect(documentScope(given)).not.toBe(given);
   });
 });

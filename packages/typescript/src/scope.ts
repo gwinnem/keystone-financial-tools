@@ -20,6 +20,11 @@ export function scopeKey(scope: DrawingScope, prefix: string = DEFAULT_KEY_PREFI
   return scope.timeframe === undefined ? key : `${key}:${encodeURIComponent(scope.timeframe)}`;
 }
 
+/** The scope a document and a store carry for `scope`: the symbol and, only when given, the timeframe. */
+export function documentScope(scope: DrawingScope): DocumentScope {
+  return scope.timeframe === undefined ? { symbol: scope.symbol } : { symbol: scope.symbol, timeframe: scope.timeframe };
+}
+
 function label(scope: DocumentScope): string {
   return [scope.symbol, scope.timeframe].filter((part): part is string => part !== undefined).join(':');
 }

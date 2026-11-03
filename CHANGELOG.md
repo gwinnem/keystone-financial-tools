@@ -197,6 +197,13 @@
   scope)` reports a document of another symbol or timeframe as `KFT-E-SCOPE`; the three repositories (and
   `readStored(value, scope)`) use it, so `load` resolves an empty document plus the issue and leaves the
   entry in place.
+- TypeScript (E06-F04): `exportDrawings(store, { pretty })` returns the document as JSON text and
+  `importDrawings(store, text, { mode, createId, history })` imports it with the core import, returning the
+  `ImportReport` plus an `issue` (`KFT-E-JSON`) instead of throwing for text that is not a drawing document
+  (`DrawingsReport`). `loadStore(repository, scope)` resolves `{ store, report }` whatever is stored: an
+  empty store for nothing or an unusable entry (`report.issue`: `KFT-E-JSON` or `KFT-E-SCOPE`), the valid
+  drawings of a partly broken document (`report.skipped`), and a store whose `scope` is the one asked for. A
+  failing backend still rejects with `RepositoryError`. `loadStore` replaces the deprecated `loadDrawings`.
 
 ### Specification and backlog
 

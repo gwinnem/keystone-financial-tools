@@ -1,8 +1,8 @@
 # keystone-financial-tools-typescript
 
 Framework-free API for the Keystone drawing tools. Re-exports `keystone-financial-tools-core` and
-adds persistence: asynchronous repositories (memory, Web Storage, IndexedDB) and the 0.1
-synchronous Web Storage helpers.
+adds persistence: asynchronous repositories (memory, Web Storage, IndexedDB), auto-save, safe loading,
+export and import of drawings as text, and the 0.1 synchronous Web Storage helpers.
 
 ## Repositories
 
@@ -26,6 +26,9 @@ interface DrawingRepository {
 | `scopeKey(scope, prefix?)` | The storage key of a scope: `keystone-drawings:<symbol>[:<timeframe>]`, URL-encoded | |
 | `checkScope(document, scope)` | The `KFT-E-SCOPE` issue when a document belongs to another symbol or timeframe, otherwise `undefined` | |
 | `autoSave(store, repository, scope, options?)` | Debounced saving with `flush()` and `stop()` (see Auto-save) | |
+| `loadStore(repository, scope)` | Loads a scope into a new store; never throws for stored data (see Loading) | |
+| `exportDrawings(store, { pretty? })` | The drawings as JSON text, for a file or a server (see Export and import) | |
+| `importDrawings(store, text, { mode? })` | Imports that text; returns an `ImportReport`, with `issue` when the text is unusable | |
 | `readStored(value, scope?)` | For your own repository: turns what you stored into the result of `load`, checking the scope | |
 | `RepositoryError` | What a failing backend rejects with; `reason` is what it threw | |
 | `REPOSITORY_TIERS` | The tier of each repository under the proposed split | |
@@ -87,6 +90,67 @@ await saver.stop(); // flush, then stop watching the store
   hand.
 - `autoSave(store, storage, key)` with a string key is the 0.1 form (deprecated, below); it saves at
   once after every change and returns a function.
+
+### Loading
+
+`loadStore` loads the drawings of a scope into a new store and resolves in every case, whatever is
+stored.
+
+```ts
+import { autoSave, loadStore, WebStorageRepository } from 'keystone-financial-tools-typescript';
+
+const repository = new WebStorageRepository(localStorage);
+const { store, report } = await loadStore(repository, { symbol: 'AAPL' });
+if (report.issue !== undefined) console.warn(report.issue.message); // the stored entry was not used
+if (report.skipped.length > 0) console.warn(`${report.skipped.length} drawings could not be read`);
+const saver = autoSave(store, repository, { symbol: 'AAPL' });
+```
+
+- Nothing stored: an empty store and an empty report.
+- A corrupt entry (`KFT-E-JSON`) or one that belongs to another symbol or timeframe
+  (`KFT-E-SCOPE`): an empty store and the issue in `report.issue`. The entry stays in place until the
+  next save replaces it.
+- A partly broken document: the valid drawings are loaded and the others are listed in
+  `report.skipped` with their index and issues. A repeated id is skipped (`KFT-E-ID`), not renamed.
+- `report` is a `DrawingsReport`: the core `ImportReport` (`added`, `renamed`, `skipped`) plus the
+  optional `issue`.
+- The store's `scope` is the one you asked for, so `autoSave` writes it into the saved document.
+- A backend that fails (storage full, database unavailable) still rejects with its
+  `RepositoryError`: an empty store there would hide the saved drawings and be saved over them.
+
+### Export and import
+
+`exportDrawings` turns the store into JSON text of the current document version (with its scope, when
+it has one); `pretty: true` indents it. `importDrawings` reads such text into a store with the core's
+`importDocument` options: `mode: 'merge'` (default; adds the drawings and renames taken ids) or
+`'replace'`, `createId`, and `history: false` to keep the import out of the undo history.
+
+```ts
+import { exportDrawings, importDrawings } from 'keystone-financial-tools-typescript';
+
+// Download
+const blob = new Blob([exportDrawings(store, { pretty: true })], { type: 'application/json' });
+const link = document.createElement('a');
+link.href = URL.createObjectURL(blob);
+link.download = 'drawings-aapl.json';
+link.click();
+URL.revokeObjectURL(link.href);
+
+// Upload (an <input type="file">)
+input.addEventListener('change', async () => {
+  const file = input.files?.[0];
+  if (file === undefined) return;
+  const report = importDrawings(store, await file.text(), { mode: 'merge' });
+  if (report.issue !== undefined) alert(report.issue.message); // not a drawing file; nothing changed
+  else if (report.skipped.length > 0) alert(`${report.skipped.length} drawings could not be read`);
+});
+```
+
+- Text that is not JSON, or JSON that is not a drawing document (an unknown version, no `drawings`
+  list), changes nothing and returns a report with the `KFT-E-JSON` issue instead of throwing.
+- Version 1 files are read too. Invalid drawings are left out and listed in `skipped`.
+- The import is one change (one store notification) and does not change the store's `scope`.
+- Errors that are not about the text, such as a store listener that throws, are rethrown.
 
 ### Your own backend
 
@@ -156,8 +220,8 @@ const { document, issue } = await repository.load({ symbol: 'AAPL' });
 - Data saved under a custom key is not found by the repository (it uses `scopeKey`). Move it once:
   read it with `loadDrawings(localStorage, 'chart-aapl')`, then `repository.save` it.
 - `autoSave(store, repository, scope)` (debounced, see Auto-save) replaces the storage form of
-  `autoSave`, and `loadStore(repository, scope)` replaces `loadDrawings`; `loadStore` arrives with
-  the rest of E06.
+  `autoSave`, and `loadStore(repository, scope)` (see Loading) replaces `loadDrawings`: it never
+  throws for stored data and reports what it skipped.
 
-The core's `importDocument(store, json, { mode })` is also available here for importing a file
-while keeping the valid drawings of a partly broken document.
+The core's `importDocument(store, json, { mode })` is also available here; `importDrawings` is the
+same for text and returns a report instead of throwing for text that is not a drawing document.

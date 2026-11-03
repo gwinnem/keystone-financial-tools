@@ -110,6 +110,18 @@ describe('serializeDocument and invalidJsonIssue', () => {
     expect(JSON.parse(serializeDocument(document))).toEqual(document);
   });
 
+  it('writes compact text unless pretty is set', () => {
+    const document = new DrawingStore([line('a')]).toJSON();
+    expect(serializeDocument(document)).not.toContain('\n');
+    expect(serializeDocument(document, false)).toBe(JSON.stringify(document));
+  });
+
+  it('indents with two spaces when pretty is set', () => {
+    const document = new DrawingStore([line('a')]).toJSON();
+    expect(serializeDocument(document, true)).toBe(JSON.stringify(document, null, 2));
+    expect(serializeDocument(document, true)).toContain('\n  "version": 2');
+  });
+
   it('names the key in the invalid JSON issue', () => {
     expect(invalidJsonIssue('k:1')).toEqual({ code: 'KFT-E-JSON', message: 'The drawings saved under k:1 are not valid JSON.' });
   });

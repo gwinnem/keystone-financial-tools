@@ -34,7 +34,7 @@ export function saveDrawings(store: DrawingStore, storage: DrawingStorage, key: 
  * Reads drawings saved by `saveDrawings`. Returns an empty store when nothing is saved under `key`,
  * and throws `DrawingError` (`KFT-E-JSON`) when the saved text is not valid.
  *
- * @deprecated Use `loadStore(repository, scope)` (E06-F04), which never throws for stored data and
+ * @deprecated Use `loadStore(repository, scope)`, which never throws for stored data and
  * reports what it skipped. To move data saved under a custom key, read it once with this helper and
  * save it with `WebStorageRepository.save`.
  *
