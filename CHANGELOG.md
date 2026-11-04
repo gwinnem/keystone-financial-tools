@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Angular controller adapter (E07-F04): `KeystoneDrawingToolsService` (`attach(host, options?)`, `detach()`,
+  signals and observables for `tools`, `state`, `drawings` and `textEdit`, and the actions; destroyed
+  with its component through `DestroyRef`; zone.js and zoneless) and `KeystoneTextEditorComponent`, the
+  default text editor, the same as the Vue and React ones.
 - React controller adapter (E07-F03): `useDrawingTools(host, options?)` (the host may be missing until
   the chart exists) returns the controller or null, the store, `state`, `drawings`, `textEdit` and the
   actions; it is StrictMode safe (one controller per mount). `KeystoneTextEditor` is the default text

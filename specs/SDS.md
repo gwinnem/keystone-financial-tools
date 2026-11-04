@@ -887,6 +887,31 @@ Decisions of E07-F03 (React controller adapter):
   the focus to another element (a blur that confirmed the text), it stays there. The Vue editor had
   always moved the focus back; E07-F03 fixes that with the same rule.
 
+Decisions of E07-F04 (Angular controller adapter):
+
+- `KeystoneDrawingToolsService` is not provided in root: it is one chart's service, provided on the
+  component that holds the chart (`providers: [KeystoneDrawingToolsService]`) and destroyed with it
+  through `DestroyRef`. `attach(host, options?)` and `detach()` replace the host argument of the Vue
+  and React hooks, as an Angular chart has no host until its view exists. Like the React hook it has
+  no controller until a host is attached: `tools` is null, the state is idle, the actions do nothing
+  (`undo` and `redo` give false), and the options are read when `attach` creates the controller.
+  `attach` destroys the controller it had, `detach` and destroying the service destroy it and then
+  cancel an open editor, so its answer is dropped.
+- Every value is offered as a signal (`tools`, `state`, `drawings`, `textEdit`) and as an observable
+  (`tools$`, `state$`, `drawings$`, `textEdit$`). A small internal `Channel` sets both together, so they
+  never differ, and the observables complete with the service. Signals make the service work with zone.js
+  and zoneless; both are tested.
+- `store` is the one in the options, otherwise the service's own, which is kept across `attach` calls.
+  `KeystoneDrawingService` (providedIn root, `attach(store)`) is unchanged.
+- `KeystoneTextEditorComponent` (`keystone-text-editor`) builds its textarea with the DOM, not with a
+  template: its inputs are setters (`session`, `label`) that open and close the textarea at once. The
+  signal `input()` function needs Angular's compiler transform, which the package's vitest tests do not
+  run, and the DOM route keeps the text a `value` (NFR-SEC-002), with native listeners that run before
+  the chart's own. Behaviour is the same as the Vue and React editors; `shouldRestoreFocus` decides
+  whether the focus goes back.
+- The `editText` rule (left out: default editor, function: replaces it, `false`: none) is in each of the
+  three adapters; E07-F06 looks at moving it into the core with the parity test.
+
 ## 11. Integration with keystone-charts-financial
 
 - FR-INTG-001: The chart implements `DrawingHost` v2 in its repository (tracked there; the chart's

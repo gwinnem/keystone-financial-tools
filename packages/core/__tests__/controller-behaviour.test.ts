@@ -256,6 +256,26 @@ describe('what is logged', () => {
     host.pointer('move', 720, 120);
     expect(messages).toEqual(['Ignored drag-start while idle.']);
   });
+
+  it('treats an ignored input as a debug message and nothing else: no throw, no error, no event, the same state', () => {
+    const messages: string[] = [];
+    const { tools, host } = rig({ debug: (message) => messages.push(message), store: new DrawingStore([LINE]) });
+    const seen: string[] = [];
+    tools.on('error', () => seen.push('error'));
+    tools.on('state', () => seen.push('state'));
+    tools.on('interaction', () => seen.push('interaction'));
+    tools.on('selection', () => seen.push('selection'));
+    tools.on('blocked', () => seen.push('blocked'));
+    const before = tools.getState();
+    expect(() => {
+      tools.deactivate();
+      host.pointer('down', 700, 100);
+      host.pointer('move', 720, 120);
+    }).not.toThrow();
+    expect(messages).toEqual(['Ignored deactivate while idle.', 'Ignored drag-start while idle.']);
+    expect(seen).toEqual([]);
+    expect(tools.getState()).toBe(before);
+  });
 });
 
 describe('selecting with the keyboard', () => {
