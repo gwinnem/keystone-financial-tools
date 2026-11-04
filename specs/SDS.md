@@ -977,6 +977,26 @@ testing runs in CI for changes headed to `main`.
   with an interactive example, host implementation guide, persistence guide, keyboard reference.
 - DOC-004: CHANGELOG per release.
 
+Decisions of E09-F01-S01 (docs site scaffold, pulled forward from M5 while E07 is open; S02, the API
+reference, and S03, the live examples, stay in E09):
+
+- `packages/docs` (`keystone-financial-tools-docs`) is an Astro 7 and Starlight site. The pages are plain
+  Markdown under `src/content/docs` (no MDX: S01 needs no components, and Prettier leaves `.md` alone).
+  Its only code is the data modules in `src/site` (`pages`, `sidebar`, `shortcuts`, `config`), which
+  `astro.config.ts` imports so that the configuration can be tested; they have unit tests and Stryker
+  like every package, and `src/content.config.ts` and the config file are left out as they only wire
+  Astro.
+- The tests tie the pages to the core instead of to themselves: one tool page for each entry of
+  `DRAWING_KINDS`, each documenting exactly the options of `KIND_OPTION_KEYS`; the keyboard table has
+  one row for each entry of `SHORTCUTS`; every page is in the sidebar and has a title and a description.
+- Broken links fail the build: `starlight-links-validator` runs inside `astro build`, and CI already
+  runs `pnpm build` for every package, so no separate job is needed. Mutation testing of the package
+  runs in the CI matrix like the others.
+- The docs build needs Node 22.23.4+ or 24 (Astro 7). It is the only package that does; the floor of
+  NFR-COMP-001 for the other tooling does not change, and CI uses Node 24.
+- The pages describe the fibonacci scene items as the chart's to paint (FR-INTG-003, the scope split);
+  the geometry the tools compute for them is for hit-testing and handles.
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |

@@ -53,6 +53,7 @@ jobs:
         run: pnpm test:coverage
 
       - name: Build all packages
+        # Includes the docs site (packages/docs): its links validator fails the build on a broken link.
         run: pnpm build
 
   e2e:
@@ -102,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [core, typescript, vue, react, angular]
+        package: [core, typescript, vue, react, angular, docs]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

@@ -34,6 +34,9 @@ SDS first, then `backlog.json`, then re-run the script with `-UpdateExisting`.
   `DrawingHost` v2. `e2e/` (`keystone-financial-tools-e2e`): Playwright tests that run against it.
 - `packages/vue`, `packages/react`, `packages/angular`: thin adapters (composables, hooks,
   services). No business logic in framework packages: they adapt the core's public contracts only.
+- `packages/docs` (`keystone-financial-tools-docs`): the Astro/Starlight documentation site. Pages are
+  Markdown in `src/content/docs`; the navigation and the keyboard table come from `src/site`. The build
+  fails on a broken link. Needs Node 22.23.4+ or 24 (Astro 7).
 
 Drawings are stored in chart-agnostic coordinates (time, price, y-axis id), never pixels, so they
 survive zoom, scroll and layout changes.
@@ -46,6 +49,7 @@ Package names are un-scoped (`keystone-financial-tools-*`). Packages are private
 - TypeScript 6.0 (strict). Held below 6.1: Angular 22 and typescript-eslint require `<6.1`
 - pnpm 12 workspaces + Turbo 2 (dependency build scripts are approved in `pnpm-workspace.yaml` `allowBuilds`)
 - Vite 8 + Vitest 5 (core, typescript, vue, react)
+- Astro 7 + Starlight (docs, `packages/docs`)
 - Angular 22, ng-packagr 22 + Vitest 5 (angular)
 - Stryker 10 (mutation testing)
 - ESLint 10 (flat config, `eslint.config.mjs`) + Prettier, Husky + lint-staged

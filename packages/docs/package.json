@@ -1,0 +1,34 @@
+{
+  "name": "keystone-financial-tools-docs",
+  "version": "0.1.0",
+  "description": "Documentation site of the Keystone financial drawing tools (Astro and Starlight)",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
+    "lint": "eslint src __tests__ astro.config.ts vitest.config.ts",
+    "type-check": "astro check && tsc --noEmit",
+    "clean": "rm -rf dist coverage .astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.9",
+    "astro": "^7.4.5",
+    "starlight-links-validator": "^0.27.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "keystone-financial-tools-core": "workspace:*",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

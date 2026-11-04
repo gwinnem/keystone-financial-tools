@@ -16,6 +16,7 @@ the chart package itself.
 | `keystone-financial-tools-vue` | `packages/vue` | Vue 3 composable (`useDrawings`) |
 | `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |
 | `keystone-financial-tools-angular` | `packages/angular` | Angular service (`KeystoneDrawingService`) |
+| `keystone-financial-tools-docs` | `packages/docs` | The documentation site (Astro and Starlight): getting started per framework, host and persistence guides, keyboard reference and one page per tool |
 
 ## Apps and end-to-end tests
 
@@ -92,9 +93,11 @@ pnpm build
 pnpm test:coverage
 pnpm test:mutation
 pnpm --filter keystone-financial-tools-e2e test:e2e
+pnpm --filter keystone-financial-tools-docs dev   # the documentation site
 ```
 
-Requirements: Node 22.22.3+ or 24.15+ (Node 24 recommended), pnpm 12+.
+Requirements: Node 22.22.3+ or 24.15+ (Node 24 recommended), pnpm 12+. The documentation site
+(`packages/docs`) needs Node 22.23.4+ or 24 (Astro 7).
 
 ## Documentation
 

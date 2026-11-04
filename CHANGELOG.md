@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Documentation site scaffold (E09-F01-S01, pulled forward): `packages/docs` is an Astro and Starlight
+  site with a getting started page for TypeScript, Vue, React and Angular, a host guide, a persistence
+  guide, a keyboard reference and one page for each of the eight tools. Broken links fail the build
+  (`starlight-links-validator`); the CI `verify` job builds it and the `mutation` job covers its data
+  modules. The API reference and the live examples follow in E09-F01-S02 and S03.
 - Angular controller adapter (E07-F04): `KeystoneDrawingToolsService` (`attach(host, options?)`, `detach()`,
   signals and observables for `tools`, `state`, `drawings` and `textEdit`, and the actions; destroyed
   with its component through `DestroyRef`; zone.js and zoneless) and `KeystoneTextEditorComponent`, the

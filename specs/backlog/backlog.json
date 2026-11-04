@@ -1916,7 +1916,8 @@
                 "Builds in CI; broken links fail the build."
               ],
               "tasks": ["Scaffold the site.", "Write the pages.", "CI build job."],
-              "labels": ["area:docs"]
+              "labels": ["area:docs"],
+              "status": "done"
             },
             {
               "id": "E09-F01-S02",
