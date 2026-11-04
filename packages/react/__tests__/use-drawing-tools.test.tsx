@@ -1,7 +1,7 @@
 import { StrictMode, type ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { act, cleanup, renderHook } from '@testing-library/react';
-import { DARK_THEME, DrawingStore, IDLE_STATE, type Drawing, type DrawingHost, type TextEditRequest } from 'keystone-financial-tools-core';
+import { DARK_THEME, DrawingStore, IDLE_STATE, IDLE_TOOLBAR, TOOL_CATALOG, type Drawing, type DrawingHost, type TextEditRequest } from 'keystone-financial-tools-core';
 import { createMockHost, type MockHost, type MockHostOptions } from 'keystone-financial-tools-core/testing';
 import { useDrawingTools, type UseDrawingToolsOptions } from '../src/use-drawing-tools';
 
@@ -42,7 +42,10 @@ describe('useDrawingTools', () => {
     it('has no controller, an idle state and actions that do nothing', () => {
       const { result } = render(null, { magnet: 'weak' });
       expect(result.current.tools).toBeNull();
-      expect(result.current.state).toStrictEqual({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'weak' });
+      expect(result.current.state).toStrictEqual({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'weak', toolbar: IDLE_TOOLBAR });
+      expect(result.current.toolbar).toBe(IDLE_TOOLBAR);
+      expect(result.current.toolbar.map((entry) => entry.id)).toStrictEqual(TOOL_CATALOG.map((entry) => entry.id));
+      expect(result.current.toolbar.some((entry) => entry.enabled || entry.active)).toBe(false);
       act(() => {
         result.current.activate('trend-line');
         result.current.deactivate();
@@ -115,6 +118,44 @@ describe('useDrawingTools', () => {
       expect(result.current.state.selection).toStrictEqual(['t']);
       act(() => result.current.clearSelection());
       expect(result.current.state.selection).toStrictEqual([]);
+    });
+
+    it('has the toolbar: all tools from the catalog, the active one marked, a new array only when an entry changes', () => {
+      const host = hostOf();
+      const { result } = render(host, { store: new DrawingStore([LINE]) });
+      const first = result.current.toolbar;
+      expect(first).toBe(result.current.state.toolbar);
+      expect(first).not.toBe(IDLE_TOOLBAR);
+      expect(first.map((entry) => entry.id)).toStrictEqual(TOOL_CATALOG.map((entry) => entry.id));
+      expect(first.every((entry) => entry.enabled && !entry.active)).toBe(true);
+      act(() => result.current.select(['l']));
+      expect(result.current.toolbar).toBe(first);
+      act(() => result.current.activate('rectangle'));
+      expect(result.current.toolbar).not.toBe(first);
+      expect(result.current.toolbar.filter((entry) => entry.active).map((entry) => entry.id)).toStrictEqual(['rectangle']);
+      act(() => {
+        host.key('Escape');
+      });
+      expect(result.current.toolbar.some((entry) => entry.active)).toBe(false);
+    });
+
+    it('enables the tools of the tools option only, and passes the shortcuts option', () => {
+      const { result } = render(hostOf(), { tools: ['trend-line'], shortcuts: { 'trend-line': 'Alt+L' } });
+      expect(result.current.toolbar.filter((entry) => entry.enabled).map((entry) => entry.id)).toStrictEqual(['trend-line']);
+      expect(result.current.toolbar[0]?.shortcut).toBe('Alt+L');
+      act(() => result.current.setOptions({ tools: ['rectangle'] }));
+      expect(result.current.toolbar.filter((entry) => entry.enabled).map((entry) => entry.id)).toStrictEqual(['rectangle']);
+    });
+
+    it('activates a tool with its shortcut and follows it in the toolbar', () => {
+      const host = hostOf();
+      const { result } = render(host);
+      let handled = false;
+      act(() => {
+        handled = host.key('t', { altKey: true });
+      });
+      expect(handled).toBe(true);
+      expect(result.current.toolbar.find((entry) => entry.id === 'trend-line')?.active).toBe(true);
     });
 
     it('forwards the actions to the controller', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { effectScope } from 'vue';
-import { DARK_THEME, DrawingStore, type Drawing, type TextEditRequest } from 'keystone-financial-tools-core';
+import { DARK_THEME, DrawingStore, TOOL_CATALOG, type Drawing, type TextEditRequest } from 'keystone-financial-tools-core';
 import { createMockHost, type MockHost, type MockHostOptions } from 'keystone-financial-tools-core/testing';
 import { useDrawingTools, type UseDrawingTools, type UseDrawingToolsOptions } from '../src/use-drawing-tools';
 
@@ -61,6 +61,35 @@ describe('useDrawingTools', () => {
     expect(result.state.value.selection).toStrictEqual(['t']);
     result.clearSelection();
     expect(result.state.value.selection).toStrictEqual([]);
+  });
+
+  it('keeps the toolbar in a ref: all tools from the catalog, the active one marked, a new array only when an entry changes', () => {
+    const { host, result } = setup({ store: new DrawingStore([LINE]) });
+    const first = result.toolbar.value;
+    expect(first).toBe(result.tools.getState().toolbar);
+    expect(first.map((entry) => entry.id)).toStrictEqual(TOOL_CATALOG.map((entry) => entry.id));
+    expect(first.every((entry) => entry.enabled && !entry.active)).toBe(true);
+    result.select(['l']);
+    expect(result.toolbar.value).toBe(first);
+    result.activate('rectangle');
+    expect(result.toolbar.value).not.toBe(first);
+    expect(result.toolbar.value.filter((entry) => entry.active).map((entry) => entry.id)).toStrictEqual(['rectangle']);
+    host.key('Escape');
+    expect(result.toolbar.value.some((entry) => entry.active)).toBe(false);
+  });
+
+  it('enables the tools of the tools option only, and passes the shortcuts option', () => {
+    const { result } = setup({ tools: ['trend-line'], shortcuts: { 'trend-line': 'Alt+L' } });
+    expect(result.toolbar.value.filter((entry) => entry.enabled).map((entry) => entry.id)).toStrictEqual(['trend-line']);
+    expect(result.toolbar.value[0]?.shortcut).toBe('Alt+L');
+    result.setOptions({ tools: ['rectangle'] });
+    expect(result.toolbar.value.filter((entry) => entry.enabled).map((entry) => entry.id)).toStrictEqual(['rectangle']);
+  });
+
+  it('activates a tool with its shortcut and follows it in the toolbar', () => {
+    const { host, result } = setup();
+    expect(host.key('t', { altKey: true })).toBe(true);
+    expect(result.toolbar.value.find((entry) => entry.id === 'trend-line')?.active).toBe(true);
   });
 
   it('forwards the actions to the controller', () => {

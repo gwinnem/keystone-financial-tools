@@ -16,10 +16,11 @@ describe('the pages of the site', () => {
     ]);
   });
 
-  it('has a host guide, a persistence guide and a keyboard reference', () => {
+  it('has a host guide, a persistence guide, a toolbar guide and a keyboard reference', () => {
     expect(GUIDES).toStrictEqual([
       { slug: 'guides/host', label: 'Implement a host' },
       { slug: 'guides/persistence', label: 'Save and load drawings' },
+      { slug: 'guides/toolbar', label: 'Build a toolbar' },
       { slug: 'guides/keyboard', label: 'Keyboard reference' },
     ]);
   });
@@ -71,6 +72,23 @@ describe('a getting started page', () => {
     const page = readPage(slug);
     expect(page).toContain('](/guides/host/)');
     expect(page).toContain('](/guides/persistence/)');
+  });
+});
+
+describe('the toolbar example of a getting started page (FR-FW-040)', () => {
+  it.each(GETTING_STARTED)('$slug has a Build a toolbar section that renders the toolbar and leads to the guide', ({ slug }) => {
+    const page = readPage(slug);
+    expect(page).toContain('\n## Build a toolbar\n');
+    const section = page.slice(page.indexOf('\n## Build a toolbar\n')).split('\n## ')[1] ?? '';
+    expect(section).toContain('tool.active');
+    expect(section).toContain('tool.enabled');
+    expect(section).toContain('tool.id');
+    expect(section).toContain('](/guides/toolbar/)');
+  });
+
+  it.each(GETTING_STARTED)('$slug lists the guide under Next', ({ slug }) => {
+    const next = readPage(slug).split('\n## Next\n')[1] ?? '';
+    expect(next).toContain('- [Build a toolbar](/guides/toolbar/)');
   });
 });
 

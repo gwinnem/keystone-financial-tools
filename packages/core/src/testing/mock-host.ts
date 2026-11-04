@@ -42,8 +42,8 @@ export type MockListenerKind = 'pointer' | 'key' | 'viewport';
 export interface MockHost extends DrawingHost {
   /** Sends a pointer event to every pointer listener. */
   pointer(phase: PointerPhase, x: number, y: number, options?: MockPointerOptions): void;
-  /** Sends a key event to every key listener; true when any of them handled it. */
-  key(key: string, modifiers?: Partial<Modifiers>): boolean;
+  /** Sends a key event to every key listener (with the physical key `code` when given); true when any of them handled it. */
+  key(key: string, modifiers?: Partial<Modifiers> & { readonly code?: string }): boolean;
   /** Zooms the time axis by `factor` (2 = twice as wide) around `aroundX` (default 0) and notifies viewport listeners. */
   zoom(factor: number, aroundX?: number): void;
   /** Moves the data `px` CSS px to the right (negative: left) and notifies viewport listeners. */
@@ -148,7 +148,7 @@ export function createMockHost(options: MockHostOptions = {}): MockHost {
       for (const listener of [...pointerListeners]) listener(event);
     },
     key: (key, given = {}) => {
-      const event: HostKeyEvent = { key, ...modifiers(given) };
+      const event: HostKeyEvent = { key, ...(given.code === undefined ? {} : { code: given.code }), ...modifiers(given) };
       let handled = false;
       for (const listener of [...keyListeners]) {
         if (listener(event)) handled = true;

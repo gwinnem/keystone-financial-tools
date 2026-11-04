@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { toolbarEntries } from '../src/catalog';
 import { createDrawingTools, type DrawingTools, type DrawingToolsEventName, type DrawingToolsEvents, type DrawingToolsOptions } from '../src/controller';
 import { DrawingError } from '../src/errors';
 import type { NearestBar } from '../src/host';
 import { IDLE_STATE } from '../src/interaction/types';
+import { DRAWING_KINDS } from '../src/kinds';
+import { resolveShortcuts } from '../src/shortcuts';
 import type { SceneItem } from '../src/scene/types';
 import { DrawingStore } from '../src/store';
 import { createMockHost, type MockHost, type MockHostOptions } from '../src/testing/mock-host';
@@ -92,7 +95,16 @@ describe('createDrawingTools: creation (FR-HOST-001, S01)', () => {
     expect(host.listenerCount('pointer')).toBe(1);
     expect(host.listenerCount('key')).toBe(1);
     expect(host.listenerCount('viewport')).toBeGreaterThan(0);
-    expect(tools.getState()).toEqual({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'off' });
+    expect(tools.getState()).toEqual({
+      activeTool: null,
+      interaction: IDLE_STATE,
+      selection: [],
+      hover: null,
+      canUndo: false,
+      canRedo: false,
+      magnet: 'off',
+      toolbar: toolbarEntries(null, new Set(DRAWING_KINDS), resolveShortcuts().shortcuts),
+    });
     expect(tools.getScene()).toEqual([]);
   });
 

@@ -1,4 +1,4 @@
-import { onScopeDispose, shallowRef, type Ref } from 'vue';
+import { computed, onScopeDispose, shallowRef, type Ref } from 'vue';
 import {
   createDrawingTools,
   TextEditor,
@@ -13,6 +13,7 @@ import {
   type DrawingToolsState,
   type MagnetMode,
   type TextEditSession,
+  type ToolbarEntry,
 } from 'keystone-financial-tools-core';
 import { useDrawings } from './use-drawings';
 
@@ -34,6 +35,11 @@ export interface UseDrawingTools {
   readonly store: DrawingStore;
   /** The state of the tools, replaced whenever a value in it changes. */
   readonly state: Readonly<Ref<DrawingToolsState>>;
+  /**
+   * The toolbar (FR-FW-040): every tool of `TOOL_CATALOG` with `active`, `enabled` and the shortcut in use.
+   * The same array until an entry changes. Render a button per entry and call `activate(entry.id)`.
+   */
+  readonly toolbar: Readonly<Ref<readonly ToolbarEntry[]>>;
   /** The drawings, replaced on every store change. */
   readonly drawings: Readonly<Ref<readonly Drawing[]>>;
   /** The note editor that is open, or null. Show it with `KeystoneTextEditor` or your own editor. */
@@ -52,16 +58,18 @@ export interface UseDrawingTools {
 
 /**
  * The drawing tools for a Vue component (FR-FW-010): creates the controller for `host`, and keeps
- * `state`, `drawings` and the open note editor in refs. It only maps the controller's events to
+ * `state`, `toolbar`, `drawings` and the open note editor in refs. It only maps the controller's events to
  * refs; everything else is the core's. The controller is destroyed, and the host's listeners removed,
  * when the calling effect scope (for example the component) is disposed.
  *
  * @example
  * ```ts
- * const { tools, state, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
+ * const { tools, state, toolbar, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
  * // in the host's overlay render pass:
  * for (const item of tools.getScene()) paint(item);
- * // in the template: <KeystoneTextEditor :session="textEdit" />
+ * // in the template:
+ * // <button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" @click="activate(tool.id)">{{ tool.id }}</button>
+ * // <KeystoneTextEditor :session="textEdit" />
  * ```
  */
 export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOptions): UseDrawingTools {
@@ -70,6 +78,7 @@ export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOpti
   const editText = options?.editText === undefined ? editor.edit : options.editText === false ? undefined : options.editText;
   const tools = createDrawingTools(host, { ...options, store, editText });
   const state = shallowRef(tools.getState());
+  const toolbar = computed(() => state.value.toolbar);
   const textEdit = shallowRef<TextEditSession | null>(null);
   tools.on('state', (next) => {
     state.value = next;
@@ -87,6 +96,7 @@ export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOpti
     tools,
     store,
     state,
+    toolbar,
     drawings,
     textEdit,
     activate: (kind) => tools.activate(kind),

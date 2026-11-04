@@ -12,7 +12,9 @@ It takes the options of `createDrawingTools` and returns:
 - `store` and `drawings`: the store (the one in `options.store`, or a new one) and a ref with its
   drawings.
 - `state`: a ref with the tools' state (`activeTool`, `interaction`, `selection`, `hover`, `canUndo`,
-  `canRedo`, `magnet`).
+  `canRedo`, `magnet`, `toolbar`).
+- `toolbar`: a ref with one entry for each tool (`id`, `labelKey`, `group`, `icon`, `shortcut`, `tier`, and
+  `active` and `enabled`); the same array until an entry changes. See [A toolbar](#a-toolbar).
 - `textEdit`: a ref with the text editor that is open, or `null`.
 - The actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`,
   `setMagnet`, `setTheme` and `setOptions`.
@@ -36,6 +38,19 @@ const { state, drawings, textEdit, activate, undo } = useDrawingTools(props.host
     <KeystoneTextEditor :session="textEdit" />
   </div>
 </template>
+```
+
+### A toolbar
+
+Render a button for each entry of `toolbar` and call `activate(tool.id)`. Alt with T, H, R, F or N
+chooses a tool (change them with the `shortcuts` option, `null` turns one off), and Ctrl or Cmd with Z
+undoes. `enabled` follows the `tools` option. `TOOL_CATALOG` and the types `ToolbarEntry`,
+`ToolCatalogEntry`, `ToolGroup`, `ToolTier` and `ShortcutOptions` are exported from this package.
+
+```vue
+<button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" :title="tool.shortcut ?? ''" @click="activate(tool.id)">
+  {{ tool.id }}
+</button>
 ```
 
 ### The text editor

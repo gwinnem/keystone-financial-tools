@@ -128,6 +128,18 @@ describe('createMockHost input and output', () => {
     expect(host.key('Delete')).toBe(false);
   });
 
+  it('sends the physical key code only when one is given', () => {
+    const host = createMockHost();
+    const seen = vi.fn(() => false);
+    host.onKey(seen);
+    host.key('t', { altKey: true, code: 'KeyT' });
+    host.key('t');
+    expect(seen.mock.calls).toStrictEqual([
+      [{ key: 't', code: 'KeyT', shiftKey: false, ctrlKey: false, altKey: true, metaKey: false }],
+      [{ key: 't', shiftKey: false, ctrlKey: false, altKey: false, metaKey: false }],
+    ]);
+  });
+
   it('calls every listener even when a later one would handle the key', () => {
     const host = createMockHost();
     const handles = vi.fn(() => true);

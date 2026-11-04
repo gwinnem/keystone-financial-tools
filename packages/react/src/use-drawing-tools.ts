@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import {
   createDrawingTools,
   IDLE_STATE,
+  IDLE_TOOLBAR,
   TextEditor,
   type Drawing,
   type DrawingHost,
@@ -14,6 +15,7 @@ import {
   type DrawingToolsState,
   type MagnetMode,
   type TextEditSession,
+  type ToolbarEntry,
 } from 'keystone-financial-tools-core';
 import { useDrawings } from './use-drawings';
 
@@ -35,6 +37,12 @@ export interface UseDrawingTools {
   readonly store: DrawingStore;
   /** The state of the tools, a new object whenever a value in it changes. Idle until there is a host. */
   readonly state: DrawingToolsState;
+  /**
+   * The toolbar (FR-FW-040): every tool of `TOOL_CATALOG` with `active`, `enabled` and the shortcut in use.
+   * The same array until an entry changes; every entry is disabled until there is a host.
+   * Render a button per entry and call `activate(entry.id)`.
+   */
+  readonly toolbar: readonly ToolbarEntry[];
   /** The drawings; the component re-renders on every store change. */
   readonly drawings: readonly Drawing[];
   /** The note editor that is open, or null. Show it with `KeystoneTextEditor` or your own editor. */
@@ -56,7 +64,7 @@ const NO_SUBSCRIPTION = (): void => undefined;
 
 /**
  * The drawing tools for a React component (FR-FW-010): creates the controller for `host` and keeps
- * `state`, `drawings` and the open note editor in the component's state. It only maps the
+ * `state`, `toolbar`, `drawings` and the open note editor in the component's state. It only maps the
  * controller's events to React; everything else is the core's.
  *
  * The controller is created when the component has mounted and `host` is given (a chart is often
@@ -67,10 +75,12 @@ const NO_SUBSCRIPTION = (): void => undefined;
  *
  * @example
  * ```tsx
- * const { tools, state, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
+ * const { tools, state, toolbar, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
  * // in the host's overlay render pass:
  * for (const item of tools?.getScene() ?? []) paint(item);
- * // in the JSX: <KeystoneTextEditor session={textEdit} />
+ * // in the JSX:
+ * // {toolbar.map((tool) => <button key={tool.id} disabled={!tool.enabled} aria-pressed={tool.active} onClick={() => activate(tool.id)}>{tool.id}</button>)}
+ * // <KeystoneTextEditor session={textEdit} />
  * ```
  */
 export function useDrawingTools(host: DrawingHost | null | undefined, options?: UseDrawingToolsOptions): UseDrawingTools {
@@ -100,7 +110,7 @@ export function useDrawingTools(host: DrawingHost | null | undefined, options?: 
   }, [host, store, editor]);
 
   const magnet = options?.magnet ?? 'off';
-  const idle = useMemo<DrawingToolsState>(() => ({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet }), [magnet]);
+  const idle = useMemo<DrawingToolsState>(() => ({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet, toolbar: IDLE_TOOLBAR }), [magnet]);
   const state = useSyncExternalStore(
     useCallback((onChange) => (tools === null ? NO_SUBSCRIPTION : tools.on('state', () => onChange())), [tools]),
     useCallback(() => (tools === null ? idle : tools.getState()), [tools, idle])
@@ -118,5 +128,5 @@ export function useDrawingTools(host: DrawingHost | null | undefined, options?: 
   const setTheme = useCallback((theme: DrawingTheme) => tools?.setTheme(theme), [tools]);
   const setOptions = useCallback((runtime: DrawingToolsRuntimeOptions) => tools?.setOptions(runtime), [tools]);
 
-  return { tools, store, state, drawings, textEdit, activate, deactivate, select, clearSelection, remove, undo, redo, setMagnet, setTheme, setOptions };
+  return { tools, store, state, toolbar: state.toolbar, drawings, textEdit, activate, deactivate, select, clearSelection, remove, undo, redo, setMagnet, setTheme, setOptions };
 }

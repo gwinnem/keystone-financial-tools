@@ -40,7 +40,7 @@ export class ChartComponent implements AfterViewInit {
 
 ## What you get
 
-- Signals `tools` (the controller, `null` until `attach`), `state`, `drawings` and `textEdit`, and the observables `tools$`, `state$`, `drawings$` and `textEdit$`. The observables emit the current value on subscribe and complete when the service is destroyed.
+- Signals `tools` (the controller, `null` until `attach`), `state`, `toolbar`, `drawings` and `textEdit`, and the observables `tools$`, `state$`, `toolbar$`, `drawings$` and `textEdit$`. The observables emit the current value on subscribe and complete when the service is destroyed.
 - The actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme` and `setOptions`. Before `attach` the state is idle and the actions do nothing.
 - `attach(host, options?)` destroys the controller it had, so one service can move to another host. `detach()` releases the host and keeps the drawings. The service also detaches when it is destroyed.
 - `options` are those of `createDrawingTools` and are read when `attach` runs; change them later with `setTheme`, `setMagnet` and `setOptions`.
@@ -49,9 +49,26 @@ export class ChartComponent implements AfterViewInit {
 
 `KeystoneTextEditorComponent` is a textarea at the position of the note being edited. Place it inside the element that holds the chart. Ctrl or Cmd with Enter confirms, Escape cancels and leaving the textarea confirms. Pass `editText` in the options to use your own editor, or `editText: false` for none. A host that has its own `editText` always wins.
 
+## Build a toolbar
+
+`toolbar` has one entry for each tool with its `active` and `enabled` flags and its shortcut. It is the same array until an entry changes, and every entry is disabled until `attach`. `toolbar$` emits only when an entry changes.
+
+Put it in the template of the component that provides the service, next to the chart:
+
+```html
+<div role="toolbar" aria-label="Drawing tools">
+  @for (tool of tools.toolbar(); track tool.id) {
+    <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" [title]="tool.shortcut ?? ''" (click)="tools.activate(tool.id)">{{ tool.id }}</button>
+  }
+</div>
+```
+
+Alt with T, H, R, F or N chooses a tool, and Ctrl or Cmd with Z undoes. The [toolbar guide](/guides/toolbar/) has the catalog and the `shortcuts` option.
+
 ## Next
 
 - [Implement a host](/guides/host/) for your chart.
 - [Save and load drawings](/guides/persistence/) with a repository.
+- [Build a toolbar](/guides/toolbar/) from the tool catalog.
 - The [keyboard reference](/guides/keyboard/) lists every key.
 - Each tool has a page, for example the [trend line](/tools/trend-line/).

@@ -31,7 +31,7 @@ The tools never depend on a chart package. A chart takes part by implementing `D
 | `requestRender()` | Asks the host to redraw its overlay layer. The host then paints `tools.getScene()`. |
 | `editText(request)` | Optional. Edits a text note in place and resolves with the new text, or `null` when cancelled. |
 
-A pointer event has a `phase` (`down`, `move`, `up`, `cancel` or `leave`), the position in plot coordinates, the `pointerType` (`mouse`, `touch` or `pen`), the `button` and the modifier keys. A key event has `key` (the value of `KeyboardEvent.key`) and the modifier keys.
+A pointer event has a `phase` (`down`, `move`, `up`, `cancel` or `leave`), the position in plot coordinates, the `pointerType` (`mouse`, `touch` or `pen`), the `button` and the modifier keys. A key event has `key` (the value of `KeyboardEvent.key`), the modifier keys and, optionally, `code` (the value of `KeyboardEvent.code`): with it the tool shortcuts work on a Mac, where Option changes the character of a letter.
 
 ## A skeleton
 
@@ -78,4 +78,4 @@ Every `shape` and `fibonacci` item has its `state` (`normal`, `hover`, `selected
 
 ## Next
 
-Connect the tools to your framework with a [getting started](/getting-started/typescript/) page, and read the [keyboard reference](/guides/keyboard/) for the keys your `onKey` listener passes on.
+Connect the tools to your framework with a [getting started](/getting-started/typescript/) page, and read the [keyboard reference](/guides/keyboard/) for the keys your `onKey` listener passes on. To add a toolbar, see [Build a toolbar](/guides/toolbar/).

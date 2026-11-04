@@ -2,6 +2,17 @@
 
 ## 0.1.0 (unreleased)
 
+- Headless toolbar model (E07-F05): `TOOL_CATALOG` lists the eight tools with `id`, `labelKey` (`tool.<id>`),
+  `group`, `icon`, `shortcut` and `tier`; `DrawingToolsState.toolbar` has every tool with `active` and
+  `enabled` (the `tools` option) and the shortcut in use, the same array until an entry changes. The Vue,
+  React and Angular adapters expose it (`toolbar`, and `toolbar$` in Angular). Keyboard shortcuts through
+  `host.onKey` (FR-FW-041): Alt+T, Alt+H, Alt+R, Alt+F and Alt+N choose a tool, configurable with the
+  `shortcuts` option (`null` turns one off; invalid, reserved and duplicate shortcuts throw at creation),
+  and Ctrl or Cmd with Z undoes, with Shift and Z or with Y redoes. `HostKeyEvent` gains the optional
+  `code`, so the shortcuts work with Option on a Mac. Core: `resolveShortcuts`, `parseShortcut`,
+  `formatShortcut`, `matchShortcut`, `shortcutAction`, `shortcutKey`, `toolbarEntries`, `IDLE_TOOLBAR`.
+  The licence check of `enabled` follows with E10. Docs: the guide Build a toolbar, a toolbar example on
+  each getting started page, the shortcuts in the keyboard reference.
 - Documentation site scaffold (E09-F01-S01, pulled forward): `packages/docs` is an Astro and Starlight
   site with a getting started page for TypeScript, Vue, React and Angular, a host guide, a persistence
   guide, a keyboard reference and one page for each of the eight tools. Broken links fail the build

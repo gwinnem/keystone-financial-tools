@@ -44,6 +44,7 @@ export class ChartComponent {
 | `detach()` | Destroys the controller and removes its listeners from the host; the store and its drawings stay |
 | `tools`, `tools$` | The controller (`getScene()`, `hitTest()`, `on()`), or null until a host is attached |
 | `state`, `state$` | The state of the tools, a new object whenever a value in it changes; idle until a host is attached |
+| `toolbar`, `toolbar$` | One entry for each tool (`id`, `labelKey`, `group`, `icon`, `shortcut`, `tier`, `active`, `enabled`); the same array until an entry changes (`toolbar$` emits only then), disabled until a host is attached |
 | `drawings`, `drawings$` | The drawings of the store |
 | `textEdit`, `textEdit$` | The note editor that is open, or null |
 | `store` | The store the tools draw into: the one in the options, otherwise one that belongs to the service |
@@ -54,6 +55,16 @@ export class ChartComponent {
 - `editText` left out gives the default text editor (show it with `KeystoneTextEditorComponent`), a
   function replaces it and `false` means no editor. A host that has its own `editText` always wins.
 - Every observable emits the current value on subscribe and completes when the service is destroyed.
+- A toolbar: render a button for each entry of `toolbar()` and call `activate(tool.id)`. Alt with T, H, R,
+  F or N chooses a tool (change them with the `shortcuts` option, `null` turns one off), and Ctrl or Cmd
+  with Z undoes. `enabled` follows the `tools` option. `TOOL_CATALOG` and the types `ToolbarEntry`,
+  `ToolCatalogEntry`, `ToolGroup`, `ToolTier` and `ShortcutOptions` are exported from this package.
+
+  ```html
+  @for (tool of tools.toolbar(); track tool.id) {
+    <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" [title]="tool.shortcut ?? ''" (click)="tools.activate(tool.id)">{{ tool.id }}</button>
+  }
+  ```
 
 ## `KeystoneTextEditorComponent`
 

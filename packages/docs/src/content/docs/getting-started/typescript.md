@@ -42,13 +42,39 @@ tools.destroy();
 ## What you get
 
 - `tools.activate(kind)`, `deactivate()`, `select(ids)`, `clearSelection()`, `remove(ids)`, `undo()`, `redo()`, `setMagnet(mode)`, `setTheme(theme)` and `setOptions(options)`.
+- `tools.getState().toolbar`: the model of a toolbar, see below.
 - `tools.getState()` and the events `change`, `selection`, `tool`, `interaction`, `state`, `blocked` and `error`.
 - `tools.getScene()` and `tools.hitTest(x, y)` for the overlay of the chart.
 - The tools never throw into the host: failures arrive as `error` events and leave the store unchanged.
+
+## Build a toolbar
+
+`state.toolbar` has one entry for each tool with its `active` and `enabled` flags and its shortcut. Render a button for each and render again on the `state` event.
+
+```ts
+function renderToolbar(): void {
+  bar.replaceChildren(
+    ...tools.getState().toolbar.map((tool) => {
+      const button = document.createElement('button');
+      button.textContent = tool.id;
+      button.disabled = !tool.enabled;
+      button.setAttribute('aria-pressed', String(tool.active));
+      button.onclick = () => tools.activate(tool.id);
+      return button;
+    })
+  );
+}
+
+tools.on('state', renderToolbar);
+renderToolbar();
+```
+
+Alt with T, H, R, F or N chooses a tool, and Ctrl or Cmd with Z undoes. The [toolbar guide](/guides/toolbar/) has the catalog and the `shortcuts` option.
 
 ## Next
 
 - [Implement a host](/guides/host/) for your chart.
 - [Save and load drawings](/guides/persistence/) with a repository.
+- [Build a toolbar](/guides/toolbar/) from the tool catalog.
 - The [keyboard reference](/guides/keyboard/) lists every key.
 - Each tool has a page, for example the [trend line](/tools/trend-line/).

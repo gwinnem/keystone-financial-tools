@@ -25,7 +25,7 @@ export function Toolbar({ host }: { host: DrawingHost | null }): JSX.Element {
 }
 ```
 
-- It returns `tools` (the controller, `null` until a host exists), `store`, `state`, `drawings`,
+- It returns `tools` (the controller, `null` until a host exists), `store`, `state`, `toolbar`, `drawings`,
   `textEdit` and the actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`,
   `redo`, `setMagnet`, `setTheme` and `setOptions`. Without a host the state is idle and the actions
   do nothing (`undo` and `redo` return `false`).
@@ -36,6 +36,23 @@ export function Toolbar({ host }: { host: DrawingHost | null }): JSX.Element {
   them later with `setTheme`, `setMagnet` and `setOptions`.
 - `editText` left out gives the default text editor (show it with `KeystoneTextEditor`), a function
   replaces it and `false` means no editor. A host that has its own `editText` always wins.
+
+### A toolbar
+
+`toolbar` has one entry for each tool (`id`, `labelKey`, `group`, `icon`, `shortcut`, `tier`, and `active` and
+`enabled`); it is the same array until an entry changes, and every entry is disabled until there is a host.
+Render a button for each and call `activate(tool.id)`. Alt with T, H, R, F or N chooses a tool (change them
+with the `shortcuts` option, `null` turns one off), and Ctrl or Cmd with Z undoes. `enabled` follows the
+`tools` option. `TOOL_CATALOG` and the types `ToolbarEntry`, `ToolCatalogEntry`, `ToolGroup`, `ToolTier` and
+`ShortcutOptions` are exported from this package.
+
+```tsx
+{toolbar.map((tool) => (
+  <button key={tool.id} disabled={!tool.enabled} aria-pressed={tool.active} title={tool.shortcut ?? ''} onClick={() => activate(tool.id)}>
+    {tool.id}
+  </button>
+))}
+```
 
 ## `KeystoneTextEditor`
 

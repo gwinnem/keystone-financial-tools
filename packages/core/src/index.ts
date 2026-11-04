@@ -75,6 +75,10 @@ export type {
 } from './controller';
 export { createDrawingTools } from './controller';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
+export type { ToolbarEntry, ToolCatalogEntry, ToolGroup, ToolTier } from './catalog';
+export { IDLE_TOOLBAR, TOOL_CATALOG, toolbarEntries } from './catalog';
+export type { ResolvedShortcuts, Shortcut, ShortcutAction, ShortcutBinding, ShortcutOptions, ToolShortcuts } from './shortcuts';
+export { formatShortcut, matchShortcut, parseShortcut, resolveShortcuts, shortcutAction, shortcutKey } from './shortcuts';
 export { isValidAnchor, validateDrawing } from './validate';
 export { DrawingError } from './errors';
 export type { IdSource } from './ids';

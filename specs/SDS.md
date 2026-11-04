@@ -704,8 +704,9 @@ per drag or key press. `error` sources are `pointer`, `key`, `viewport`, `store`
 `error` listener is ignored, so there is no loop) and the other listeners are still called. A
 failed drag is reverted (the history transaction cancelled, the anchors restored) and the state returns
 to `selected`. After every handled input the controller publishes the state and calls
-`host.requestRender()`. `activate` and `deactivate` set the `crosshair` or `default` cursor. Undo and
-redo are API actions (there is no Ctrl+Z binding; the host or adapter binds shortcuts, FR-FW-041).
+`host.requestRender()`. `activate` and `deactivate` set the `crosshair` or `default` cursor. Tool shortcuts and
+the undo and redo keys are bound by the controller through `host.onKey` (FR-FW-041, §10.5); `undo()`
+and `redo()` remain API actions too.
 Keyboard placement needs a pane; it uses the pane of the first anchor, otherwise `defaultYAxisId`
 (default `price`). A text note is created with `text: ''` and the editor (`host.editText`) is opened when
 the host has one. A cancelled editor removes the new note without a history entry (FR-INT-050); a host
@@ -777,8 +778,8 @@ Decisions of E06-F02 (repositories):
   IndexedDB repository keeps one record per scope in the `drawings` object store of a version 1
   database (`UPGRADES[n]` takes version n to n + 1) and retries a failed open on the next call.
 - Tiers: `REPOSITORY_TIERS` records Web Storage and memory as Community and IndexedDB as
-  Professional, following the proposal of FR-LIC-002; OD-2 stays open and `TOOL_CATALOG` (E07) will
-  carry the final split.
+  Professional, following the proposal of FR-LIC-002; OD-2 stays open; `TOOL_CATALOG` (E07-F05) carries
+  the same proposal in its `tier`, to be changed when OD-2 is decided.
 
 Decisions of E06-F01 (0.1 helpers):
 
@@ -911,6 +912,42 @@ Decisions of E07-F04 (Angular controller adapter):
   whether the focus goes back.
 - The `editText` rule (left out: default editor, function: replaces it, `false`: none) is in each of the
   three adapters; E07-F06 looks at moving it into the core with the parity test.
+
+Decisions of E07-F05 (headless toolbar model, FR-FW-040, FR-FW-041):
+
+- `TOOL_CATALOG` is a frozen list in the order of `DRAWING_KINDS`. An entry has `id`, `labelKey`
+  (`tool.<id>`, the key of the label in the application's own translations; the default messages come
+  with E07-F06), `group`, `icon` (the id, a name for the application to map to an icon), `shortcut`
+  (the default, or null) and `tier`. Groups: `lines` (trend line, horizontal line), `shapes` (rectangle),
+  `fibonacci` (the four Fibonacci tools) and `annotations` (text note). Tiers follow the proposal of
+  FR-LIC-002: text note, lines and rectangle `community`, the Fibonacci tools `professional`; OD-2 stays
+  open.
+- The toolbar is part of the controller's state, `DrawingToolsState.toolbar`, not computed in each adapter,
+  so the three adapters cannot differ: one `ToolbarEntry` (the catalog entry with `active`, `enabled`
+  and the shortcut in use) per tool. `active` is the tool placing drawings now (also while its note is
+  edited and `stayInTool` returns to the tool), `enabled` is membership of the `tools` option. The array
+  is rebuilt only when an entry changes (an unchanged one is the same object, so `toolbar$` of Angular
+  and the memo of a framework can compare by reference); `setOptions({ tools })` publishes a new state
+  when the enabled set changes. Without a host the adapters give `IDLE_TOOLBAR`: every entry disabled.
+  Vue and React return `toolbar`, Angular `toolbar` (signal) and `toolbar$`.
+- The licence half of `enabled` (FR-LIC) waits for E10: nothing checks a licence yet, and `tier` is data
+  only. When E10 lands the licence gate feeds the same `enabled` flag, so the adapters do not change.
+- Shortcuts are handled in the controller's key handler, before the interaction machine, so they work
+  with any host that passes keys on. A shortcut is `Ctrl` or `Cmd`, `Alt` and `Shift` joined with `+`
+  before a letter or a digit, with Ctrl or Alt among them; `parseShortcut` reads it and `formatShortcut`
+  gives the canonical text (`Ctrl+Alt+L`) the toolbar shows. The `shortcuts` option maps kinds to
+  shortcuts: a kind left out keeps its default, `null` turns one off. `resolveShortcuts` throws at creation:
+  `KFT-E-KIND` for a name that is not a kind, `RangeError` for an invalid shortcut, for Ctrl/Cmd with A,
+  D, Z or Y (the keys of select all, duplicate, undo and redo) and for one shortcut given to two tools.
+- Undo is Ctrl/Cmd+Z, redo is Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y. These keys are fixed, not options. A key is
+  reported as handled only when it did something: nothing to undo or redo, and the open entry of a note
+  editor (`undo()` returns false then), leave the key to the host; a tool shortcut is handled when the
+  tool is in `tools` and the machine accepts `activate` (idle, selected or placing, so a drag or a note
+  editor is not interrupted). Choosing a tool while placing starts that tool over (`cancel-placement`).
+- `HostKeyEvent` gains the optional `code`, a compatible addition to contract version 2. A key matches by
+  `key` when it is a letter or a digit (either case) and otherwise by the letter or digit of `code`, as
+  Option on a Mac changes the character of a letter. A host that does not pass `code` still gets the
+  shortcuts on Windows and Linux. The playground does not pass `code` yet.
 
 ## 11. Integration with keystone-charts-financial
 

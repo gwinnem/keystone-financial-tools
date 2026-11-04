@@ -58,9 +58,14 @@ export interface HostPointerEvent extends Modifiers {
   readonly button: number;
 }
 
-/** A key event while the chart has focus. `key` is `KeyboardEvent.key`, for example `'Delete'` or `'z'`. */
+/**
+ * A key event while the chart has focus. `key` is `KeyboardEvent.key`, for example `'Delete'` or `'z'`.
+ * `code` is `KeyboardEvent.code`, for example `'KeyT'`; pass it when you have it: the tool shortcuts use it
+ * for letters that Alt or Option change (Option+T on a Mac gives the key `'†'`).
+ */
 export interface HostKeyEvent extends Modifiers {
   readonly key: string;
+  readonly code?: string;
 }
 
 /** The cursors the tools ask the host to show. */

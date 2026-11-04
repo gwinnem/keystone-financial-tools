@@ -1,9 +1,10 @@
-import { DestroyRef, Injectable, inject, type Signal } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { DestroyRef, Injectable, computed, inject, type Signal } from '@angular/core';
+import { distinctUntilChanged, map, type Observable } from 'rxjs';
 import {
   createDrawingTools,
   DrawingStore,
   IDLE_STATE,
+  IDLE_TOOLBAR,
   TextEditor,
   type Drawing,
   type DrawingHost,
@@ -15,6 +16,7 @@ import {
   type DrawingToolsState,
   type MagnetMode,
   type TextEditSession,
+  type ToolbarEntry,
 } from 'keystone-financial-tools-core';
 import { Channel } from './channel';
 
@@ -29,11 +31,20 @@ export interface KeystoneDrawingToolsOptions extends Omit<DrawingToolsOptions, '
 }
 
 /** The state before a host is attached and after it is detached. */
-const IDLE_TOOLS_STATE: DrawingToolsState = Object.freeze({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'off' });
+const IDLE_TOOLS_STATE: DrawingToolsState = Object.freeze({
+  activeTool: null,
+  interaction: IDLE_STATE,
+  selection: [],
+  hover: null,
+  canUndo: false,
+  canRedo: false,
+  magnet: 'off',
+  toolbar: IDLE_TOOLBAR,
+});
 
 /**
  * The drawing tools for one chart (FR-FW-030): `attach` creates the controller for a host and the
- * service keeps `state`, `drawings` and the open note editor in signals and observables. It only maps
+ * service keeps `state`, `toolbar`, `drawings` and the open note editor in signals and observables. It only maps
  * the controller's events to Angular; everything else is the core's.
  *
  * Provide it where the chart is, so every chart has its own and it is destroyed with the chart:
@@ -47,7 +58,11 @@ const IDLE_TOOLS_STATE: DrawingToolsState = Object.freeze({ activeTool: null, in
  *   selector: 'app-chart',
  *   imports: [KeystoneTextEditorComponent],
  *   providers: [KeystoneDrawingToolsService],
- *   template: `<keystone-text-editor [session]="tools.textEdit()" />`,
+ *   template: `
+ *     @for (tool of tools.toolbar(); track tool.id) {
+ *       <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" (click)="tools.activate(tool.id)">{{ tool.id }}</button>
+ *     }
+ *     <keystone-text-editor [session]="tools.textEdit()" />`,
  * })
  * export class ChartComponent {
  *   readonly tools = inject(KeystoneDrawingToolsService);
@@ -72,6 +87,12 @@ export class KeystoneDrawingToolsService {
   readonly tools: Signal<DrawingTools | null> = this.toolsChannel.value;
   /** The state of the tools, a new object whenever a value in it changes. Idle until a host is attached. */
   readonly state: Signal<DrawingToolsState> = this.stateChannel.value;
+  /**
+   * The toolbar (FR-FW-040): every tool of `TOOL_CATALOG` with `active`, `enabled` and the shortcut in use.
+   * The same array until an entry changes; every entry is disabled until a host is attached.
+   * Render a button per entry and call `activate(entry.id)`.
+   */
+  readonly toolbar: Signal<readonly ToolbarEntry[]> = computed(() => this.state().toolbar);
   /** The drawings of the store; changes with every store change. */
   readonly drawings: Signal<readonly Drawing[]> = this.drawingsChannel.value;
   /** The note editor that is open, or null. Show it with `KeystoneTextEditorComponent` or your own editor. */
@@ -80,6 +101,11 @@ export class KeystoneDrawingToolsService {
   /** `tools` as an observable; it emits the current value on subscribe and completes when the service is destroyed. */
   readonly tools$: Observable<DrawingTools | null> = this.toolsChannel.changes;
   readonly state$: Observable<DrawingToolsState> = this.stateChannel.changes;
+  /** `toolbar` as an observable; it emits only when an entry changes. */
+  readonly toolbar$: Observable<readonly ToolbarEntry[]> = this.state$.pipe(
+    map((state) => state.toolbar),
+    distinctUntilChanged()
+  );
   readonly drawings$: Observable<readonly Drawing[]> = this.drawingsChannel.changes;
   readonly textEdit$: Observable<TextEditSession | null> = this.editChannel.changes;
 

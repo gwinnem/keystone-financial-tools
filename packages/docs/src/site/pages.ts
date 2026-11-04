@@ -15,6 +15,7 @@ export const GETTING_STARTED: readonly PageEntry[] = [
 export const GUIDES: readonly PageEntry[] = [
   { slug: 'guides/host', label: 'Implement a host' },
   { slug: 'guides/persistence', label: 'Save and load drawings' },
+  { slug: 'guides/toolbar', label: 'Build a toolbar' },
   { slug: 'guides/keyboard', label: 'Keyboard reference' },
 ];
 

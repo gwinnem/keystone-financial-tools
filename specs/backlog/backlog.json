@@ -1721,7 +1721,8 @@
                 "Each adapter exposes the catalog with `active` and `enabled` (license and `tools` option) per entry.",
                 "Docs show a toolbar example per framework."
               ],
-              "tasks": ["Add `catalog.ts`.", "Expose in adapters.", "Tests."]
+              "tasks": ["Add `catalog.ts`.", "Expose in adapters.", "Tests."],
+              "status": "done"
             },
             {
               "id": "E07-F05-S02",
@@ -1734,7 +1735,8 @@
                 "Undo/redo shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are handled too."
               ],
               "tasks": ["Implement shortcut map.", "Tests."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             }
           ]
         },

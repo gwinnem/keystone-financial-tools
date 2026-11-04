@@ -1,3 +1,4 @@
+import { toolbarEntries, type ToolbarEntry } from './catalog';
 import { Disposables } from './disposables';
 import { DrawingError } from './errors';
 import { assertHost } from './host-check';
@@ -21,6 +22,7 @@ import { DRAWING_KINDS, isDrawingKind } from './kinds';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
 import type { SceneItem, SceneOptions } from './scene/types';
+import { resolveShortcuts, shortcutAction, type ShortcutAction, type ShortcutBinding, type ShortcutOptions, type ToolShortcuts } from './shortcuts';
 import { DrawingStore } from './store';
 import { resolveStyle, type DrawingTheme } from './theme';
 import type { Anchor, Drawing, DrawingKind, StoreChange } from './types';
@@ -46,6 +48,12 @@ export interface DrawingToolsOptions {
   readonly stayInTool?: boolean;
   /** The drawing kinds that can be activated. Default: all. */
   readonly tools?: readonly DrawingKind[];
+  /**
+   * The keyboard shortcut of each tool, for example `{ 'trend-line': 'Alt+L', rectangle: null }`: a tool left
+   * out keeps its default from `TOOL_CATALOG`, `null` turns one off (FR-FW-041). Invalid shortcuts are an
+   * error at creation, see `resolveShortcuts`. Ctrl or Cmd with Z, Shift and Z, or Y is always undo and redo.
+   */
+  readonly shortcuts?: ShortcutOptions;
   /** Thresholds and clock of the gesture recogniser. */
   readonly gestures?: GestureOptions;
   /** Formats the price on the label of a horizontal line (FR-SC-001). Default: 2 decimals. */
@@ -85,6 +93,11 @@ export interface DrawingToolsState {
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly magnet: MagnetMode;
+  /**
+   * The toolbar (FR-FW-040): every tool of `TOOL_CATALOG` with `active` and `enabled` and the shortcut in
+   * use. The same array until an entry changes, so a toolbar re-renders only when it has to.
+   */
+  readonly toolbar: readonly ToolbarEntry[];
 }
 
 /** Locked drawings were asked to change (`KFT-E-LOCKED`). */
@@ -256,6 +269,9 @@ class DrawingToolsController implements DrawingTools {
   private magnet: MagnetMode;
   private stayInTool: boolean;
   private allowed: ReadonlySet<DrawingKind>;
+  private readonly shortcuts: ToolShortcuts;
+  private readonly bindings: readonly ShortcutBinding[];
+  private toolbar: readonly ToolbarEntry[];
   private interaction: InteractionState = IDLE_STATE;
   private progress: PlacementProgress = PLACEMENT_START;
   private snap: Point | null = null;
@@ -277,6 +293,10 @@ class DrawingToolsController implements DrawingTools {
     assertMagnet(magnet);
     this.magnet = magnet;
     this.allowed = options.tools === undefined ? new Set(DRAWING_KINDS) : toolSet(options.tools);
+    const resolved = resolveShortcuts(options.shortcuts);
+    this.shortcuts = resolved.shortcuts;
+    this.bindings = resolved.bindings;
+    this.toolbar = toolbarEntries(null, this.allowed, this.shortcuts);
     this.stayInTool = options.stayInTool === true;
     this.theme = options.theme;
     this.priceFormatter = options.priceFormatter;
@@ -296,7 +316,7 @@ class DrawingToolsController implements DrawingTools {
     this.scenes = new SceneCache(host);
     this.recogniser = new GestureRecogniser(options.gestures);
     this.cursors = new CursorSync(host);
-    this.state = { activeTool: null, interaction: IDLE_STATE, selection: EMPTY_IDS, hover: null, canUndo: false, canRedo: false, magnet };
+    this.state = { activeTool: null, interaction: IDLE_STATE, selection: EMPTY_IDS, hover: null, canUndo: false, canRedo: false, magnet, toolbar: this.toolbar };
     try {
       this.subscriptions.add(this.store.subscribe((_drawings, change) => this.onStoreChange(change)));
       this.subscriptions.add(this.history.onError((issue) => this.fail('history', new DrawingError([issue]))));
@@ -507,22 +527,32 @@ class DrawingToolsController implements DrawingTools {
     const previous = this.state;
     const interaction = this.interaction;
     const { canUndo, canRedo } = this.history;
-    if (previous.interaction === interaction && previous.canUndo === canUndo && previous.canRedo === canRedo && previous.magnet === this.magnet) return;
+    const activeTool = toolOf(interaction);
+    const toolbar = this.toolbarFor(activeTool);
+    if (previous.interaction === interaction && previous.canUndo === canUndo && previous.canRedo === canRedo && previous.magnet === this.magnet && previous.toolbar === toolbar) return;
     const ids = selectionOf(interaction);
     const next: DrawingToolsState = {
-      activeTool: toolOf(interaction),
+      activeTool,
       interaction,
       selection: sameIds(previous.selection, ids) ? previous.selection : ids,
       hover: hoverOf(interaction),
       canUndo,
       canRedo,
       magnet: this.magnet,
+      toolbar,
     };
     this.state = next;
     if (next.activeTool !== previous.activeTool) this.emit('tool', next.activeTool);
     if (next.selection !== previous.selection) this.emit('selection', next.selection);
     if (next.interaction !== previous.interaction) this.emit('interaction', next.interaction);
     this.emit('state', next);
+  }
+
+  /** The toolbar for the tool placing drawings now and the tools allowed now: the one the state has while no entry changed. */
+  private toolbarFor(activeTool: DrawingKind | null): readonly ToolbarEntry[] {
+    const stale = this.toolbar.some((entry) => entry.active !== (entry.id === activeTool) || entry.enabled !== this.allowed.has(entry.id));
+    if (stale) this.toolbar = toolbarEntries(activeTool, this.allowed, this.shortcuts);
+    return this.toolbar;
   }
 
   private onStoreChange(change: StoreChange): void {
@@ -617,7 +647,21 @@ class DrawingToolsController implements DrawingTools {
   private handleKey(event: HostKeyEvent): boolean {
     const ctrl = event.ctrlKey || event.metaKey;
     this.modifiers = { shift: event.shiftKey, invert: ctrl };
+    const action = shortcutAction(event, this.bindings);
+    if (action !== null) return this.shortcut(action);
     return !this.feed({ type: 'key', key: event.key, ctrl, shift: event.shiftKey }).ignored;
+  }
+
+  /** A tool, undo or redo shortcut: handled when it did something (a tool that is not allowed, or a state that cannot change tool, leaves the key to the host). */
+  private shortcut(action: ShortcutAction): boolean {
+    switch (action.type) {
+      case 'undo':
+        return this.history.undo();
+      case 'redo':
+        return this.history.redo();
+      case 'tool':
+        return this.allowed.has(action.tool) && !this.feed({ type: 'activate', tool: action.tool }).ignored;
+    }
   }
 
   /** A zoom or scroll moves everything on the screen: the snap point (in pixels) is out of date. */

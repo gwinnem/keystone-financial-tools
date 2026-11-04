@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Component, inject, provideZonelessChangeDetection, type EnvironmentProviders, type Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { Observable } from 'rxjs';
-import { DARK_THEME, DrawingStore, IDLE_STATE, type Drawing, type DrawingHost, type TextEditRequest } from 'keystone-financial-tools-core';
+import { DARK_THEME, DrawingStore, IDLE_STATE, IDLE_TOOLBAR, TOOL_CATALOG, type Drawing, type DrawingHost, type TextEditRequest } from 'keystone-financial-tools-core';
 import { createMockHost, type MockHost, type MockHostOptions } from 'keystone-financial-tools-core/testing';
 import { KeystoneDrawingToolsService } from './drawing-tools.service';
 
@@ -45,7 +45,11 @@ describe('KeystoneDrawingToolsService', () => {
     it('has no controller, an idle state and actions that do nothing', () => {
       const service = setup();
       expect(service.tools()).toBeNull();
-      expect(service.state()).toStrictEqual({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'off' });
+      expect(service.state()).toStrictEqual({ activeTool: null, interaction: IDLE_STATE, selection: [], hover: null, canUndo: false, canRedo: false, magnet: 'off', toolbar: IDLE_TOOLBAR });
+      expect(service.toolbar()).toBe(IDLE_TOOLBAR);
+      expect(service.toolbar().map((entry) => entry.id)).toStrictEqual(TOOL_CATALOG.map((entry) => entry.id));
+      expect(service.toolbar().some((entry) => entry.enabled || entry.active)).toBe(false);
+      expect(latest(service.toolbar$)).toBe(IDLE_TOOLBAR);
       expect(service.drawings()).toStrictEqual([]);
       expect(service.textEdit()).toBeNull();
       service.activate('trend-line');
@@ -109,6 +113,71 @@ describe('KeystoneDrawingToolsService', () => {
       expect(latest(service.state$)).toBe(service.state());
       service.clearSelection();
       expect(service.state().selection).toStrictEqual([]);
+    });
+
+    it('has the toolbar as a signal and an observable: all tools from the catalog, the active one marked, a new array only when an entry changes', () => {
+      const host = hostOf();
+      const service = setup();
+      service.attach(host, { store: new DrawingStore([LINE]) });
+      const first = service.toolbar();
+      expect(first).toBe(service.state().toolbar);
+      expect(first).not.toBe(IDLE_TOOLBAR);
+      expect(latest(service.toolbar$)).toBe(first);
+      expect(first.map((entry) => entry.id)).toStrictEqual(TOOL_CATALOG.map((entry) => entry.id));
+      expect(first.every((entry) => entry.enabled && !entry.active)).toBe(true);
+      const seen: unknown[] = [];
+      const subscription = service.toolbar$.subscribe((toolbar) => seen.push(toolbar));
+      service.select(['l']);
+      expect(service.toolbar()).toBe(first);
+      expect(seen).toStrictEqual([first]);
+      service.activate('rectangle');
+      expect(service.toolbar()).not.toBe(first);
+      expect(
+        service
+          .toolbar()
+          .filter((entry) => entry.active)
+          .map((entry) => entry.id)
+      ).toStrictEqual(['rectangle']);
+      expect(seen).toHaveLength(2);
+      expect(seen[1]).toBe(service.toolbar());
+      host.key('Escape');
+      expect(service.toolbar().some((entry) => entry.active)).toBe(false);
+      expect(seen).toHaveLength(3);
+      subscription.unsubscribe();
+    });
+
+    it('enables the tools of the tools option only, and passes the shortcuts option', () => {
+      const service = setup();
+      service.attach(hostOf(), { tools: ['trend-line'], shortcuts: { 'trend-line': 'Alt+L' } });
+      expect(
+        service
+          .toolbar()
+          .filter((entry) => entry.enabled)
+          .map((entry) => entry.id)
+      ).toStrictEqual(['trend-line']);
+      expect(service.toolbar()[0]?.shortcut).toBe('Alt+L');
+      service.setOptions({ tools: ['rectangle'] });
+      expect(
+        service
+          .toolbar()
+          .filter((entry) => entry.enabled)
+          .map((entry) => entry.id)
+      ).toStrictEqual(['rectangle']);
+    });
+
+    it('activates a tool with its shortcut and follows it in the toolbar', () => {
+      const host = hostOf();
+      const service = setup();
+      service.attach(host);
+      expect(host.key('t', { altKey: true })).toBe(true);
+      expect(service.toolbar().find((entry) => entry.id === 'trend-line')?.active).toBe(true);
+    });
+
+    it('goes back to the idle toolbar when the host is detached', () => {
+      const service = setup();
+      service.attach(hostOf());
+      service.detach();
+      expect(service.toolbar()).toBe(IDLE_TOOLBAR);
     });
 
     it('forwards the actions to the controller', () => {

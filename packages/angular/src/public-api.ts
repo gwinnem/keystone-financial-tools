@@ -12,7 +12,12 @@ export type {
   DrawingToolsRuntimeOptions,
   DrawingToolsState,
   MagnetMode,
+  ShortcutOptions,
   TextEditRequest,
   TextEditSession,
+  ToolbarEntry,
+  ToolCatalogEntry,
+  ToolGroup,
+  ToolTier,
 } from 'keystone-financial-tools-core';
-export { createDrawingTools, DARK_THEME, LIGHT_THEME, shouldRestoreFocus, TextEditor, textEditorKeyAction } from 'keystone-financial-tools-core';
+export { createDrawingTools, DARK_THEME, LIGHT_THEME, shouldRestoreFocus, TextEditor, textEditorKeyAction, TOOL_CATALOG } from 'keystone-financial-tools-core';

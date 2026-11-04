@@ -40,6 +40,8 @@ geometry of every drawing kind.
 | `dragHandle`, `moveDrawings`, `nudgeAnchors`, `MovedDrawing`, `constrainMove`, `constrainAngle`, `SHIFT_STEP_FACTOR` | New anchors for a handle drag, a body move and an arrow-key nudge, and the Shift rules |
 | `keyboardCursorStart`, `moveKeyboardCursor`, `KEYBOARD_CURSOR_INSET_PX` | The keyboard cursor for placing without a pointer |
 | `snapAnchor`, `effectiveMagnet`, `placementSnap`, `handleSnap`, `MagnetMode`, `SnapResult`, `WEAK_MAGNET_PX` | Magnet snapping to the open, high, low or close of the nearest bar, the Ctrl/Cmd inversion and the point for the snap indicator |
+| `TOOL_CATALOG`, `ToolCatalogEntry`, `ToolGroup`, `ToolTier`, `ToolbarEntry`, `toolbarEntries`, `IDLE_TOOLBAR` | The toolbar model: the eight tools with label key, group, icon, shortcut and tier, and the entries with `active` and `enabled` (FR-FW-040) |
+| `resolveShortcuts`, `parseShortcut`, `formatShortcut`, `matchShortcut`, `shortcutAction`, `shortcutKey`, `ShortcutOptions`, `ToolShortcuts`, `Shortcut`, `ShortcutBinding`, `ShortcutAction`, `ResolvedShortcuts` | Tool shortcuts and the undo and redo keys (FR-FW-041) |
 | `createDrawingTools`, `DrawingTools`, `DrawingToolsOptions`, `DrawingToolsRuntimeOptions`, `DrawingToolsState`, `DrawingToolsEvents`, `DrawingToolsEventName`, `DrawingToolsBlocked`, `DrawingToolsError`, `DrawingToolsErrorSource` | The controller: ties a host, a store, the history and the tools together (actions, state snapshot, typed events, scene, hit test, destroy) |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
@@ -542,6 +544,7 @@ tools.destroy(); // when the chart goes away
 | `tools` | The kinds that can be activated | all kinds |
 | `gestures` | `GestureOptions` (thresholds, clock) | defaults |
 | `priceFormatter` | `(price, yAxisId) => string` for the price label of a horizontal line and the price in a retracement level label | 2 decimals |
+| `shortcuts` | `{ [kind]: 'Alt+L' \| null }`: the shortcut of a tool; one left out keeps its default, `null` turns it off | Alt+T, H, R, F, N |
 | `defaultYAxisId` | The pane keyboard placement starts in when no anchor is set | `price` |
 | `createId` | Id of a new drawing | `createId` |
 | `debug` | Receives a message for every input the state machine ignores | none |
@@ -549,10 +552,27 @@ tools.destroy(); // when the chart goes away
 - **Actions**: `activate(kind)` (throws `KFT-E-KIND` for a kind that is not available), `deactivate()`,
   `select(ids)`, `clearSelection()`, `remove(ids)` (one history entry), `undo()` and `redo()` (return whether
   anything happened), `setMagnet(mode)`, `setTheme(theme)`, `setOptions({ stayInTool?, tools? })`,
-  `hitTest(x, y)`. Undo and redo are API actions; the application binds the shortcuts.
-- **`getState()`**: `{ activeTool, interaction, selection, hover, canUndo, canRedo, magnet }`. The same object
-  comes back until a value changes, and `selection` keeps its array while the ids are the same, so adapters
-  can compare by reference.
+  `hitTest(x, y)`.
+- **`getState()`**: `{ activeTool, interaction, selection, hover, canUndo, canRedo, magnet, toolbar }`. The same object
+  comes back until a value changes, and `selection` and `toolbar` keep their arrays while nothing in them
+  changes, so adapters can compare by reference.
+- **Toolbar** (FR-FW-040): `state.toolbar` has one `ToolbarEntry` for each tool of `TOOL_CATALOG`, in that order:
+  `id`, `labelKey` (`tool.<id>`), `group` (`lines`, `shapes`, `fibonacci`, `annotations`), `icon` (the id), `shortcut`
+  (in use, or null), `tier` (`community` or `professional`, a proposal until OD-2), `active` (the tool placing
+  drawings now, also while its note is edited and it stays in the tool) and `enabled` (the kind is in the `tools`
+  option; the licence check follows with E10). `setOptions({ tools })` publishes a new toolbar; `TOOL_CATALOG`
+  alone is the static list. The tool of an entry is chosen with `activate(entry.id)`.
+- **Shortcuts** (FR-FW-041), through `host.onKey` and so only while the chart has the focus: Alt+T (trend line),
+  Alt+H (horizontal line), Alt+R (rectangle), Alt+F (Fibonacci retracement) and Alt+N (text note) choose the
+  tool, also while another tool places drawings (it starts over); Ctrl/Cmd+Z undoes, Ctrl/Cmd+Shift+Z and
+  Ctrl/Cmd+Y redo. A key is handled (the host prevents its default action) only when it did something: a tool
+  that is not in `tools`, a state that cannot change tool (a drag, a note being edited), nothing to undo or
+  redo, and an open note editor leave the key to the host. The `shortcuts` option takes `Ctrl`/`Cmd`, `Alt` and
+  `Shift` joined with `+` before a letter or a digit, with Ctrl or Alt among them, in any case. Creating the
+  tools throws `KFT-E-KIND` for a name that is not a kind and `RangeError` for an invalid shortcut, for Ctrl/Cmd
+  with A, D, Z or Y (used by the tools) and for one two tools share. A key event may carry `code`
+  (`KeyboardEvent.code`): with Option on a Mac the letter changes, so the physical key is read when `key`
+  is not a letter or a digit.
 - **Events** (`on(event, listener)`, payload typed per name): `change` (`StoreChange`), `selection` (ids),
   `tool` (kind or null), `interaction` (the interaction state), `state` (every new snapshot, including magnet,
   `canUndo` and `canRedo` changes), `blocked` (`{ code: 'KFT-E-LOCKED', ids }`, once per drag or key press)
@@ -561,6 +581,11 @@ tools.destroy(); // when the chart goes away
   editor or the history is caught and raised as an `error` event; an open drag is reverted and the store is
   left as it was. A listener that throws does not stop the other listeners.
 - **Magnet**: Ctrl/Cmd inverts the mode for the event it comes with; the stored mode never changes.
+- **Toolbar example**:
+
+  ```ts
+  for (const tool of tools.getState().toolbar) addButton({ label: t(tool.labelKey), disabled: !tool.enabled, pressed: tool.active, title: tool.shortcut ?? '', onClick: () => tools.activate(tool.id) });
+  ```
 - **Text notes**: a new note is created with empty text and `host.editText` (when the host has it) is asked
   for the text. A cancelled editor (it resolves with `null`) removes the new note without a history entry; a host
   without an editor and an editor that fails keep the empty note. See [Text note](#text-note).
