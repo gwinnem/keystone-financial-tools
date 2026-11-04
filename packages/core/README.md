@@ -42,6 +42,7 @@ geometry of every drawing kind.
 | `snapAnchor`, `effectiveMagnet`, `placementSnap`, `handleSnap`, `MagnetMode`, `SnapResult`, `WEAK_MAGNET_PX` | Magnet snapping to the open, high, low or close of the nearest bar, the Ctrl/Cmd inversion and the point for the snap indicator |
 | `TOOL_CATALOG`, `ToolCatalogEntry`, `ToolGroup`, `ToolTier`, `ToolbarEntry`, `toolbarEntries`, `IDLE_TOOLBAR` | The toolbar model: the eight tools with label key, group, icon, shortcut and tier, and the entries with `active` and `enabled` (FR-FW-040) |
 | `resolveShortcuts`, `parseShortcut`, `formatShortcut`, `matchShortcut`, `shortcutAction`, `shortcutKey`, `ShortcutOptions`, `ToolShortcuts`, `Shortcut`, `ShortcutBinding`, `ShortcutAction`, `ResolvedShortcuts` | Tool shortcuts and the undo and redo keys (FR-FW-041) |
+| `DEFAULT_MESSAGES`, `resolveMessages`, `Messages`, `MessageKey`, `MessageOverrides` | The table of every user-visible text, in English, and the merge of your own texts over it (NFR-I18N-001) |
 | `createDrawingTools`, `DrawingTools`, `DrawingToolsOptions`, `DrawingToolsRuntimeOptions`, `DrawingToolsState`, `DrawingToolsEvents`, `DrawingToolsEventName`, `DrawingToolsBlocked`, `DrawingToolsError`, `DrawingToolsErrorSource` | The controller: ties a host, a store, the history and the tools together (actions, state snapshot, typed events, scene, hit test, destroy) |
 
 Every store change replaces the drawing list (the old list is never mutated) and notifies the
@@ -545,6 +546,7 @@ tools.destroy(); // when the chart goes away
 | `gestures` | `GestureOptions` (thresholds, clock) | defaults |
 | `priceFormatter` | `(price, yAxisId) => string` for the price label of a horizontal line and the price in a retracement level label | 2 decimals |
 | `shortcuts` | `{ [kind]: 'Alt+L' \| null }`: the shortcut of a tool; one left out keeps its default, `null` turns it off | Alt+T, H, R, F, N |
+| `messages` | `{ [key]: 'text' }`: the texts to replace, for example `{ 'tool.trend-line': 'Trendlinie' }`; a key left out keeps its English text; an unknown key or an empty text throws a `RangeError`. The merged table is `tools.messages` | `DEFAULT_MESSAGES` |
 | `defaultYAxisId` | The pane keyboard placement starts in when no anchor is set | `price` |
 | `createId` | Id of a new drawing | `createId` |
 | `debug` | Receives a message for every input the state machine ignores | none |
@@ -573,6 +575,12 @@ tools.destroy(); // when the chart goes away
   with A, D, Z or Y (used by the tools) and for one two tools share. A key event may carry `code`
   (`KeyboardEvent.code`): with Option on a Mac the letter changes, so the physical key is read when `key`
   is not a letter or a digit.
+- **Messages** (NFR-I18N-001): every user-visible text is a key of `DEFAULT_MESSAGES`: `tool.<kind>` (the
+  `labelKey` of a toolbar entry), `group.lines`, `group.shapes`, `group.fibonacci`, `group.annotations`,
+  `toolbar.label`, `editor.note` (the accessible name of the note editor, `TEXT_EDITOR_LABEL`), `editor.confirm`
+  and `editor.cancel`. The `messages` option merges your texts over the English ones; `tools.messages` is the
+  frozen result, and `resolveMessages(overrides)` makes the same table without the tools. No other text is
+  written anywhere in the packages (a test of the repository fails for one).
 - **Events** (`on(event, listener)`, payload typed per name): `change` (`StoreChange`), `selection` (ids),
   `tool` (kind or null), `interaction` (the interaction state), `state` (every new snapshot, including magnet,
   `canUndo` and `canRedo` changes), `blocked` (`{ code: 'KFT-E-LOCKED', ids }`, once per drag or key press)
@@ -584,7 +592,7 @@ tools.destroy(); // when the chart goes away
 - **Toolbar example**:
 
   ```ts
-  for (const tool of tools.getState().toolbar) addButton({ label: t(tool.labelKey), disabled: !tool.enabled, pressed: tool.active, title: tool.shortcut ?? '', onClick: () => tools.activate(tool.id) });
+  for (const tool of tools.getState().toolbar) addButton({ label: tools.messages[tool.labelKey], disabled: !tool.enabled, pressed: tool.active, title: tool.shortcut ?? '', onClick: () => tools.activate(tool.id) });
   ```
 - **Text notes**: a new note is created with empty text and `host.editText` (when the host has it) is asked
   for the text. A cancelled editor (it resolves with `null`) removes the new note without a history entry; a host

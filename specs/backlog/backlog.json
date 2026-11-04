@@ -1757,7 +1757,8 @@
                 "Runs in CI for all packages."
               ],
               "tasks": ["Write the parity test.", "Add to CI."],
-              "labels": ["area:ci"]
+              "labels": ["area:ci"],
+              "status": "done"
             },
             {
               "id": "E07-F06-S02",
@@ -1768,7 +1769,8 @@
                 "`DEFAULT_MESSAGES` (English) covers tool labels, editor buttons and accessibility labels; `messages` option merges overrides.",
                 "No user-visible string is hard-coded elsewhere (lint rule or test)."
               ],
-              "tasks": ["Implement messages.", "Tests."]
+              "tasks": ["Implement messages.", "Tests."],
+              "status": "done"
             }
           ]
         }

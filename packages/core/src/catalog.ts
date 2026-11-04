@@ -1,3 +1,4 @@
+import type { MessageKey } from './messages';
 import { deepFreeze } from './object';
 import type { ToolShortcuts } from './shortcuts';
 import type { DrawingKind } from './types';
@@ -19,8 +20,9 @@ export type ToolTier = 'community' | 'professional';
 export interface ToolCatalogEntry {
   /** The drawing kind the tool places: pass it to `activate`. */
   readonly id: DrawingKind;
-  /** The key of the label in your messages; `DEFAULT_MESSAGES` has the English text. */
-  readonly labelKey: string;
+  /** The key of the label in the messages (`tool.<id>`): `messages[entry.labelKey]` is the text to show. */
+  readonly labelKey: MessageKey;
+  /** The group of the tool; its name is `messages['group.' + group]`. */
   readonly group: ToolGroup;
   /** The name of the icon: yours to map to a picture. */
   readonly icon: string;

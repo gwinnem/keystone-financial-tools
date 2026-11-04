@@ -25,8 +25,8 @@ export function Toolbar({ host }: { host: DrawingHost | null }): JSX.Element {
 }
 ```
 
-- It returns `tools` (the controller, `null` until a host exists), `store`, `state`, `toolbar`, `drawings`,
-  `textEdit` and the actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`,
+- It returns `tools` (the controller, `null` until a host exists), `store`, `state`, `toolbar`, `messages`,
+  `drawings`, `textEdit` and the actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`,
   `redo`, `setMagnet`, `setTheme` and `setOptions`. Without a host the state is idle and the actions
   do nothing (`undo` and `redo` return `false`).
 - `host` can be `null` or `undefined`. A new host gets a new controller; the old one is destroyed.
@@ -49,17 +49,40 @@ with the `shortcuts` option, `null` turns one off), and Ctrl or Cmd with Z undoe
 ```tsx
 {toolbar.map((tool) => (
   <button key={tool.id} disabled={!tool.enabled} aria-pressed={tool.active} title={tool.shortcut ?? ''} onClick={() => activate(tool.id)}>
-    {tool.id}
+    {messages[tool.labelKey]}
   </button>
 ))}
 ```
+
+### Translate the texts
+
+Every text comes from one table (NFR-I18N-001): `DEFAULT_MESSAGES` has the English text of the tool labels
+(`tool.<kind>`), the toolbar groups (`group.<group>`), `toolbar.label`, and the note editor (`editor.note`,
+`editor.confirm`, `editor.cancel`). Put your texts over them with the `messages` option; a key that is not in the
+table, or an empty text, throws a `RangeError`. `messages` is the result, a plain object that is there from the
+first render, also before there is a host, and that is read once like the other options:
+
+```tsx
+const { toolbar, messages, textEdit } = useDrawingTools(host, { messages: { 'tool.trend-line': 'Trendlinie', 'editor.note': 'Notiztext' } });
+// ...
+<KeystoneTextEditor session={textEdit} label={messages['editor.note']} />
+```
+
+### The public API of the core
+
+This package exports everything of the core that an application needs (types, constants, validation, document
+import, shortcut and message helpers, `DrawingStore`, `createDrawingTools` and more), so you never import from
+`keystone-financial-tools-core`. What it leaves out is the engine behind the tools (geometry, hit-testing, the
+interaction machine, snapping and the history internals); a test of the repository (FR-FW-050) fails when the core
+gets an export that this package neither exports nor lists as left out.
 
 ## `KeystoneTextEditor`
 
 A textarea at the position of the note being edited. Place it inside the chart's positioned element.
 Ctrl or Cmd with Enter confirms, Escape cancels and leaving the textarea confirms. Keys and pointer
 events stop at the textarea, so they do not reach the chart. The text is never read as HTML. It has
-the accessible name `Note text`; pass `label` to change it. Focus moves into the textarea and goes
+the accessible name `Note text` (`DEFAULT_MESSAGES['editor.note']`); pass `label` to change it, for example
+`messages['editor.note']`. Focus moves into the textarea and goes
 back when it closes.
 
 ## `useDrawings(store?)`

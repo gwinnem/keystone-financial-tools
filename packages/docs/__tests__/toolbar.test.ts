@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TOOL_CATALOG } from 'keystone-financial-tools-core';
+import { DEFAULT_MESSAGES, TOOL_CATALOG } from 'keystone-financial-tools-core';
 import { readPage } from './support';
 
 const page = readPage('guides/toolbar');
@@ -17,8 +17,21 @@ describe('the toolbar guide (FR-FW-040, FR-FW-041)', () => {
   });
 
   it('has no row that is not a field, a tool, a key or a table head', () => {
-    // Heads and their lines (3 tables), 8 fields, 8 tools, 2 keys.
-    expect(rows).toHaveLength(6 + 8 + TOOL_CATALOG.length + 2);
+    // Heads and their lines (4 tables), 8 fields, the tools, the messages, 2 keys.
+    expect(rows).toHaveLength(8 + 8 + TOOL_CATALOG.length + Object.keys(DEFAULT_MESSAGES).length + 2);
+  });
+
+  it('has a row for every message, with its English text (NFR-I18N-001)', () => {
+    for (const [key, text] of Object.entries(DEFAULT_MESSAGES)) expect(rows, key).toContain(`| \`${key}\` | ${text} |`);
+  });
+
+  it('explains the messages option, the table of every package and the error for a bad key', () => {
+    expect(page).toContain("messages: { 'tool.trend-line': 'Trendlinie', 'editor.note': 'Notiztext' }");
+    expect(page).toContain('`messages` of `useDrawingTools` in Vue and React');
+    expect(page).toContain('`messages()` of `KeystoneDrawingToolsService` in Angular');
+    expect(page).toContain("`messages['editor.note']`");
+    expect(page).toContain('`resolveMessages(overrides)`');
+    expect(page).toContain('throw a `RangeError`');
   });
 
   it('names the label key as the core builds it', () => {

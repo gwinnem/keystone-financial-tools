@@ -12,6 +12,7 @@ import {
   type DrawingToolsRuntimeOptions,
   type DrawingToolsState,
   type MagnetMode,
+  type Messages,
   type TextEditSession,
   type ToolbarEntry,
 } from 'keystone-financial-tools-core';
@@ -40,6 +41,12 @@ export interface UseDrawingTools {
    * The same array until an entry changes. Render a button per entry and call `activate(entry.id)`.
    */
   readonly toolbar: Readonly<Ref<readonly ToolbarEntry[]>>;
+  /**
+   * Every user-visible text (NFR-I18N-001): the English ones with the `messages` option on top. Use
+   * `messages[entry.labelKey]` for the label of a toolbar entry and `messages['editor.note']` for the
+   * `label` of `KeystoneTextEditor`.
+   */
+  readonly messages: Messages;
   /** The drawings, replaced on every store change. */
   readonly drawings: Readonly<Ref<readonly Drawing[]>>;
   /** The note editor that is open, or null. Show it with `KeystoneTextEditor` or your own editor. */
@@ -58,18 +65,18 @@ export interface UseDrawingTools {
 
 /**
  * The drawing tools for a Vue component (FR-FW-010): creates the controller for `host`, and keeps
- * `state`, `toolbar`, `drawings` and the open note editor in refs. It only maps the controller's events to
+ * `state`, `toolbar`, `drawings` and the open note editor in refs, and gives the `messages`. It only maps the controller's events to
  * refs; everything else is the core's. The controller is destroyed, and the host's listeners removed,
  * when the calling effect scope (for example the component) is disposed.
  *
  * @example
  * ```ts
- * const { tools, state, toolbar, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
+ * const { tools, state, toolbar, messages, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak', messages: { 'tool.trend-line': 'Trendlinie' } });
  * // in the host's overlay render pass:
  * for (const item of tools.getScene()) paint(item);
  * // in the template:
- * // <button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" @click="activate(tool.id)">{{ tool.id }}</button>
- * // <KeystoneTextEditor :session="textEdit" />
+ * // <button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" @click="activate(tool.id)">{{ messages[tool.labelKey] }}</button>
+ * // <KeystoneTextEditor :session="textEdit" :label="messages['editor.note']" />
  * ```
  */
 export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOptions): UseDrawingTools {
@@ -97,6 +104,7 @@ export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOpti
     store,
     state,
     toolbar,
+    messages: tools.messages,
     drawings,
     textEdit,
     activate: (kind) => tools.activate(kind),

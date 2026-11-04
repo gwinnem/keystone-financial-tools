@@ -1,6 +1,6 @@
 ---
 title: Build a toolbar
-description: The tool catalog, the toolbar state each package gives you, and the keyboard shortcuts that choose a tool.
+description: The tool catalog, the toolbar state each package gives you, the texts you can translate, and the keyboard shortcuts that choose a tool.
 ---
 
 The drawing tools come without a toolbar, so it looks like the rest of your application. What they give you is a model: a list of the tools, which one is active, which ones can be used, and the key that chooses each. You render it with your own buttons.
@@ -14,7 +14,7 @@ An entry has these fields:
 | Field | What it is |
 | --- | --- |
 | `id` | The drawing kind. Pass it to `activate`. |
-| `labelKey` | The key of the label in your own translations, `tool.` and the kind. |
+| `labelKey` | The key of the label in the [messages](#translate-the-texts), `tool.` and the kind. |
 | `group` | `lines`, `shapes`, `fibonacci` or `annotations`, for grouping the buttons. |
 | `icon` | The name of the icon, the kind. Map it to your own icons. |
 | `shortcut` | The key that chooses the tool, for example `Alt+T`, or `null` when it has none. |
@@ -50,12 +50,49 @@ for (const tool of tools.getState().toolbar) {
   button.setAttribute('aria-pressed', String(tool.active));
   button.title = tool.shortcut ?? '';
   button.onclick = () => tools.activate(tool.id);
-  button.textContent = translate(tool.labelKey);
+  button.textContent = tools.messages[tool.labelKey];
   bar.append(button);
 }
 ```
 
 Render again on the `state` event. The getting started page of your framework has the same toolbar with its own bindings: [TypeScript](/getting-started/typescript/), [Vue](/getting-started/vue/), [React](/getting-started/react/) and [Angular](/getting-started/angular/).
+
+## Translate the texts
+
+Every text the tools show comes from one table of messages, so nothing is written in English where you cannot change it. `DEFAULT_MESSAGES` has the English text of each key, and the `messages` option puts your texts over them: a key you leave out keeps its English text.
+
+```ts
+const tools = createDrawingTools(host, {
+  messages: { 'tool.trend-line': 'Trendlinie', 'editor.note': 'Notiztext' },
+});
+tools.messages['tool.trend-line']; // 'Trendlinie'
+tools.messages['tool.rectangle']; // 'Rectangle'
+```
+
+The table you get is `messages` of the controller, `messages` of `useDrawingTools` in Vue and React (a plain object, there also before the chart exists) and `messages()` of `KeystoneDrawingToolsService` in Angular (a signal, with the `messages` option of `attach`). Use it for the label of a toolbar entry, `messages[entry.labelKey]`, for the name of a group, `messages['group.' + entry.group]`, and for the `label` of the note editor, `messages['editor.note']`. `resolveMessages(overrides)` makes the same table without the tools.
+
+A key that is not in the table, and a text that is empty, throw a `RangeError` when the tools are created, so a typo does not leave a text untranslated. These are all the keys:
+
+| Key | English text |
+| --- | --- |
+| `tool.trend-line` | Trend line |
+| `tool.horizontal-line` | Horizontal line |
+| `tool.rectangle` | Rectangle |
+| `tool.fibonacci-retracement` | Fibonacci retracement |
+| `tool.fibonacci-arcs` | Fibonacci arcs |
+| `tool.fibonacci-fans` | Fibonacci fans |
+| `tool.fibonacci-time-zones` | Fibonacci time zones |
+| `tool.text-note` | Text note |
+| `group.lines` | Lines |
+| `group.shapes` | Shapes |
+| `group.fibonacci` | Fibonacci |
+| `group.annotations` | Annotations |
+| `toolbar.label` | Drawing tools |
+| `editor.note` | Note text |
+| `editor.confirm` | Confirm |
+| `editor.cancel` | Cancel |
+
+The default note editor has no buttons, only its accessible name (`editor.note`). `editor.confirm` and `editor.cancel` are for an editor of your own.
 
 ## Keyboard shortcuts
 

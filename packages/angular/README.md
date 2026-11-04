@@ -45,6 +45,7 @@ export class ChartComponent {
 | `tools`, `tools$` | The controller (`getScene()`, `hitTest()`, `on()`), or null until a host is attached |
 | `state`, `state$` | The state of the tools, a new object whenever a value in it changes; idle until a host is attached |
 | `toolbar`, `toolbar$` | One entry for each tool (`id`, `labelKey`, `group`, `icon`, `shortcut`, `tier`, `active`, `enabled`); the same array until an entry changes (`toolbar$` emits only then), disabled until a host is attached |
+| `messages` | Every user-visible text: the English ones with the `messages` option of `attach` over them (a signal); the English ones until a host is attached |
 | `drawings`, `drawings$` | The drawings of the store |
 | `textEdit`, `textEdit$` | The note editor that is open, or null |
 | `store` | The store the tools draw into: the one in the options, otherwise one that belongs to the service |
@@ -62,17 +63,28 @@ export class ChartComponent {
 
   ```html
   @for (tool of tools.toolbar(); track tool.id) {
-    <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" [title]="tool.shortcut ?? ''" (click)="tools.activate(tool.id)">{{ tool.id }}</button>
+    <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" [title]="tool.shortcut ?? ''" (click)="tools.activate(tool.id)">{{ tools.messages()[tool.labelKey] }}</button>
   }
   ```
+
+- Translate the texts: `DEFAULT_MESSAGES` has the English text of the tool labels (`tool.<kind>`), the toolbar
+  groups (`group.<group>`), `toolbar.label`, and the note editor (`editor.note`, `editor.confirm`,
+  `editor.cancel`) (NFR-I18N-001). Put your texts over them with the `messages` option of `attach`; a key that is
+  not in the table, or an empty text, throws a `RangeError`. Read the result from `messages()`, and give the
+  editor its name: `<keystone-text-editor [session]="tools.textEdit()" [label]="tools.messages()['editor.note']" />`.
+- This package exports everything of the core that an application needs (types, constants, validation, document
+  import, shortcut and message helpers, `DrawingStore`, `createDrawingTools` and more), so you never import from
+  `keystone-financial-tools-core`. What it leaves out is the engine behind the tools (geometry, hit-testing, the
+  interaction machine, snapping and the history internals); a test of the repository (FR-FW-050) fails when the
+  core gets an export that this package neither exports nor lists as left out.
 
 ## `KeystoneTextEditorComponent`
 
 `<keystone-text-editor [session]="tools.textEdit()" />` shows a textarea at the position of the note
 being edited. Place it inside the chart's positioned element. Ctrl or Cmd with Enter confirms, Escape
 cancels and leaving the textarea confirms. Keys and pointer events stop at the textarea, so they do
-not reach the chart. The text is never read as HTML. It has the accessible name `Note text`; set
-`label` to change it. Focus moves into the textarea and goes back when it closes, unless the user has
+not reach the chart. The text is never read as HTML. It has the accessible name `Note text` (`DEFAULT_MESSAGES['editor.note']`); set
+`label` to change it, for example to `tools.messages()['editor.note']`. Focus moves into the textarea and goes back when it closes, unless the user has
 moved it to something else. To use your own editor, leave the component out and show `textEdit()`
 yourself, calling `confirm` or `cancel` on the session.
 

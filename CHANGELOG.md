@@ -2,6 +2,19 @@
 
 ## 0.1.0 (unreleased)
 
+- Parity and i18n (E07-F06): every export of the core is now in the Vue, React and Angular packages (types,
+  constants, validation, document import, shortcut and message helpers and more), so an application never
+  imports from the core; the engine behind the tools (geometry, hit-testing, the interaction machine, snapping,
+  the history internals) is the allow-list, with a reason each. A parity test (FR-FW-050) reads the entries of
+  the packages and fails for a core export that a framework package neither exports nor wraps nor lists; it
+  runs in the unit tests and in its own CI step. Message table (NFR-I18N-001): `DEFAULT_MESSAGES` has the English
+  text of the tool labels (`tool.<kind>`, the `labelKey` of a toolbar entry), the toolbar groups, the toolbar and
+  the note editor (`editor.note`, `editor.confirm`, `editor.cancel`); the `messages` option of `createDrawingTools`
+  merges your texts over them (an unknown key or an empty text throws a `RangeError`), `DrawingTools.messages`
+  is the result, and the adapters give it as `messages` (`useDrawingTools` in Vue and React, a signal in the
+  Angular service). `TEXT_EDITOR_LABEL` is now `DEFAULT_MESSAGES['editor.note']`, and `ToolCatalogEntry.labelKey`
+  is a `MessageKey`. A test fails for a user-visible text written outside the table. Core: `resolveMessages`,
+  `Messages`, `MessageKey`, `MessageOverrides`. Docs: Translate the texts in the guide Build a toolbar.
 - Headless toolbar model (E07-F05): `TOOL_CATALOG` lists the eight tools with `id`, `labelKey` (`tool.<id>`),
   `group`, `icon`, `shortcut` and `tier`; `DrawingToolsState.toolbar` has every tool with `active` and
   `enabled` (the `tools` option) and the shortcut in use, the same array until an entry changes. The Vue,

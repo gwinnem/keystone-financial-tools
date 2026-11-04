@@ -49,6 +49,12 @@ jobs:
       - name: Lint (all packages)
         run: pnpm lint
 
+      - name: Parity and messages (all packages)
+        # Every export of the core is in the Vue, React and Angular packages unless the allow-list says otherwise (FR-FW-050), and no text
+        # the user sees is written outside the message table (NFR-I18N-001). The same tests run in the unit tests below; they read the
+        # source of every package, which a cached unit test run of one package would not notice changing, so they run here uncached.
+        run: pnpm --filter keystone-financial-tools-typescript test:parity
+
       - name: Unit tests (with 90% coverage gates)
         run: pnpm test:coverage
 

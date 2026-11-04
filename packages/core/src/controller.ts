@@ -19,6 +19,7 @@ import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
 import { DRAWING_KINDS, isDrawingKind } from './kinds';
+import { resolveMessages, type MessageOverrides, type Messages } from './messages';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
 import type { SceneItem, SceneOptions } from './scene/types';
@@ -54,6 +55,12 @@ export interface DrawingToolsOptions {
    * error at creation, see `resolveShortcuts`. Ctrl or Cmd with Z, Shift and Z, or Y is always undo and redo.
    */
   readonly shortcuts?: ShortcutOptions;
+  /**
+   * Texts to replace, for example `{ 'tool.trend-line': 'Trendlinie' }` (NFR-I18N-001): a key left out keeps
+   * its English text from `DEFAULT_MESSAGES`. An unknown key or an empty text is an error at creation, see
+   * `resolveMessages`. The result is `DrawingTools.messages`.
+   */
+  readonly messages?: MessageOverrides;
   /** Thresholds and clock of the gesture recogniser. */
   readonly gestures?: GestureOptions;
   /** Formats the price on the label of a horizontal line (FR-SC-001). Default: 2 decimals. */
@@ -140,6 +147,8 @@ export type DrawingToolsEventName = keyof DrawingToolsEvents;
  * (SDS 9.7). Create it with `createDrawingTools`.
  */
 export interface DrawingTools {
+  /** Every user-visible text: `DEFAULT_MESSAGES` with the `messages` option on top (NFR-I18N-001). Use `messages[entry.labelKey]` for the label of a toolbar entry. */
+  readonly messages: Messages;
   /** Starts placing drawings of `kind`. Throws `KFT-E-KIND` for a kind that is unknown or not in the `tools` option. */
   activate(kind: DrawingKind): void;
   /** Stops placing; a drawing in progress is dropped. */
@@ -244,6 +253,7 @@ function memoOne<K, V>(compute: (key: K) => V): (key: K) => V {
 }
 
 class DrawingToolsController implements DrawingTools {
+  readonly messages: Messages;
   private readonly store: DrawingStore;
   private readonly history: History;
   private readonly scenes: SceneCache;
@@ -296,6 +306,7 @@ class DrawingToolsController implements DrawingTools {
     const resolved = resolveShortcuts(options.shortcuts);
     this.shortcuts = resolved.shortcuts;
     this.bindings = resolved.bindings;
+    this.messages = resolveMessages(options.messages);
     this.toolbar = toolbarEntries(null, this.allowed, this.shortcuts);
     this.stayInTool = options.stayInTool === true;
     this.theme = options.theme;

@@ -15,6 +15,8 @@ It takes the options of `createDrawingTools` and returns:
   `canRedo`, `magnet`, `toolbar`).
 - `toolbar`: a ref with one entry for each tool (`id`, `labelKey`, `group`, `icon`, `shortcut`, `tier`, and
   `active` and `enabled`); the same array until an entry changes. See [A toolbar](#a-toolbar).
+- `messages`: every user-visible text, the English ones with the `messages` option over them (a plain object).
+  See [Translate the texts](#translate-the-texts).
 - `textEdit`: a ref with the text editor that is open, or `null`.
 - The actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`,
   `setMagnet`, `setTheme` and `setOptions`.
@@ -49,9 +51,35 @@ undoes. `enabled` follows the `tools` option. `TOOL_CATALOG` and the types `Tool
 
 ```vue
 <button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" :title="tool.shortcut ?? ''" @click="activate(tool.id)">
-  {{ tool.id }}
+  {{ messages[tool.labelKey] }}
 </button>
 ```
+
+### Translate the texts
+
+Every text comes from one table (NFR-I18N-001): `DEFAULT_MESSAGES` has the English text of the tool
+labels (`tool.<kind>`), the toolbar groups (`group.<group>`), `toolbar.label`, and the note editor
+(`editor.note`, `editor.confirm`, `editor.cancel`). Put your texts over them with the `messages` option; a
+key that is not in the table, or an empty text, throws a `RangeError`. Read the result from `messages`:
+
+```vue
+<script setup lang="ts">
+const { toolbar, messages, textEdit } = useDrawingTools(props.host, { messages: { 'tool.trend-line': 'Trendlinie', 'editor.note': 'Notiztext' } });
+</script>
+
+<template>
+  <KeystoneTextEditor :session="textEdit" :label="messages['editor.note']" />
+</template>
+```
+
+### The public API of the core
+
+This package exports everything of the core that an application needs (types, constants, validation,
+document import, shortcut and message helpers, `DrawingStore`, `createDrawingTools` and more), so you
+never import from `keystone-financial-tools-core`. What it leaves out is the engine behind the tools
+(geometry, hit-testing, the interaction machine, snapping and the history internals); a test of the
+repository (FR-FW-050) fails when the core gets an export that this package neither exports nor lists
+as left out.
 
 ### The text editor
 
@@ -65,7 +93,8 @@ do not reach the chart.
 - `editText: false` means no editor: a new note stays empty.
 - To build your own editor, show `textEdit.value` (its `request` has the text and the position) and
   call `confirm(text)` or `cancel()` on it.
-- `label` on the component sets the accessible name of the textarea.
+- `label` on the component sets the accessible name of the textarea; it is `messages['editor.note']` for
+  your own texts.
 
 ## `useDrawings(store?)`
 

@@ -25,6 +25,7 @@
     "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:parity": "vitest run __tests__/parity.test.ts __tests__/messages-literals.test.ts __tests__/sources.test.ts",
     "test:mutation": "stryker run",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",

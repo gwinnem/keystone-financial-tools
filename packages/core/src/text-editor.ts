@@ -1,7 +1,8 @@
 import type { TextEditRequest } from './host';
+import { DEFAULT_MESSAGES } from './messages';
 
-/** The accessible name of the default note editor. Replaced by the message table (E07-F06). */
-export const TEXT_EDITOR_LABEL = 'Note text';
+/** The accessible name of the default note editor in English: `DEFAULT_MESSAGES['editor.note']`. Pass `messages['editor.note']` as the `label` to show another text. */
+export const TEXT_EDITOR_LABEL: string = DEFAULT_MESSAGES['editor.note'];
 
 /** One open request to edit a note's text, as the adapters' default editors show it. Answering it more than once does nothing. */
 export interface TextEditSession {

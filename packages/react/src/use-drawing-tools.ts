@@ -3,6 +3,7 @@ import {
   createDrawingTools,
   IDLE_STATE,
   IDLE_TOOLBAR,
+  resolveMessages,
   TextEditor,
   type Drawing,
   type DrawingHost,
@@ -14,6 +15,7 @@ import {
   type DrawingToolsRuntimeOptions,
   type DrawingToolsState,
   type MagnetMode,
+  type Messages,
   type TextEditSession,
   type ToolbarEntry,
 } from 'keystone-financial-tools-core';
@@ -43,6 +45,12 @@ export interface UseDrawingTools {
    * Render a button per entry and call `activate(entry.id)`.
    */
   readonly toolbar: readonly ToolbarEntry[];
+  /**
+   * Every user-visible text (NFR-I18N-001): the English ones with the `messages` option on top, also before
+   * there is a host. Use `messages[entry.labelKey]` for the label of a toolbar entry and `messages['editor.note']`
+   * for the `label` of `KeystoneTextEditor`. Read once, like the other options.
+   */
+  readonly messages: Messages;
   /** The drawings; the component re-renders on every store change. */
   readonly drawings: readonly Drawing[];
   /** The note editor that is open, or null. Show it with `KeystoneTextEditor` or your own editor. */
@@ -64,7 +72,7 @@ const NO_SUBSCRIPTION = (): void => undefined;
 
 /**
  * The drawing tools for a React component (FR-FW-010): creates the controller for `host` and keeps
- * `state`, `toolbar`, `drawings` and the open note editor in the component's state. It only maps the
+ * `state`, `toolbar`, `drawings` and the open note editor in the component's state, and gives the `messages`. It only maps the
  * controller's events to React; everything else is the core's.
  *
  * The controller is created when the component has mounted and `host` is given (a chart is often
@@ -75,12 +83,12 @@ const NO_SUBSCRIPTION = (): void => undefined;
  *
  * @example
  * ```tsx
- * const { tools, state, toolbar, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak' });
+ * const { tools, state, toolbar, messages, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak', messages: { 'tool.trend-line': 'Trendlinie' } });
  * // in the host's overlay render pass:
  * for (const item of tools?.getScene() ?? []) paint(item);
  * // in the JSX:
- * // {toolbar.map((tool) => <button key={tool.id} disabled={!tool.enabled} aria-pressed={tool.active} onClick={() => activate(tool.id)}>{tool.id}</button>)}
- * // <KeystoneTextEditor session={textEdit} />
+ * // {toolbar.map((tool) => <button key={tool.id} disabled={!tool.enabled} aria-pressed={tool.active} onClick={() => activate(tool.id)}>{messages[tool.labelKey]}</button>)}
+ * // <KeystoneTextEditor session={textEdit} label={messages['editor.note']} />
  * ```
  */
 export function useDrawingTools(host: DrawingHost | null | undefined, options?: UseDrawingToolsOptions): UseDrawingTools {
@@ -91,6 +99,8 @@ export function useDrawingTools(host: DrawingHost | null | undefined, options?: 
     return { editor: created, subscribeEditor: created.subscribe.bind(created) };
   });
   const [tools, setTools] = useState<DrawingTools | null>(null);
+  // Resolved once, so a bad key is an error on the first render and the texts do not change under the toolbar.
+  const [messages] = useState(() => resolveMessages(options?.messages));
   const optionsRef = useRef(options);
   useEffect(() => {
     optionsRef.current = options;
@@ -128,5 +138,5 @@ export function useDrawingTools(host: DrawingHost | null | undefined, options?: 
   const setTheme = useCallback((theme: DrawingTheme) => tools?.setTheme(theme), [tools]);
   const setOptions = useCallback((runtime: DrawingToolsRuntimeOptions) => tools?.setOptions(runtime), [tools]);
 
-  return { tools, store, state, toolbar: state.toolbar, drawings, textEdit, activate, deactivate, select, clearSelection, remove, undo, redo, setMagnet, setTheme, setOptions };
+  return { tools, store, state, toolbar: state.toolbar, messages, drawings, textEdit, activate, deactivate, select, clearSelection, remove, undo, redo, setMagnet, setTheme, setOptions };
 }

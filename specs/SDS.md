@@ -860,8 +860,8 @@ Decisions of E07-F02 (Vue controller adapter):
   pointer events stop at the textarea, so Delete, Backspace and clicks do not reach the host's
   listeners. The text is a `value`, never HTML (NFR-SEC-002). Focus moves into the textarea and back to
   the element that had it. Each session gets its own textarea (its own text, selection and focus).
-  `TEXT_EDITOR_LABEL` is the default accessible name; `label` replaces it until E07-F06 adds the
-  message table.
+  `TEXT_EDITOR_LABEL` is the default accessible name (`DEFAULT_MESSAGES['editor.note']` since E07-F06);
+  `label` replaces it, for example with the translated text of the message table.
 
 Decisions of E07-F03 (React controller adapter):
 
@@ -911,13 +911,13 @@ Decisions of E07-F04 (Angular controller adapter):
   the chart's own. Behaviour is the same as the Vue and React editors; `shouldRestoreFocus` decides
   whether the focus goes back.
 - The `editText` rule (left out: default editor, function: replaces it, `false`: none) is in each of the
-  three adapters; E07-F06 looks at moving it into the core with the parity test.
+  three adapters; E07-F06 left it there: each adapter maps it to its own editor, and the core keeps the
+  framework-neutral `TextEditor`.
 
 Decisions of E07-F05 (headless toolbar model, FR-FW-040, FR-FW-041):
 
 - `TOOL_CATALOG` is a frozen list in the order of `DRAWING_KINDS`. An entry has `id`, `labelKey`
-  (`tool.<id>`, the key of the label in the application's own translations; the default messages come
-  with E07-F06), `group`, `icon` (the id, a name for the application to map to an icon), `shortcut`
+  (`tool.<id>`, the key of the label in the message table, `DEFAULT_MESSAGES` of E07-F06), `group`, `icon` (the id, a name for the application to map to an icon), `shortcut`
   (the default, or null) and `tier`. Groups: `lines` (trend line, horizontal line), `shapes` (rectangle),
   `fibonacci` (the four Fibonacci tools) and `annotations` (text note). Tiers follow the proposal of
   FR-LIC-002: text note, lines and rectangle `community`, the Fibonacci tools `professional`; OD-2 stays
@@ -948,6 +948,47 @@ Decisions of E07-F05 (headless toolbar model, FR-FW-040, FR-FW-041):
   `key` when it is a letter or a digit (either case) and otherwise by the letter or digit of `code`, as
   Option on a Mac changes the character of a letter. A host that does not pass `code` still gets the
   shortcuts on Windows and Linux. The playground does not pass `code` yet.
+
+Decisions of E07-F06 (parity and i18n, FR-FW-050, NFR-I18N-001, AR-5):
+
+- The parity test lives in `packages/typescript/__tests__/parity.test.ts`: the typescript package is the one
+  that depends on the core and runs in Node, and no package may depend on the framework packages. It reads
+  the entries of the packages as text (the `export { ... } from` lists and the declarations behind
+  `export * from './lib/...'`) and does not import them, so it checks what an application can import. For
+  each of Vue, React and Angular, every name the core exports is exported by the package, wrapped (the
+  wrapper is named and must be exported), or on the allow-list (`parity-exceptions.ts`, a reason for each).
+  The test also fails for an allow-list entry that the core does not export, one that a package exports
+  anyway, and a wrapper that is missing, so the list cannot go stale. The typescript package exports the
+  core as a whole (`export *`).
+- Every package re-exports by name, not with `export *` (AR-5 keeps the surface visible in each entry): the
+  types, constants, validation, document import and export, style and option helpers, shortcut and
+  message helpers, the host contract, the scene and geometry types that `getScene()` returns, the store, the
+  text editor and the controller. The allow-list is the engine behind the tools: geometry and hit-test
+  functions, the caches, the gesture recogniser, the interaction, placement, snap and move functions and
+  their types, the commands, the history internals and the host wiring. A chart integration that needs
+  those uses the core directly, as it did before. `History`, `HistoryState`, `hitTest` and `buildScene` are
+  wrapped: `undo`, `redo`, `canUndo`, `canRedo`, `hitTest` and `getScene` of the controller.
+- CI runs the parity test in its own step as well as in the unit tests: it reads the source of every
+  package, which a cached unit test run of one package would not notice changing.
+- The message table is `DEFAULT_MESSAGES`, a frozen record of English texts under 16 keys: `tool.<kind>`
+  (the `labelKey` of a catalog entry), `group.<group>`, `toolbar.label`, `editor.note`, `editor.confirm` and
+  `editor.cancel`. `MessageKey` is the union of the keys, so a misspelt key is a type error. The `messages`
+  option of `createDrawingTools` takes any of the keys; `resolveMessages` merges it over the English texts
+  and throws a `RangeError` for a key that is not in the table (a typo would otherwise leave a text
+  untranslated without a word) and for a text that is empty or not a string (an empty accessible name is
+  no name); a key set to `undefined` keeps its English text. The result is `DrawingTools.messages`, frozen.
+- The toolbar entries do not carry the text: `messages[entry.labelKey]` is the label, so the state and its
+  reference identity do not depend on the language, and the texts are read once, when the tools are created.
+  The adapters give the table as `messages`: Vue and React as a plain object (React from the first render,
+  also before a host exists, read once like the other options), Angular as a signal that is the English
+  table until `attach` and again after `detach`.
+- The default note editor still has only its accessible name. `editor.confirm` and `editor.cancel` are in
+  the table for an editor of the application's own, so that its buttons are translated with the rest.
+- No user-visible text is written outside the table: a test (`messages-literals.test.ts`) fails when any
+  source of the core, Vue, React or Angular has an English text of the table as a string literal, or gives an
+  accessible name, a placeholder or the text of an element with a literal. This is a test and not a lint rule
+  because it needs the table itself to know what to look for. Error messages for developers are not user
+  texts and stay in English in the code.
 
 ## 11. Integration with keystone-charts-financial
 
