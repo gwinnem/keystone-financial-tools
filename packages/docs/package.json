@@ -6,20 +6,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "pnpm --filter keystone-financial-tools-playground build:embed && astro dev",
+    "build": "pnpm --filter keystone-financial-tools-playground build:embed && astro build",
     "preview": "astro preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",
     "lint": "eslint src __tests__ astro.config.ts vitest.config.ts",
     "type-check": "astro check && tsc --noEmit",
-    "clean": "rm -rf dist coverage .astro"
+    "clean": "rm -rf dist coverage .astro public/playground src/content/docs/api-*"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.42.9",
     "astro": "^7.4.5",
-    "starlight-links-validator": "^0.27.0"
+    "starlight-links-validator": "^0.27.0",
+    "starlight-typedoc": "^0.23.1",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.9.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
@@ -28,6 +31,7 @@
     "@types/node": "^24.19.2",
     "@vitest/coverage-v8": "^5.0.5",
     "keystone-financial-tools-core": "workspace:*",
+    "keystone-financial-tools-playground": "workspace:*",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   }

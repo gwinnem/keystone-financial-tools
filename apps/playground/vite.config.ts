@@ -30,6 +30,7 @@ export default defineConfig({
         vue: source('vue.html'),
         react: source('react.html'),
         angular: source('angular.html'),
+        embed: source('embed.html'),
       },
     },
   },
@@ -39,8 +40,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
-      // The host logic is unit tested. main.ts, demo.ts, dom.ts, render.ts and the framework pages only wire it to the DOM and the canvas; the end-to-end tests cover them.
-      include: ['src/data.ts', 'src/plot-host.ts', 'src/input.ts', 'src/toolbar.ts', 'src/viewport.ts'],
+      // The host logic is unit tested. main.ts, embed.ts, demo.ts, dom.ts, render.ts and the framework pages only wire it to the DOM and the canvas; the end-to-end tests cover them.
+      include: ['src/data.ts', 'src/plot-host.ts', 'src/input.ts', 'src/toolbar.ts', 'src/viewport.ts', 'src/embed-params.ts'],
       thresholds: { lines: 100, functions: 100, branches: 100, statements: 100 },
     },
   },

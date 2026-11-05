@@ -25,6 +25,12 @@ The editor comes from the first of these that exists:
 
 Pass `editText: false` to the framework package to have no editor: a new note then stays empty.
 
+## Try it
+
+The chart below has only the text note enabled, and the tool is already active. Click to place a note and type its text (Ctrl or Cmd with Enter confirms, Escape cancels), or Tab to the chart and use the keyboard. It works with touch too.
+
+<iframe src="/playground/embed.html?tool=text-note" title="Text note example" width="100%" height="560" loading="lazy"></iframe>
+
 ## Options
 
 A text note has no options of its own. Its look comes from `style`: `textColor` and `fontSize` (8 to 72 pixels).

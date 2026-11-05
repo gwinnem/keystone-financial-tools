@@ -58,6 +58,12 @@ export async function openPlayground(page: Page): Promise<void> {
   await page.waitForFunction(() => window.playground !== undefined);
 }
 
+/** Opens the embed page the docs site uses (`apps/playground/embed.html`) with only `tool` enabled, and waits until the chart is ready. */
+export async function openEmbed(page: Page, tool: string): Promise<void> {
+  await page.goto(`/embed.html?tool=${tool}`);
+  await page.waitForFunction(() => window.playground !== undefined);
+}
+
 /** How far the chart is zoomed (CSS px per bar) and scrolled (the bar slot at the left edge). */
 export async function viewport(page: Page): Promise<{ pxPerBar: number; offset: number }> {
   return page.evaluate(() => {

@@ -1,38 +1,7 @@
-import { createDrawingTools, TextEditor, type DrawingKind, type DrawingStore, type DrawingTools } from 'keystone-financial-tools-typescript';
-import type { Bar } from './data';
-import { ACTION_LABELS, CHART_LABEL, createSurface, openStore } from './demo';
-import type { PlotHost } from './plot-host';
+import { createDrawingTools, TextEditor, type DrawingKind } from 'keystone-financial-tools-typescript';
+import { ACTION_LABELS, button, CHART_LABEL, createSurface, element, openStore } from './demo';
 import { mountTextEditor } from './text-editor-dom';
 import { nextMagnet, statusText } from './toolbar';
-
-/** What the page exposes as `window.playground`, so the end-to-end tests can ask where things are and what the store holds. */
-export interface Playground {
-  readonly host: PlotHost;
-  readonly tools: DrawingTools;
-  readonly store: DrawingStore;
-  readonly bars: readonly Bar[];
-}
-
-declare global {
-  interface Window {
-    playground?: Playground;
-  }
-}
-
-function element<T extends HTMLElement>(id: string): T {
-  const found = document.getElementById(id);
-  if (found === null) throw new Error(`The page has no element #${id}.`);
-  return found as T;
-}
-
-function button(label: string, id: string, onClick: () => void): HTMLButtonElement {
-  const created = document.createElement('button');
-  created.type = 'button';
-  created.id = id;
-  created.textContent = label;
-  created.addEventListener('click', onClick);
-  return created;
-}
 
 // The plain TypeScript page: the toolbar is built once from the tools' own toolbar state (FR-FW-040) and its attributes follow the state.
 async function start(): Promise<void> {

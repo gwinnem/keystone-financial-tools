@@ -2,6 +2,17 @@
 
 ## 0.1.0 (unreleased)
 
+- Live tool examples (E09-F01-S03): the page of each tool on the docs site has a *Try it* section with the playground
+  embedded in an iframe, with only that tool enabled and already active, plus Undo, Redo, Delete and Magnet. The
+  playground has a new `embed.html?tool=<kind>` page for it (in memory only; a missing or unknown tool says how to ask
+  for one) and a `build:embed` build into `packages/docs/public/playground`, which the docs `build` and `dev` run
+  first. e2e: the embed page for every tool (place, stays active, undo and redo, keyboard-only, no state across a
+  reload, unknown tool, axe) and taps on touch.
+- Generated API reference (E09-F01-S02): the docs site generates the API reference of the core, the core's
+  `/testing` entry, and the TypeScript, Vue, React and Angular packages from their TSDoc with TypeDoc
+  (`starlight-typedoc`), one sidebar group each, at build time. A public class, enum, function, interface, type
+  alias or variable without a TSDoc comment fails the site build (`astro build` and `astro check`), so CI fails
+  (NFR-DOC-001). `src/site/api.ts` lists the references; the generated pages are not committed.
 - charts-financial integration (E08-F03): `keystone-financial-tools-core/testing` now exports `FIBONACCI_PARITY`
   (version `FIBONACCI_PARITY_VERSION`, 1), a versioned fixture for the renderer of a chart: the scales of a mock
   chart and seven cases for all four Fibonacci kinds (retracement up and reversed, fans, half and full arcs, time

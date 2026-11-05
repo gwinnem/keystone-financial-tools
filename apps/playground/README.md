@@ -47,6 +47,15 @@ The same demo is a page for each package, on one Vite server (multi-page build):
 The Vue and React pages use render functions and `createElement`, and the Angular page is compiled in the
 browser, so no framework plugin is needed. `src/demo.ts` is the code the pages share.
 
+## The embed page
+
+`embed.html?tool=<kind>` (`src/embed.ts`) is the chart with only one tool enabled (`tools: [kind]`) and already
+active (`stayInTool`), plus Undo, Redo, Delete and Magnet; the drawings are kept in memory only. Without a valid
+`tool` it says how to ask for one and shows no chart. `toolFromSearch` and `unknownToolMessage`
+(`src/embed-params.ts`) are unit tested; the page is covered by `e2e/tests/embed.spec.ts`. The docs site embeds it
+in the page of each tool: `pnpm --filter keystone-financial-tools-playground build:embed` builds only this page, with
+the base `/playground/`, into `packages/docs/public/playground` (`vite.embed.config.ts`).
+
 ## How a host is built
 
 | File | Role | Tested by |
@@ -57,7 +66,8 @@ browser, so no framework plugin is needed. `src/demo.ts` is the code the pages s
 | `src/dom.ts` | `bindInput`: pointer events (with capture) and key events on the chart element | e2e |
 | `src/render.ts` | Candles, volume and the scene on the canvases | e2e |
 | `src/text-editor-dom.ts` | `mountTextEditor`: the DOM editor of the text note | e2e |
-| `src/main.ts`, `src/demo.ts`, the framework pages | Wire the pages together; `main.ts` exposes `window.playground` | e2e |
+| `src/embed-params.ts` | `toolFromSearch`, `unknownToolMessage`: the `?tool=` of the embed page | Unit tests, 100% coverage |
+| `src/main.ts`, `src/embed.ts`, `src/demo.ts`, the framework pages | Wire the pages together; the pages expose `window.playground` | e2e |
 
 To write a host for your own chart, copy `createPlotHost`, replace the scales with the chart's own and
 call `dispatchPointer` and `dispatchKey` from its input handling; then run

@@ -25,6 +25,7 @@ or the tests run against the old build. Screenshots and traces are kept for fail
 | `tests/tools.spec.ts` | The same flows for each of the eight tools (the `TOOLS` table in `support.ts`): place by click and by drag, magnet snap, select, move, resize by a handle (not the text note), multi-select (Shift+click, Ctrl+A), delete with undo, undo and redo, reload. The text note adds its editor: confirm, Escape, Enter and double-click to edit. |
 | `tests/touch.spec.ts` | Tap-tap placement, select, delete and undo with touch. Runs only in the `mobile-chromium` project. |
 | `tests/keyboard.spec.ts` | A keyboard-only run (no mouse): Tab to the chart, Alt+T to choose the tool, place with the keyboard cursor and Enter, select, nudge and delete. An axe scan (`@axe-core/playwright`) of the toolbar on the four demo pages fails on serious or critical findings. |
+| `tests/embed.spec.ts` | The embed page of the docs site (`/embed.html?tool=<kind>`) for each tool: only its button, already active, place by click (the text note with its editor), the tool stays active, memory only (nothing after a reload), undo and redo, keyboard-only placement, the message for a missing or unknown tool, and an axe scan. `touch.spec.ts` adds taps on it. |
 | viewport and demo page specs | Zoom and scroll, and the TypeScript, Vue, React and Angular pages. |
 
 The projects are `chromium`, `firefox` and `webkit` (everything except `touch.spec.ts`) and

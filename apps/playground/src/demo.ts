@@ -1,4 +1,4 @@
-import { autoSave, loadStore, WebStorageRepository, type DrawingStore, type SceneItem } from 'keystone-financial-tools-typescript';
+import { autoSave, loadStore, WebStorageRepository, type DrawingStore, type DrawingTools, type SceneItem } from 'keystone-financial-tools-typescript';
 import { BAR_INTERVAL_MS, generateBars, type Bar } from './data';
 import { bindInput } from './dom';
 import { createPlotHost, type PlotHost } from './plot-host';
@@ -6,6 +6,37 @@ import { fitCanvas, renderBase, renderOverlay } from './render';
 
 // The browser glue the four demo pages share: the localStorage store and the chart surface (host, canvases, input).
 // It needs a DOM, so it is covered by the end-to-end tests, not by the unit tests.
+
+/** What a page exposes as `window.playground`, so the end-to-end tests can ask where things are and what the store holds. */
+export interface Playground {
+  readonly host: PlotHost;
+  readonly tools: DrawingTools;
+  readonly store: DrawingStore;
+  readonly bars: readonly Bar[];
+}
+
+declare global {
+  interface Window {
+    playground?: Playground;
+  }
+}
+
+/** The element of the page with this id; a page that lacks it is a bug in the page. */
+export function element<T extends HTMLElement>(id: string): T {
+  const found = document.getElementById(id);
+  if (found === null) throw new Error(`The page has no element #${id}.`);
+  return found as T;
+}
+
+/** A toolbar button with a label and an id. */
+export function button(label: string, id: string, onClick: () => void): HTMLButtonElement {
+  const created = document.createElement('button');
+  created.type = 'button';
+  created.id = id;
+  created.textContent = label;
+  created.addEventListener('click', onClick);
+  return created;
+}
 
 export const WIDTH = 800;
 export const HEIGHT = 400;

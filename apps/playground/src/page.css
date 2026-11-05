@@ -5,6 +5,9 @@ body {
   color: #131722;
   background: #ffffff;
 }
+[hidden] {
+  display: none !important;
+}
 h1 {
   font-size: 1.25rem;
   margin: 0 0 8px;

@@ -15,6 +15,12 @@ tools.activate('fibonacci-arcs');
 
 Click the first anchor and then the second, or press at the first, drag and release at the second. With the keyboard, move the keyboard cursor with the arrow keys and place each anchor with Enter. See the [keyboard reference](/guides/keyboard/).
 
+## Try it
+
+The chart below has only the Fibonacci arcs enabled, and the tool is already active. Click to place the two anchors, or Tab to the chart and use the keyboard. It works with touch too. The example page draws the arcs as a line between the anchors; your chart's own renderer draws the arcs.
+
+<iframe src="/playground/embed.html?tool=fibonacci-arcs" title="Fibonacci arcs example" width="100%" height="560" loading="lazy"></iframe>
+
 ## Options
 
 | Option | Default | What it does |

@@ -13,6 +13,12 @@ tools.activate('horizontal-line');
 
 Click where the line should be. With the keyboard, move the keyboard cursor with the arrow keys and place the anchor with Enter. See the [keyboard reference](/guides/keyboard/).
 
+## Try it
+
+The chart below has only the horizontal line enabled, and the tool is already active. Click to place it, or Tab to the chart and use the keyboard. It works with touch too.
+
+<iframe src="/playground/embed.html?tool=horizontal-line" title="Horizontal line example" width="100%" height="560" loading="lazy"></iframe>
+
 ## Options
 
 A horizontal line has no options of its own. The label shows the price with two decimals; pass `priceFormatter` to `createDrawingTools` to format it your way.

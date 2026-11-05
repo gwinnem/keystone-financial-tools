@@ -1935,7 +1935,8 @@
               "sds": ["DOC-002", "NFR-DOC-001"],
               "acceptance": ["TypeDoc generates the reference for all packages into the docs site.", "A check fails CI when a public export has no TSDoc."],
               "tasks": ["Set up TypeDoc.", "Add the TSDoc check."],
-              "labels": ["area:docs"]
+              "labels": ["area:docs"],
+              "status": "done"
             },
             {
               "id": "E09-F01-S03",
@@ -1944,7 +1945,8 @@
               "sds": ["DOC-003"],
               "acceptance": ["Each tool page embeds the playground host with only that tool enabled.", "Examples work with keyboard and touch."],
               "tasks": ["Embed playground builds.", "Write examples."],
-              "labels": ["area:docs"]
+              "labels": ["area:docs"],
+              "status": "done"
             }
           ]
         },

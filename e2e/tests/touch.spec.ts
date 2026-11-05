@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { bodyPoint, drawings, expectDrawings, openPlayground, plotPoint, selection, type Pixel } from './support';
+import { bodyPoint, drawings, expectDrawings, openEmbed, openPlayground, plotPoint, selection, type Pixel } from './support';
 
 // Runs in the `mobile-chromium` project only (touch screen, landscape phone viewport).
 
@@ -30,6 +30,17 @@ test('places a trend line with two taps', async ({ page }) => {
   const [line] = await drawings(page);
   expect(line.kind).toBe('trend-line');
   expect(line.anchors).toHaveLength(2);
+});
+
+test('the embed page places trend lines with taps and keeps its tool active (E09-F01-S03)', async ({ page }) => {
+  await openEmbed(page, 'trend-line');
+  await tapPlot(page, 150, 60);
+  await tapPlot(page, 350, 140);
+  await expectDrawings(page, 1);
+  await tapPlot(page, 150, 200);
+  await tapPlot(page, 350, 260);
+  await expectDrawings(page, 2);
+  expect((await drawings(page)).map(({ kind }) => kind)).toStrictEqual(['trend-line', 'trend-line']);
 });
 
 test('places a horizontal line with one tap', async ({ page }) => {

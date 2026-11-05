@@ -1142,7 +1142,34 @@ Decisions of E08-F03 (keystone-charts-financial integration):
   events, the overlay pass, the Fibonacci items, the fixture and `runHostConformance`, each with a skeleton.
 - The chart's side (the issue in keystone-charts-financial that replaces its E19 placeholder, the reconciliation
   of its tier plan with FR-LIC-002 (OD-2, deferred) and its CI run of `runHostConformance`, FR-INTG-002) is
-  tracked in the chart repository.
+  tracked in the chart repository (gwinnem/keystone-charts-financial#3765).
+
+Decisions of E09-F01-S02 (generated API reference; `packages/docs`):
+
+- `starlight-typedoc` with one TypeDoc instance per reference (core, core `/testing`, TypeScript, Vue, React,
+  Angular), listed in `src/site/api.ts`. TypeDoc reads the source entry files with each package's own
+  `tsconfig.json` (the root `paths` map every package to its sources), so no build comes first. Output goes to
+  `src/content/docs/api-<id>/` and is not committed; the written-page tests ignore `api-*`.
+- NFR-DOC-001 check: TypeDoc `validation.notDocumented` for classes, enums, functions, interfaces, type aliases and
+  variables, with `treatValidationWarningsAsErrors`; it runs during `astro build` and `astro check`, so the CI build
+  step fails. Members are not required (the contract is the export). `notExported` and `invalidLink` are off.
+- The links validator is the last plugin, so it checks the generated pages as well.
+
+Decisions of E09-F01-S03 (live tool examples):
+
+- The docs embed the playground, not a second demo: `apps/playground/embed.html?tool=<kind>` runs the same
+  surface, input and scene as the demo pages with `tools: [kind]` and `stayInTool`, the tool already active, an
+  in-memory store (so the embeds on different pages do not share drawings through localStorage) and a toolbar
+  that lists only the enabled tool. `?tool=` is checked with `isDrawingKind`; anything else shows the
+  usage text and no chart.
+- Delivery: a second Vite config (`vite.embed.config.ts`) builds only the embed page with the base `/playground/`
+  into `packages/docs/public/playground` (not committed). The docs `build` and `dev` scripts run it first, and
+  the playground is a `devDependency` of the docs package so Turborepo builds it first and invalidates the docs
+  cache when it changes. Each tool page has one `<iframe>` in a *Try it* section before its options.
+- Keyboard and touch: the iframe holds the normal chart, so the keyboard cursor, shortcuts and tap-tap
+  placement work; `embed.spec.ts` (desktop browsers) and `touch.spec.ts` (`mobile-chromium`) cover both.
+- Known limit: the playground renders Fibonacci arcs, fans and time zones as a line between the anchors, which
+  the three tool pages say.
 
 ## 15. Non-functional requirements
 

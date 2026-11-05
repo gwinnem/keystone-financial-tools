@@ -15,6 +15,12 @@ tools.activate('fibonacci-fans');
 
 Click the first anchor and then the second, or press at the first, drag and release at the second. With the keyboard, move the keyboard cursor with the arrow keys and place each anchor with Enter. Hold Shift while you place the second anchor to keep the angle to 45 degree steps. See the [keyboard reference](/guides/keyboard/).
 
+## Try it
+
+The chart below has only the Fibonacci fans enabled, and the tool is already active. Click to place the two anchors, or Tab to the chart and use the keyboard. It works with touch too. The example page draws the fans as a line between the anchors; your chart's own renderer draws the fans.
+
+<iframe src="/playground/embed.html?tool=fibonacci-fans" title="Fibonacci fans example" width="100%" height="560" loading="lazy"></iframe>
+
 ## Options
 
 | Option | Default | What it does |

@@ -34,6 +34,25 @@ The build needs Node 22.23.4+ or 24 (Astro 7).
 exist stops `astro build`, and so the `Build all packages` step of the CI `verify` job. Link to pages
 with an absolute path and a trailing slash, for example `/guides/host/`.
 
-## Not yet here
+## API reference
 
-The generated API reference (E09-F01-S02) and the live tool examples (E09-F01-S03).
+The API reference of every package is generated from its TSDoc by TypeDoc (`starlight-typedoc`) while the site is
+built: one group in the sidebar for each of the core, the core's `/testing` entry, TypeScript, Vue, React and
+Angular. `src/site/api.ts` lists them (entry file, `tsconfig.json`, label); to add a package, add a line there.
+TypeDoc reads the sources, so no package has to be built first. The pages go to `src/content/docs/api-<id>/` and
+are not committed (`.gitignore`); `pnpm --filter keystone-financial-tools-docs clean` removes them.
+
+A public class, enum, function, interface, type alias or variable without a TSDoc comment is a TypeDoc validation
+warning, and the options treat it as an error: `astro build` (and `astro check`) fails and with it the CI step that
+builds every package (NFR-DOC-001). Members of an interface or class are not checked. The generated pages are
+checked by the links validator like the written ones.
+
+## Live examples
+
+The page of each tool has a *Try it* section with an `<iframe>` of the playground's embed page,
+`/playground/embed.html?tool=<kind>`: the chart with only that tool enabled and already active, plus Undo,
+Redo, Delete and Magnet. It is the same chart as the demo pages, so it works with the mouse, the keyboard and
+touch. The `build` and `dev` scripts first run `pnpm --filter keystone-financial-tools-playground build:embed`,
+which builds only the embed page (base `/playground/`) into `public/playground/`; that folder is generated and
+not committed. The playground is a `devDependency`, so Turborepo builds it before the docs and rebuilds the docs
+when it changes. A tool page without the section fails the tests.

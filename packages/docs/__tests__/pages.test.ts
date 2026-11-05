@@ -97,6 +97,19 @@ describe('a tool page', () => {
     expect(readPage(slug)).toContain(`activate('${kindOf(slug)}')`);
   });
 
+  it.each(TOOLS)('$slug has a Try it section that embeds the playground with only its tool (E09-F01-S03)', ({ slug, label }) => {
+    const page = readPage(slug);
+    expect(page).toContain('\n## Try it\n');
+    expect(page).toContain(`<iframe src="/playground/embed.html?tool=${kindOf(slug)}" title="${label} example"`);
+    expect(page.match(/<iframe /g)).toHaveLength(1);
+    // The section comes before the options, where a reader is still deciding whether to use the tool.
+    expect(page.indexOf('\n## Try it\n')).toBeLessThan(page.indexOf('\n## Options\n'));
+  });
+
+  it.each(TOOLS)('$slug gives its iframe a width, a height and lazy loading', ({ slug }) => {
+    expect(readPage(slug)).toMatch(/<iframe [^>]*width="100%" height="\d+" loading="lazy"><\/iframe>/);
+  });
+
   it.each(TOOLS)('$slug documents every option of its kind, and no other', ({ slug }) => {
     const page = readPage(slug);
     const kind = kindOf(slug);

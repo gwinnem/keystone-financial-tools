@@ -19,5 +19,5 @@
       "keystone-financial-tools-angular": ["../../packages/angular/src/public-api.ts"]
     }
   },
-  "include": ["src/**/*", "__tests__/**/*", "vite.config.ts"]
+  "include": ["src/**/*", "__tests__/**/*", "vite.config.ts", "vite.embed.config.ts"]
 }
