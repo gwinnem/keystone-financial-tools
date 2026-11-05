@@ -1106,6 +1106,28 @@ Decisions of E08-F01 (playground reference host and demo pages; `apps/playground
   100%; `main`, `demo`, `dom`, `render` and the framework pages only wire it to the DOM and are covered
   by the e2e tests (QA-006): the viewport and the four pages.
 
+Decisions of E08-F02 (end-to-end tests; `e2e/`):
+
+- Table-driven flows (E08-F02-S01): `tools.spec.ts` runs the same flows for each of the eight tools (`TOOLS` in
+  `support.ts`: kind, button label, anchor count): place by click, place by drag (two-anchor tools), magnet
+  snap, select and deselect, move, resize by handle, multi-select (Shift+click, Ctrl+A), delete with undo,
+  undo and redo, reload persistence. The text note adds its editor (confirm, Escape takes back a new note,
+  Enter and double-click edit, text survives a reload). Resize is not run for the text note (no handle).
+- No pixel arithmetic from the drawings' geometry: the tests place at fixed plot positions and find a drawing's
+  body or handle by asking the tools' own `hitTest` across the price pane (`bodyPoint`, `handlePoint`), so
+  the tests hold for any shape (arcs, fans, time zones) and any later change of the geometry.
+- Browsers and touch: the three desktop projects run everything except `touch.spec.ts`; one `mobile-chromium`
+  project (Pixel 7, landscape 915 x 412 so the 800 px chart fits) runs only `touch.spec.ts`: tap-tap placement,
+  select, delete and undo. Touch drag is not covered (the tools place on tap-tap on touch). CI needs no change:
+  the `e2e` job runs every project, headless, and uploads the traces and screenshots kept on failure.
+- Keyboard-only and a11y (E08-F02-S02): `keyboard.spec.ts` reaches the chart with Tab, chooses the tool with
+  Alt+T, places both anchors with the keyboard cursor and Enter, selects with Ctrl+A, nudges (one bar, ten px
+  with Shift) and deletes; no mouse call. An axe scan (`@axe-core/playwright`) of `[role="toolbar"]` on the four
+  pages fails on serious or critical findings.
+- The TypeScript page mounts a DOM text editor (`text-editor-dom.ts`, over the core's `TextEditor`) so a note
+  can be typed there; it is DOM glue and excluded from coverage like `dom` and `render`.
+- Stryker does not apply to the e2e package (tests only).
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |

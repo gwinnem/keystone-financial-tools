@@ -1,7 +1,8 @@
-import { createDrawingTools, type DrawingKind, type DrawingStore, type DrawingTools } from 'keystone-financial-tools-typescript';
+import { createDrawingTools, TextEditor, type DrawingKind, type DrawingStore, type DrawingTools } from 'keystone-financial-tools-typescript';
 import type { Bar } from './data';
 import { ACTION_LABELS, CHART_LABEL, createSurface, openStore } from './demo';
 import type { PlotHost } from './plot-host';
+import { mountTextEditor } from './text-editor-dom';
 import { nextMagnet, statusText } from './toolbar';
 
 /** What the page exposes as `window.playground`, so the end-to-end tests can ask where things are and what the store holds. */
@@ -37,7 +38,9 @@ function button(label: string, id: string, onClick: () => void): HTMLButtonEleme
 async function start(): Promise<void> {
   const surface = createSurface();
   const store = await openStore();
-  const controller = createDrawingTools(surface.host, { store, magnet: 'off' });
+  // Text notes are edited in a textarea over the chart; without an editor a new note would stay empty.
+  const editor = new TextEditor();
+  const controller = createDrawingTools(surface.host, { store, magnet: 'off', editText: editor.edit });
   controller.on('error', ({ source, message }) => console.error(`${source}: ${message}`));
 
   const chart = element<HTMLDivElement>('chart');
@@ -77,6 +80,7 @@ async function start(): Promise<void> {
   sync();
 
   surface.mount(chart, () => controller.getScene());
+  mountTextEditor(chart, editor, controller.messages['editor.note']);
   window.playground = { host: surface.host, tools: controller, store, bars: surface.bars };
 }
 

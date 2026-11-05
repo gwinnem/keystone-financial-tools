@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- End-to-end tests (E08-F02): Playwright runs every tool (trend line, horizontal line, rectangle, the four Fibonacci
+  tools and the text note) through place by click and by drag, magnet snap, select, multi-select (Shift+click and
+  Ctrl+A), move, resize by handle, delete, undo and redo and reload persistence, plus the text note's editor
+  (confirm, Escape, Enter and double-click to edit) in Chromium, Firefox and WebKit, and the touch flows (tap-tap
+  placement, select, delete, undo) in a `mobile-chromium` profile (Pixel 7, landscape). A keyboard-only test places,
+  nudges, selects and deletes a trend line, and an axe scan (`@axe-core/playwright`) of the toolbar of the four
+  demo pages must have no serious or critical finding. The TypeScript demo page now has a DOM text editor
+  (`text-editor-dom.ts`), so notes can be typed there too. Traces and screenshots are kept on failure.
 - Playground reference host and demo pages (E08-F01): the playground chart now has two panes, `price` above
   `volume` (a volume per candle derived from its prices), linear scales that fit the bars in view, and zoom and
   scroll: the wheel zooms around the pointer, Shift with the wheel or sideways movement scrolls, and while the

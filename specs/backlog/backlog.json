@@ -1837,7 +1837,8 @@
                 "Run headless in CI; screenshots and traces kept on failure."
               ],
               "tasks": ["Set up Playwright in `e2e/`.", "Write the flows.", "Add a CI job."],
-              "labels": ["area:ci"]
+              "labels": ["area:ci"],
+              "status": "done"
             },
             {
               "id": "E08-F02-S02",
@@ -1849,7 +1850,8 @@
                 "An axe accessibility scan of the demo toolbar has no serious or critical findings."
               ],
               "tasks": ["Write the test.", "Add `@axe-core/playwright`."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             }
           ]
         },
