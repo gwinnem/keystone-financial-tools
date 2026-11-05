@@ -1885,7 +1885,8 @@
                 "Core geometry tests use it; the chart repo issue references it for its renderer tests."
               ],
               "tasks": ["Create the fixture.", "Use it in core tests."],
-              "labels": ["tool:fibonacci"]
+              "labels": ["tool:fibonacci"],
+              "status": "done"
             },
             {
               "id": "E08-F03-S03",

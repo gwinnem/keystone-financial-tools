@@ -72,9 +72,81 @@ The scene is a list of items in paint order:
 
 Every `shape` and `fibonacci` item has its `state` (`normal`, `hover`, `selected` or `locked`) and the style resolved from the theme.
 
+## Transforms
+
+The transforms are the part of the contract that is easiest to get subtly wrong. Keep these rules:
+
+- `timeToX` and `xToTime` are exact inverses, and so are `priceToY` and `yToPrice` for one y-axis. The conformance suite accepts a round trip that lands within 0.5 px.
+- `timeToX` is linear beyond the last bar: a drawing may be anchored in the future space and must stay where it was when the chart scrolls.
+- Convert to plot coordinates. If your chart reports positions relative to the page or to the canvas, subtract the origin of the plot area before you pass a point on, and add it back when you paint.
+- Answer for the current frame. After zoom, scroll, resize or a new timeframe call the listeners of `onViewportChange`; the tools then compute their geometry again with your new transforms.
+
+## Events
+
+- `onPointer` receives every pointer event over the whole plot area, including the events of a drag that leaves the plot: send `up`, `cancel` or `leave` so a drag in progress can end. Report `pointerType` (`mouse`, `touch` or `pen`) as the device says: the tools use a larger hit tolerance for touch.
+- `onKey` is for the keys that go to the chart while it has the focus. Return the result of the listener to your event handling: when it is `true`, call `preventDefault()`. Do not forward the key when an input outside the chart has the focus.
+- Every `on...` member returns the function that removes the listener. The tools call it when you destroy them.
+
+## The overlay pass
+
+The tools never draw. Your chart runs one overlay pass after it has painted its own layers:
+
+1. Call `tools.getScene()`.
+2. Paint the items in the order they come, clipped to the plot area. A `shape` item is a list of pixel shapes with its resolved `style`, `opacity` and `state`; a `handles` item is a list of points to draw as grab handles, or as lock markers when `locked` is set.
+3. When `requestRender()` is called, schedule that pass. Do not paint from inside `requestRender()`: it can be called many times in one frame, so coalesce the calls into one animation frame.
+
+## Fibonacci items
+
+The four Fibonacci tools reach your chart as `fibonacci` items, in data space, so that your own Fibonacci renderer draws them with the line styles and labels of your chart (decision D-3). An item has the `kind`, the `anchors` (time and price, with the `yAxisId`) and the `options` with every key resolved:
+
+| Kind | What the renderer draws |
+| --- | --- |
+| `fibonacci-retracement` | One horizontal line for each level at `from + (to − from) × ratio` (the line is mirrored when `reverse` is set), between the two anchors in time, extended to the left or right when `extendLeft` or `extendRight` is set. The label holds the ratio and, with `showPrices`, the price. |
+| `fibonacci-arcs` | For each level a circle around the second anchor with a radius of the ratio times the pixel distance of the two anchors; a half circle that faces the first anchor, or a full circle when `fullCircles` is set. |
+| `fibonacci-fans` | For each level a ray from the first anchor through the second anchor's x at the level price, clipped to the pane. |
+| `fibonacci-time-zones` | A vertical line at `t1 + n × (t2 − t1)` for each number `n` in `sequence`, across the pane. |
+
+If you would rather not write this yourself, `geometryOf(drawing, host)` from the core returns the same pixel shapes the tools use for hit testing, and your renderer can paint those.
+
+### Check your renderer against the shared fixture
+
+`keystone-financial-tools-core/testing` exports `FIBONACCI_PARITY` (version `FIBONACCI_PARITY_VERSION`). It holds the scales of a mock chart and cases for all four kinds, each with the drawing, the expected level prices (or radii or times) and the expected pixel lines, arcs and times. Build a host from `scales`, give your renderer each `drawing`, and compare what it draws with `shapes` and `levels`. Labels are not part of the fixture, because every chart draws its own. The core tests use the same fixture, so your renderer and the tools agree to within 1e-9.
+
+```ts
+import { FIBONACCI_PARITY } from 'keystone-financial-tools-core/testing';
+
+const { scales, cases } = FIBONACCI_PARITY;
+const chart = createTestChart({ width: scales.width, pane: scales.pane, barInterval: scales.barInterval, pxPerBar: scales.pxPerBar, startTime: scales.startTime });
+
+for (const { name, drawing, shapes } of cases) {
+  it(name, () => {
+    expect(chart.renderFibonacci(drawing)).toEqual(shapes);
+  });
+}
+```
+
+`createTestChart` and `renderFibonacci` stand for your own chart and renderer. Use a tolerance such as Vitest's `toBeCloseTo` where your renderer rounds.
+
 ## Test your host
 
-`keystone-financial-tools-core/testing` has `createMockHost`, a host with pointer, key and viewport events you can trigger from a test. The `apps/playground` package of this repository is a complete reference host: a minimal canvas chart that implements the contract.
+`keystone-financial-tools-core/testing` has `createMockHost`, a host with pointer, key and viewport events you can trigger from a test. It also has `runHostConformance`, the suite that checks your host against the contract: pass it a factory that makes your chart, the means to fire events, and your runner (Vitest's or Jest's `describe`, `it` and `expect`). Run it in the continuous integration of your chart. The `apps/playground` package of this repository is a complete reference host: a minimal canvas chart that implements the contract.
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { runHostConformance } from 'keystone-financial-tools-core/testing';
+
+runHostConformance(
+  () => ({
+    host: chart.drawingHost,
+    yAxisIds: ['price'],
+    lastBarTime: chart.lastBarTime,
+    changeViewport: () => chart.zoom(2),
+    firePointer: (event) => chart.dispatchPointer(event),
+    fireKey: (event) => chart.dispatchKey(event),
+  }),
+  { describe, it, expect },
+);
+```
 
 ## Next
 

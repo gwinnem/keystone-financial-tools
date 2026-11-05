@@ -2,6 +2,13 @@
 
 ## 0.1.0 (unreleased)
 
+- charts-financial integration (E08-F03): `keystone-financial-tools-core/testing` now exports `FIBONACCI_PARITY`
+  (version `FIBONACCI_PARITY_VERSION`, 1), a versioned fixture for the renderer of a chart: the scales of a mock
+  chart and seven cases for all four Fibonacci kinds (retracement up and reversed, fans, half and full arcs, time
+  zones forward and backward) with the drawing, the expected level prices, radii or times and the expected pixel
+  shapes (labels left out). The core tests check the fixture against `geometryOf` to 1e-9, and the chart's
+  renderer tests can use the same data. The host guide now covers the transforms, events, the overlay pass,
+  the Fibonacci items and the conformance suite, with code skeletons.
 - End-to-end tests (E08-F02): Playwright runs every tool (trend line, horizontal line, rectangle, the four Fibonacci
   tools and the text note) through place by click and by drag, magnet snap, select, multi-select (Shift+click and
   Ctrl+A), move, resize by handle, delete, undo and redo and reload persistence, plus the text note's editor

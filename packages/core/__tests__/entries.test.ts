@@ -31,10 +31,20 @@ describe('package entries (NFR-SIZE-001, FR-HOST-010)', () => {
     expect(files.filter((f) => f.startsWith('testing/'))).toEqual([]);
     expect(Object.keys(main)).not.toContain('createMockHost');
     expect(Object.keys(main)).not.toContain('runHostConformance');
+    expect(Object.keys(main)).not.toContain('FIBONACCI_PARITY');
   });
 
-  it('exports the mock host and the conformance kit from the testing entry', () => {
-    expect(Object.keys(testing).sort()).toEqual(['CONFORMANCE_KEY', 'CONFORMANCE_POINTER', 'CONFORMANCE_TOLERANCE_PX', 'DEFAULT_MOCK_PANE', 'createMockHost', 'runHostConformance']);
+  it('exports the mock host, the conformance kit and the Fibonacci parity fixture from the testing entry', () => {
+    expect(Object.keys(testing).sort()).toEqual([
+      'CONFORMANCE_KEY',
+      'CONFORMANCE_POINTER',
+      'CONFORMANCE_TOLERANCE_PX',
+      'DEFAULT_MOCK_PANE',
+      'FIBONACCI_PARITY',
+      'FIBONACCI_PARITY_VERSION',
+      'createMockHost',
+      'runHostConformance',
+    ]);
   });
 
   it('declares the testing entry in package.json with types, ESM and CommonJS builds', () => {

@@ -1128,6 +1128,22 @@ Decisions of E08-F02 (end-to-end tests; `e2e/`):
   can be typed there; it is DOM glue and excluded from coverage like `dom` and `render`.
 - Stryker does not apply to the e2e package (tests only).
 
+Decisions of E08-F03 (keystone-charts-financial integration):
+
+- Shared Fibonacci fixture (E08-F03-S02, QA-007, D-3): `FIBONACCI_PARITY` is published from the `/testing` entry
+  (never from the main entry), versioned by `FIBONACCI_PARITY_VERSION` (raise it when an expectation changes).
+  It holds the scales of a mock chart (800 px wide, one pane `price` 0 to 200 over 400 px, 60 s bars of 10 px)
+  and seven cases for the four kinds: each has the drawing, the `levels` (ratio or sequence value with the
+  expected price, radius or time) and the expected pixel `shapes`. Labels are left out (every chart draws its
+  own text). The numbers were derived by hand from the golden fixtures, not from the code under test.
+- Core use: `fibonacci-parity.test.ts` checks `geometryOf` against the shapes to 1e-9 and checks that the
+  levels agree with the pixels, so the fixture cannot drift from the geometry; `entries.test.ts` pins the export.
+- Host guide (E08-F03-S01, FR-INTG-001, DOC-003): `guides/host.md` is extended (no new page) with transforms,
+  events, the overlay pass, the Fibonacci items, the fixture and `runHostConformance`, each with a skeleton.
+- The chart's side (the issue in keystone-charts-financial that replaces its E19 placeholder, the reconciliation
+  of its tier plan with FR-LIC-002 (OD-2, deferred) and its CI run of `runHostConformance`, FR-INTG-002) is
+  tracked in the chart repository.
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |
