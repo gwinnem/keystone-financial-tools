@@ -2,6 +2,17 @@
 
 ## 0.1.0 (unreleased)
 
+- Playground reference host and demo pages (E08-F01): the playground chart now has two panes, `price` above
+  `volume` (a volume per candle derived from its prices), linear scales that fit the bars in view, and zoom and
+  scroll: the wheel zooms around the pointer, Shift with the wheel or sideways movement scrolls, and while the
+  chart has focus `+` and `-` zoom, Home and End go to the first and the last slot, Page Up and Page Down scroll
+  half a screen (keys no tool handled; Ctrl, Alt and Cmd are left alone). Zoom and scroll tell the viewport
+  listeners, so the tools redraw by themselves, and the host still passes `runHostConformance` for both panes. The
+  same demo is a page for TypeScript, Vue, React and Angular on one Vite server (`index.html`, `vue.html`,
+  `react.html`, `angular.html`): the toolbar is built from the tools' own toolbar state with the labels from
+  `messages`, with Undo, Redo, Delete and a Magnet toggle, labelled and keyboard accessible, and the drawings are
+  kept in localStorage. The Vue and React pages use render functions and `createElement`, and the Angular page
+  is compiled in the browser, so no framework plugin is needed. e2e: the viewport and the four pages.
 - Parity and i18n (E07-F06): every export of the core is now in the Vue, React and Angular packages (types,
   constants, validation, document import, shortcut and message helpers and more), so an application never
   imports from the core; the engine behind the tools (geometry, hit-testing, the interaction machine, snapping,

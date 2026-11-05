@@ -1801,7 +1801,8 @@
                 "Implements `DrawingHost` v2 and passes `runHostConformance` (QA-008).",
                 "Renders `shape`, `handles`, `preview` items and a simple Fibonacci renderer for `fibonacci` items."
               ],
-              "tasks": ["Create `apps/playground` (Vite).", "Implement host and renderer.", "Conformance test."]
+              "tasks": ["Create `apps/playground` (Vite).", "Implement host and renderer.", "Conformance test."],
+              "status": "done"
             },
             {
               "id": "E08-F01-S02",
@@ -1813,7 +1814,8 @@
                 "Toolbar is keyboard accessible and labelled (NFR-A11Y-001)."
               ],
               "tasks": ["Build the pages.", "Link them from the docs site."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             }
           ]
         },

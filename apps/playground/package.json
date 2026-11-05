@@ -1,13 +1,24 @@
 {
   "name": "keystone-financial-tools-playground",
   "version": "0.1.0",
-  "description": "Minimal canvas chart that implements DrawingHost v2: the reference host for the drawing tools and the target of the end-to-end tests",
+  "description": "Canvas chart that implements DrawingHost v2 (two panes, zoom, scroll) with demo pages for TypeScript, Vue, React and Angular: the reference host for the drawing tools and the target of the end-to-end tests",
   "license": "UNLICENSED",
   "private": true,
   "type": "module",
   "dependencies": {
+    "@angular/common": "^22.2.3",
+    "@angular/compiler": "^22.2.3",
+    "@angular/core": "^22.2.3",
+    "@angular/platform-browser": "^22.2.3",
+    "keystone-financial-tools-angular": "workspace:*",
     "keystone-financial-tools-core": "workspace:*",
-    "keystone-financial-tools-typescript": "workspace:*"
+    "keystone-financial-tools-react": "workspace:*",
+    "keystone-financial-tools-typescript": "workspace:*",
+    "keystone-financial-tools-vue": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "rxjs": "^7.8.2",
+    "vue": "^3.5.44"
   },
   "scripts": {
     "dev": "vite",
@@ -21,6 +32,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitest/coverage-v8": "^5.0.5",
     "typescript": "~6.0.3",
     "vite": "^8.3.5",

@@ -4,6 +4,7 @@ import type { PlotHost } from './plot-host';
 
 const UP_COLOR = '#089981';
 const DOWN_COLOR = '#f23645';
+const SEPARATOR_COLOR = '#d0d3da';
 const DASHES: Readonly<Record<LineStyle, readonly number[]>> = { solid: [], dashed: [6, 4], dotted: [2, 3] };
 
 /** Sizes a canvas to `width` x `height` CSS px at the screen's pixel density and returns its context, scaled to CSS px. */
@@ -18,7 +19,7 @@ export function fitCanvas(canvas: HTMLCanvasElement, width: number, height: numb
   return context;
 }
 
-/** Draws the candles. */
+/** Draws the candles in the price pane and the volume bars below them; bars outside the plot are skipped. */
 export function renderBase(context: CanvasRenderingContext2D, host: PlotHost, bars: readonly Bar[]): void {
   context.clearRect(0, 0, host.width, host.height);
   context.fillStyle = '#ffffff';
@@ -26,6 +27,37 @@ export function renderBase(context: CanvasRenderingContext2D, host: PlotHost, ba
   context.setLineDash([]);
   context.globalAlpha = 1;
   const bodyWidth = Math.max(1, host.pxPerBar * 0.6);
+  const shown = bars.filter((bar) => {
+    const x = host.timeToX(bar.time);
+    return x + bodyWidth >= 0 && x - bodyWidth <= host.width;
+  });
+  context.save();
+  context.beginPath();
+  context.rect(0, 0, host.width, host.priceHeight);
+  context.clip();
+  drawCandles(context, host, shown, bodyWidth);
+  context.restore();
+  drawVolume(context, host, shown, bodyWidth);
+  context.strokeStyle = SEPARATOR_COLOR;
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(0, host.priceHeight + 0.5);
+  context.lineTo(host.width, host.priceHeight + 0.5);
+  context.stroke();
+}
+
+function drawVolume(context: CanvasRenderingContext2D, host: PlotHost, bars: readonly Bar[], bodyWidth: number): void {
+  const baseline = host.priceToY(0, 'volume');
+  context.globalAlpha = 0.5;
+  for (const bar of bars) {
+    context.fillStyle = bar.close >= bar.open ? UP_COLOR : DOWN_COLOR;
+    const top = host.priceToY(bar.volume, 'volume');
+    context.fillRect(host.timeToX(bar.time) - bodyWidth / 2, top, bodyWidth, baseline - top);
+  }
+  context.globalAlpha = 1;
+}
+
+function drawCandles(context: CanvasRenderingContext2D, host: PlotHost, bars: readonly Bar[], bodyWidth: number): void {
   for (const bar of bars) {
     const x = host.timeToX(bar.time);
     const color = bar.close >= bar.open ? UP_COLOR : DOWN_COLOR;

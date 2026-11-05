@@ -1,0 +1,70 @@
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: system-ui, sans-serif;
+  color: #131722;
+  background: #ffffff;
+}
+h1 {
+  font-size: 1.25rem;
+  margin: 0 0 8px;
+}
+nav {
+  margin-bottom: 12px;
+}
+nav a {
+  margin-right: 12px;
+  color: #1e4fd6;
+}
+nav a[aria-current='page'] {
+  color: #131722;
+  font-weight: 600;
+  text-decoration: none;
+}
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+#toolbar button {
+  padding: 6px 10px;
+  font: inherit;
+  color: #131722;
+  background: #f0f3fa;
+  border: 1px solid #5d6068;
+  border-radius: 4px;
+  cursor: pointer;
+}
+#toolbar button[aria-pressed='true'] {
+  color: #ffffff;
+  background: #1e4fd6;
+  border-color: #1e4fd6;
+}
+#toolbar button:disabled {
+  color: #5d6068;
+  cursor: not-allowed;
+}
+nav a:focus-visible,
+#toolbar button:focus-visible,
+#chart:focus-visible {
+  outline: 3px solid #1e4fd6;
+  outline-offset: 2px;
+}
+#chart {
+  position: relative;
+  width: 800px;
+  height: 400px;
+  border: 1px solid #5d6068;
+  touch-action: none;
+  user-select: none;
+}
+#chart canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#status {
+  display: block;
+  margin-top: 8px;
+}

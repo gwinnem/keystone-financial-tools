@@ -5,6 +5,19 @@ export interface Bar {
   readonly high: number;
   readonly low: number;
   readonly close: number;
+  /** The traded volume, shown on the second pane. */
+  readonly volume: number;
+}
+
+/** The volume of a bar with no range at all. */
+export const BASE_VOLUME = 1000;
+
+/**
+ * The volume of a candle: busier bars (a wider range, a bigger body) trade more. It is worked out from the
+ * prices, so it never takes a number from the random generator and the prices stay what they were.
+ */
+export function volumeOf(open: number, high: number, low: number, close: number): number {
+  return Math.round(BASE_VOLUME + (high - low) * 400 + Math.abs(close - open) * 300);
 }
 
 /** One hour, in milliseconds. */
@@ -42,7 +55,8 @@ export function generateBars(count: number, seed: number = DEFAULT_SEED): readon
     close = open + (next() - 0.5) * 4;
     const high = Math.max(open, close) + next() * 1.5;
     const low = Math.min(open, close) - next() * 1.5;
-    bars.push({ time: FIRST_BAR_TIME + index * BAR_INTERVAL_MS, open: round(open), high: round(high), low: round(low), close: round(close) });
+    const candle = { open: round(open), high: round(high), low: round(low), close: round(close) };
+    bars.push({ time: FIRST_BAR_TIME + index * BAR_INTERVAL_MS, ...candle, volume: volumeOf(candle.open, candle.high, candle.low, candle.close) });
     close = round(close);
   }
   return bars;

@@ -1,16 +1,15 @@
-import type { DrawingKind, DrawingToolsState } from 'keystone-financial-tools-core';
+import type { DrawingToolsState, MagnetMode } from 'keystone-financial-tools-core';
 
 /**
- * The label of a tool button: the kind's name with spaces and a capital.
+ * The magnet mode the Magnet button switches to: off becomes weak, anything else becomes off.
  *
  * @example
  * ```ts
- * toolLabel('fibonacci-retracement'); // 'Fibonacci retracement'
+ * tools.setMagnet(nextMagnet(tools.getState().magnet));
  * ```
  */
-export function toolLabel(kind: DrawingKind): string {
-  const words = kind.replace(/-/g, ' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
+export function nextMagnet(mode: MagnetMode): MagnetMode {
+  return mode === 'off' ? 'weak' : 'off';
 }
 
 /**

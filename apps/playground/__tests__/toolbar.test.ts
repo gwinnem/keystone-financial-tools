@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { DRAWING_KINDS } from 'keystone-financial-tools-core';
-import { statusText, toolLabel } from '../src/toolbar';
+import { nextMagnet, statusText } from '../src/toolbar';
 
-describe('toolLabel', () => {
-  it('capitalises the kind and replaces its hyphens with spaces', () => {
-    expect(toolLabel('trend-line')).toBe('Trend line');
-    expect(toolLabel('fibonacci-retracement')).toBe('Fibonacci retracement');
-    expect(toolLabel('rectangle')).toBe('Rectangle');
+describe('nextMagnet', () => {
+  it('switches the magnet on (weak) when it is off', () => {
+    expect(nextMagnet('off')).toBe('weak');
   });
 
-  it('gives every kind a different label', () => {
-    expect(new Set(DRAWING_KINDS.map(toolLabel)).size).toBe(DRAWING_KINDS.length);
+  it('switches the magnet off when it is on', () => {
+    expect(nextMagnet('weak')).toBe('off');
+    expect(nextMagnet(nextMagnet('off'))).toBe('off');
   });
 });
 

@@ -1,14 +1,8 @@
-import { autoSave, createDrawingTools, DRAWING_KINDS, loadStore, WebStorageRepository, type DrawingKind, type DrawingStore, type DrawingTools } from 'keystone-financial-tools-typescript';
-import { BAR_INTERVAL_MS, generateBars, type Bar } from './data';
-import { bindInput } from './dom';
-import { createPlotHost, type PlotHost } from './plot-host';
-import { fitCanvas, renderBase, renderOverlay } from './render';
-import { statusText, toolLabel } from './toolbar';
-
-const WIDTH = 800;
-const HEIGHT = 400;
-const BAR_COUNT = 100;
-const SCOPE = { symbol: 'PLAYGROUND' };
+import { createDrawingTools, type DrawingKind, type DrawingStore, type DrawingTools } from 'keystone-financial-tools-typescript';
+import type { Bar } from './data';
+import { ACTION_LABELS, CHART_LABEL, createSurface, openStore } from './demo';
+import type { PlotHost } from './plot-host';
+import { nextMagnet, statusText } from './toolbar';
 
 /** What the page exposes as `window.playground`, so the end-to-end tests can ask where things are and what the store holds. */
 export interface Playground {
@@ -39,55 +33,39 @@ function button(label: string, id: string, onClick: () => void): HTMLButtonEleme
   return created;
 }
 
+// The plain TypeScript page: the toolbar is built once from the tools' own toolbar state (FR-FW-040) and its attributes follow the state.
 async function start(): Promise<void> {
-  const bars = generateBars(BAR_COUNT);
-  const chart = element<HTMLDivElement>('chart');
-  const baseContext = fitCanvas(element<HTMLCanvasElement>('base'), WIDTH, HEIGHT);
-  const overlayContext = fitCanvas(element<HTMLCanvasElement>('overlay'), WIDTH, HEIGHT);
-
-  // The host asks for a redraw before the tools exist (and the tools need the host), so the callback looks them up here.
-  const current: { tools?: DrawingTools } = {};
-  const host = createPlotHost({
-    width: WIDTH,
-    height: HEIGHT,
-    bars,
-    barInterval: BAR_INTERVAL_MS,
-    onRender: () => {
-      if (current.tools !== undefined) renderOverlay(overlayContext, host, current.tools.getScene());
-    },
-    onCursor: (cursor) => {
-      chart.style.cursor = cursor;
-    },
-  });
-
-  // Drawings survive a reload: they are loaded from localStorage and saved shortly after every change.
-  const repository = new WebStorageRepository(localStorage);
-  const { store, report } = await loadStore(repository, SCOPE);
-  if (report.issue !== undefined) console.warn(report.issue.message);
-  autoSave(store, repository, SCOPE, { debounceMs: 100, onError: (error) => console.error(error) });
-
-  const controller = createDrawingTools(host, { store, magnet: 'off' });
-  current.tools = controller;
+  const surface = createSurface();
+  const store = await openStore();
+  const controller = createDrawingTools(surface.host, { store, magnet: 'off' });
   controller.on('error', ({ source, message }) => console.error(`${source}: ${message}`));
 
+  const chart = element<HTMLDivElement>('chart');
+  chart.setAttribute('aria-label', CHART_LABEL);
   const toolbar = element<HTMLDivElement>('toolbar');
+  toolbar.setAttribute('aria-label', controller.messages['toolbar.label']);
   const toolButtons = new Map<DrawingKind, HTMLButtonElement>();
-  for (const kind of DRAWING_KINDS) {
-    const created = button(toolLabel(kind), `tool-${kind}`, () => (controller.getState().activeTool === kind ? controller.deactivate() : controller.activate(kind)));
-    created.dataset.tool = kind;
-    toolButtons.set(kind, created);
+  for (const entry of controller.getState().toolbar) {
+    const created = button(controller.messages[entry.labelKey], `tool-${entry.id}`, () => (controller.getState().activeTool === entry.id ? controller.deactivate() : controller.activate(entry.id)));
+    created.dataset.tool = entry.id;
+    toolButtons.set(entry.id, created);
     toolbar.append(created);
   }
-  const undo = button('Undo', 'undo', () => controller.undo());
-  const redo = button('Redo', 'redo', () => controller.redo());
-  const remove = button('Delete', 'delete', () => controller.remove(controller.getState().selection));
-  const magnet = button('Magnet', 'magnet', () => controller.setMagnet(controller.getState().magnet === 'off' ? 'weak' : 'off'));
+  const undo = button(ACTION_LABELS.undo, 'undo', () => controller.undo());
+  const redo = button(ACTION_LABELS.redo, 'redo', () => controller.redo());
+  const remove = button(ACTION_LABELS.delete, 'delete', () => controller.remove(controller.getState().selection));
+  const magnet = button(ACTION_LABELS.magnet, 'magnet', () => controller.setMagnet(nextMagnet(controller.getState().magnet)));
   toolbar.append(undo, redo, remove, magnet);
 
   const status = element<HTMLOutputElement>('status');
   const sync = (): void => {
     const state = controller.getState();
-    for (const [kind, created] of toolButtons) created.setAttribute('aria-pressed', String(state.activeTool === kind));
+    for (const entry of state.toolbar) {
+      const created = toolButtons.get(entry.id) as HTMLButtonElement;
+      created.setAttribute('aria-pressed', String(entry.active));
+      created.disabled = !entry.enabled;
+      created.title = entry.shortcut ?? '';
+    }
     undo.disabled = !state.canUndo;
     redo.disabled = !state.canRedo;
     remove.disabled = state.selection.length === 0;
@@ -98,10 +76,8 @@ async function start(): Promise<void> {
   store.subscribe(sync);
   sync();
 
-  bindInput(chart, host);
-  renderBase(baseContext, host, bars);
-  renderOverlay(overlayContext, host, controller.getScene());
-  window.playground = { host, tools: controller, store, bars };
+  surface.mount(chart, () => controller.getScene());
+  window.playground = { host: surface.host, tools: controller, store, bars: surface.bars };
 }
 
 void start();

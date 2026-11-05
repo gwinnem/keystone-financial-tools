@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 /** The part of `window.playground` (apps/playground/src/main.ts) the tests use. */
 interface PlaygroundApi {
-  host: { timeToX(time: number): number; priceToY(price: number, yAxisId: string): number };
+  host: { timeToX(time: number): number; priceToY(price: number, yAxisId: string): number; yAxisAt(x: number, y: number): string | null; pxPerBar: number; offset: number };
   tools: { getState(): { activeTool: string | null; selection: readonly string[]; canUndo: boolean; canRedo: boolean } };
   store: { list(): readonly { id: string; kind: string; anchors: readonly { time: number; price: number; yAxisId: string }[] }[] };
   bars: readonly { time: number; open: number; high: number; low: number; close: number }[];
@@ -25,6 +25,14 @@ export type StoredDrawing = ReturnType<PlaygroundApi['store']['list']>[number];
 export async function openPlayground(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForFunction(() => window.playground !== undefined);
+}
+
+/** How far the chart is zoomed (CSS px per bar) and scrolled (the bar slot at the left edge). */
+export async function viewport(page: Page): Promise<{ pxPerBar: number; offset: number }> {
+  return page.evaluate(() => {
+    const { host } = window.playground as PlaygroundApi;
+    return { pxPerBar: host.pxPerBar, offset: host.offset };
+  });
 }
 
 /** The page position of the close of bar `index`, plus `dx` and `dy` px. */

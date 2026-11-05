@@ -4,10 +4,19 @@
     "rootDir": "../..",
     "noEmit": true,
     "types": ["node"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "useDefineForClassFields": false,
+    "strictPropertyInitialization": false,
     "paths": {
       "keystone-financial-tools-core/testing": ["../../packages/core/src/testing/index.ts"],
       "keystone-financial-tools-core": ["../../packages/core/src/index.ts"],
-      "keystone-financial-tools-typescript": ["../../packages/typescript/src/index.ts"]
+      "keystone-financial-tools-typescript": ["../../packages/typescript/src/index.ts"],
+      "keystone-financial-tools-vue": ["../../packages/vue/src/index.ts"],
+      "keystone-financial-tools-react": ["../../packages/react/src/index.ts"],
+      "keystone-financial-tools-angular": ["../../packages/angular/src/public-api.ts"]
     }
   },
   "include": ["src/**/*", "__tests__/**/*", "vite.config.ts"]

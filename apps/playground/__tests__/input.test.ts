@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { toHostKey, toHostPointer, type PointerFields } from '../src/input';
+import { toHostKey, toHostPointer, toWheelAction, type PointerFields, type WheelFields } from '../src/input';
+import { ZOOM_STEP } from '../src/viewport';
 
 const NONE = { shiftKey: false, ctrlKey: false, altKey: false, metaKey: false };
 const FIELDS: PointerFields = { type: 'pointerdown', clientX: 130, clientY: 90, pointerType: 'mouse', button: 0, ...NONE };
@@ -41,6 +42,37 @@ describe('toHostPointer', () => {
 
   it('is exactly the contract event and nothing more', () => {
     expect(toHostPointer(FIELDS, ORIGIN)).toStrictEqual({ phase: 'down', x: 100, y: 50, pointerType: 'mouse', button: 0, ...NONE });
+  });
+});
+
+describe('toWheelAction', () => {
+  const WHEEL: WheelFields = { deltaX: 0, deltaY: 0, clientX: 130, shiftKey: false };
+
+  it('does nothing when the wheel did not move', () => {
+    expect(toWheelAction(WHEEL, ORIGIN, 8)).toBe(null);
+    expect(toWheelAction({ ...WHEEL, shiftKey: true }, ORIGIN, 8)).toBe(null);
+  });
+
+  it('zooms in for a turn away from you, around the pointer in plot coordinates', () => {
+    expect(toWheelAction({ ...WHEEL, deltaY: -100 }, ORIGIN, 8)).toStrictEqual({ kind: 'zoom', factor: ZOOM_STEP, anchorX: 100 });
+  });
+
+  it('zooms out for a turn towards you', () => {
+    expect(toWheelAction({ ...WHEEL, deltaY: 100 }, ORIGIN, 8)).toStrictEqual({ kind: 'zoom', factor: 1 / ZOOM_STEP, anchorX: 100 });
+  });
+
+  it('scrolls by the sideways distance in bar slots, either way', () => {
+    expect(toWheelAction({ ...WHEEL, deltaX: 40 }, ORIGIN, 8)).toStrictEqual({ kind: 'scroll', bars: 5 });
+    expect(toWheelAction({ ...WHEEL, deltaX: -16 }, ORIGIN, 8)).toStrictEqual({ kind: 'scroll', bars: -2 });
+  });
+
+  it('prefers the sideways movement when both are there', () => {
+    expect(toWheelAction({ ...WHEEL, deltaX: 8, deltaY: -100 }, ORIGIN, 8)).toStrictEqual({ kind: 'scroll', bars: 1 });
+  });
+
+  it('scrolls with the wheel while Shift is held', () => {
+    expect(toWheelAction({ ...WHEEL, deltaY: 24, shiftKey: true }, ORIGIN, 8)).toStrictEqual({ kind: 'scroll', bars: 3 });
+    expect(toWheelAction({ ...WHEEL, deltaY: -24, shiftKey: true }, ORIGIN, 8)).toStrictEqual({ kind: 'scroll', bars: -3 });
   });
 });
 

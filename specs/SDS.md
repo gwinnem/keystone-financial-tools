@@ -1075,6 +1075,37 @@ reference, and S03, the live examples, stay in E09):
 - The pages describe the fibonacci scene items as the chart's to paint (FR-INTG-003, the scope split);
   the geometry the tools compute for them is for hit-testing and handles.
 
+Decisions of E08-F01 (playground reference host and demo pages; `apps/playground`):
+
+- The existing host (`createPlotHost`) is extended, not replaced: pane `price` keeps its id and the
+  test hook `window.playground` stays, so the e2e tests only changed where coordinates move. There are
+  now two panes, `price` above `volume` (a quarter of the height), each with a linear scale. The volume
+  of a bar is derived from its prices (`volumeOf`), so the seeded data set and every price stay as they
+  were.
+- The viewport (`src/viewport.ts`) is a pure function of the bar width and the left edge in bar slots:
+  the smallest zoom shows every bar and the future space, the largest is 60 px per bar, and the view
+  never leaves the first slot or the end of the future space. The price and volume scales fit the bars
+  in view (every bar when the view is in the future space and none is shown). `zoom` and `scroll` tell
+  the viewport listeners, which is how the tools redraw (FR-HOST); the host still passes
+  `runHostConformance` for both panes (QA-008).
+- Input: the wheel zooms around the pointer, and sideways movement or Shift with the wheel scrolls;
+  `+`, `-`, Home, End, Page Up and Page Down act only on a key no tool handled, and never with Ctrl,
+  Alt or Cmd, so the tools' shortcuts and the browser's zoom win. No touch zoom (not in the acceptance
+  criteria).
+- Demo pages (E08-F01-S02): one Vite server with four entry points (`index.html` for TypeScript,
+  `vue.html`, `react.html`, `angular.html`). The toolbar is built from `state.toolbar` with the labels
+  from `messages` (`TOOL_CATALOG` through the adapters), with `role="toolbar"`, a name, `aria-pressed`
+  and `disabled` from the entries (NFR-A11Y-001). Undo, Redo, Delete and Magnet have no entry in the
+  message table, so the demo owns those four English labels. Drawings are loaded from and saved to
+  localStorage on every page (`loadStore`, `autoSave`).
+- No framework plugin and no build step for the adapters: the Vue and React pages use render functions
+  and `createElement` instead of `.vue` and JSX files, and the Angular page is compiled in the browser
+  (`@angular/compiler`, decorators and `@Input` setters, no zone.js, zoneless by default in Angular 22)
+  as the Angular package's own tests do. The Analog Vite plugin was considered and not needed.
+- Coverage: the host logic (`data`, `plot-host`, `input`, `toolbar`, `viewport`) is unit tested at
+  100%; `main`, `demo`, `dom`, `render` and the framework pages only wire it to the DOM and are covered
+  by the e2e tests (QA-006): the viewport and the four pages.
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |

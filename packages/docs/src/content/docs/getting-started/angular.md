@@ -65,6 +65,10 @@ Put it in the template of the component that provides the service, next to the c
 
 Alt with T, H, R, F or N chooses a tool, and Ctrl or Cmd with Z undoes. The [toolbar guide](/guides/toolbar/) has the catalog and the `shortcuts` option.
 
+## Try the demo
+
+The playground in `apps/playground` has this page as a working chart with two panes, zoom and scroll, a toolbar built from `toolbar()`, undo and redo, the magnet and drawings that survive a reload. Run `pnpm --filter keystone-financial-tools-playground dev` and open `http://localhost:4173/angular.html`; the code is in `apps/playground/src/angular-page.ts`. The same page exists for [TypeScript](/getting-started/typescript/), [Vue](/getting-started/vue/) and [React](/getting-started/react/).
+
 ## Next
 
 - [Implement a host](/guides/host/) for your chart.

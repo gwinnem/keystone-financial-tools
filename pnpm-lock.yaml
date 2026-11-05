@@ -199,16 +199,55 @@ importers:
 
   apps/playground:
     dependencies:
+      '@angular/common':
+        specifier: ^22.2.3
+        version: 22.2.3(@angular/core@22.2.3(@angular/compiler@22.2.3)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.2.3
+        version: 22.2.3
+      '@angular/core':
+        specifier: ^22.2.3
+        version: 22.2.3(@angular/compiler@22.2.3)(rxjs@7.8.2)(zone.js@0.16.3)
+      '@angular/platform-browser':
+        specifier: ^22.2.3
+        version: 22.2.3(@angular/common@22.2.3(@angular/core@22.2.3(@angular/compiler@22.2.3)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@22.2.3(@angular/compiler@22.2.3)(rxjs@7.8.2)(zone.js@0.16.3))
+      keystone-financial-tools-angular:
+        specifier: workspace:*
+        version: link:../../packages/angular
       keystone-financial-tools-core:
         specifier: workspace:*
         version: link:../../packages/core
+      keystone-financial-tools-react:
+        specifier: workspace:*
+        version: link:../../packages/react
       keystone-financial-tools-typescript:
         specifier: workspace:*
         version: link:../../packages/typescript
+      keystone-financial-tools-vue:
+        specifier: workspace:*
+        version: link:../../packages/vue
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
+      vue:
+        specifier: ^3.5.44
+        version: 3.5.44(typescript@6.0.3)
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
       '@vitest/coverage-v8':
         specifier: ^5.0.5
         version: 5.0.5(vitest@5.0.5)

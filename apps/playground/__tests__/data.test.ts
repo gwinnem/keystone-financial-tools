@@ -1,5 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { BAR_INTERVAL_MS, DEFAULT_SEED, FIRST_BAR_TIME, generateBars } from '../src/data';
+import { BAR_INTERVAL_MS, BASE_VOLUME, DEFAULT_SEED, FIRST_BAR_TIME, generateBars, volumeOf } from '../src/data';
+
+describe('volumeOf', () => {
+  it('is the base volume for a bar that did not move', () => {
+    expect(BASE_VOLUME).toBe(1000);
+    expect(volumeOf(100, 100, 100, 100)).toBe(1000);
+  });
+
+  it('grows with the range of the bar and with the size of its body', () => {
+    expect(volumeOf(100, 102, 99, 100)).toBe(1000 + 3 * 400);
+    expect(volumeOf(100, 100, 100, 101)).toBe(1000 + 300);
+    expect(volumeOf(100, 102, 99, 101)).toBe(2500);
+  });
+
+  it('does not care whether the bar rose or fell', () => {
+    expect(volumeOf(101, 102, 99, 100)).toBe(volumeOf(100, 102, 99, 101));
+  });
+
+  it('rounds to a whole number', () => {
+    expect(volumeOf(100, 100.01, 100, 100)).toBe(1004);
+    expect(volumeOf(100, 100.0012, 100, 100)).toBe(1000);
+  });
+});
 
 describe('generateBars', () => {
   it('makes the requested number of bars, none for zero', () => {
@@ -30,6 +52,14 @@ describe('generateBars', () => {
   it('rounds prices to two decimals', () => {
     for (const bar of generateBars(50)) {
       for (const price of [bar.open, bar.high, bar.low, bar.close]) expect(Math.round(price * 100) / 100).toBe(price);
+    }
+  });
+
+  it('gives every bar a whole volume of at least the base, made from its own prices', () => {
+    for (const bar of generateBars(100)) {
+      expect(Number.isInteger(bar.volume)).toBe(true);
+      expect(bar.volume).toBeGreaterThanOrEqual(BASE_VOLUME);
+      expect(bar.volume).toBe(volumeOf(bar.open, bar.high, bar.low, bar.close));
     }
   });
 
