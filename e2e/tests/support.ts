@@ -12,7 +12,7 @@ interface PlaygroundApi {
     priceHeight: number;
   };
   tools: {
-    getState(): { activeTool: string | null; selection: readonly string[]; canUndo: boolean; canRedo: boolean };
+    getState(): { activeTool: string | null; selection: readonly string[]; hover: string | null; canUndo: boolean; canRedo: boolean };
     hitTest(x: number, y: number): { id: string; part: string } | null;
     deactivate(): void;
   };
@@ -163,25 +163,41 @@ export async function drag(page: Page, from: Pixel, to: Pixel): Promise<void> {
 }
 
 /**
- * A page position on the body of drawing `id` (not on a handle), found by asking the tools' own hit-test across the price pane:
- * the hit closest to the middle of everything that hits, so it is away from the ends of a line. The drawing must not be covered there.
+ * A page position on the body of drawing `id` (not on a handle), found by asking the tools' own hit-test across the price pane.
+ * The candidates are the hits with the most hit neighbours (so well inside the 6 px tolerance, not on the edge of a thin shape,
+ * which a sub-pixel difference could miss), the one closest to the middle of everything that hits first. Each candidate is checked
+ * by moving the real mouse there: the tools' hover must be the drawing, so the point is known to be where a click lands on it.
  */
 export async function bodyPoint(page: Page, id: string): Promise<Pixel> {
-  const local = await page.evaluate((target) => {
+  const candidates = await page.evaluate((target) => {
     const { tools, host } = window.playground as PlaygroundApi;
-    const hits: { x: number; y: number }[] = [];
-    for (let y = 0; y < host.priceHeight; y += 3) {
-      for (let x = 0; x < host.width; x += 3) {
+    const STEP = 3;
+    const hits = new Map<string, { x: number; y: number }>();
+    for (let y = 0; y < host.priceHeight; y += STEP) {
+      for (let x = 0; x < host.width; x += STEP) {
         const hit = tools.hitTest(x, y);
-        if (hit !== null && hit.id === target && !hit.part.startsWith('handle:')) hits.push({ x, y });
+        if (hit !== null && hit.id === target && !hit.part.startsWith('handle:')) hits.set(`${x},${y}`, { x, y });
       }
     }
-    if (hits.length === 0) return null;
-    const mean = { x: hits.reduce((sum, hit) => sum + hit.x, 0) / hits.length, y: hits.reduce((sum, hit) => sum + hit.y, 0) / hits.length };
-    return hits.reduce((best, hit) => (Math.hypot(hit.x - mean.x, hit.y - mean.y) < Math.hypot(best.x - mean.x, best.y - mean.y) ? hit : best));
+    const all = [...hits.values()];
+    if (all.length === 0) return [];
+    const mean = { x: all.reduce((sum, hit) => sum + hit.x, 0) / all.length, y: all.reduce((sum, hit) => sum + hit.y, 0) / all.length };
+    const neighbours = (hit: { x: number; y: number }): number => {
+      let count = 0;
+      for (const dy of [-STEP, 0, STEP]) for (const dx of [-STEP, 0, STEP]) if ((dx !== 0 || dy !== 0) && hits.has(`${hit.x + dx},${hit.y + dy}`)) count++;
+      return count;
+    };
+    const scored = all.map((hit) => ({ hit, count: neighbours(hit), distance: Math.hypot(hit.x - mean.x, hit.y - mean.y) }));
+    scored.sort((a, b) => b.count - a.count || a.distance - b.distance);
+    return scored.slice(0, 25).map((entry) => entry.hit);
   }, id);
-  if (local === null) throw new Error(`Nothing of drawing ${id} is under the pointer.`);
-  return plotPoint(page, local.x, local.y);
+  if (candidates.length === 0) throw new Error(`Nothing of drawing ${id} is under the pointer.`);
+  for (const candidate of candidates) {
+    const point = await plotPoint(page, candidate.x, candidate.y);
+    await page.mouse.move(point.x, point.y);
+    if ((await page.evaluate(() => window.playground?.tools.getState().hover)) === id) return point;
+  }
+  throw new Error(`The pointer never hovers drawing ${id} at its ${candidates.length} best hit-test points, the first at plot (${candidates[0].x}, ${candidates[0].y}).`);
 }
 
 /** A page position on handle `index` of the selected drawing `id`: the middle of the points where the hit-test reports that handle. */

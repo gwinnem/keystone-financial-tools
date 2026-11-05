@@ -83,10 +83,14 @@ for (const tool of TOOLS) {
       await clickEmpty(page);
       const body = await bodyPoint(page, id);
       await page.mouse.click(body.x, body.y);
-      await drag(page, body, { x: body.x + 40, y: body.y + 30 });
+      // Selected, the drawing shows its handles, which win over its body (time zones have one on every line): look for a point on the body again.
+      const grip = await bodyPoint(page, id);
+      await drag(page, grip, { x: grip.x + 40, y: grip.y + 30 });
       const [after] = await drawings(page);
       before.anchors.forEach((anchor, i) => {
-        expect(after.anchors[i].time).toBeGreaterThan(anchor.time);
+        // A horizontal line has only a price: a move changes nothing else (`moveDrawings`).
+        if (tool.kind === 'horizontal-line') expect(after.anchors[i].time).toBe(anchor.time);
+        else expect(after.anchors[i].time).toBeGreaterThan(anchor.time);
         expect(after.anchors[i].price).toBeLessThan(anchor.price);
       });
     });
@@ -118,7 +122,9 @@ for (const tool of TOOLS) {
       await page.keyboard.up('Shift');
       expect([...(await selection(page))].sort()).toStrictEqual([first, second].sort());
       const before = await drawings(page);
-      await drag(page, firstBody, { x: firstBody.x, y: firstBody.y + 20 });
+      // Both are selected now, so their handles win over their bodies: look for a point on the body of the first again.
+      const grip = await bodyPoint(page, first);
+      await drag(page, grip, { x: grip.x, y: grip.y + 20 });
       const after = await drawings(page);
       for (let i = 0; i < before.length; i++) expect(after[i].anchors[0].price).toBeLessThan(before[i].anchors[0].price);
     });
