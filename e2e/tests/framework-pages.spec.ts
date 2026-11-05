@@ -56,8 +56,20 @@ for (const { name, path } of PAGES) {
       await expect(status).toContainText('0 drawings');
       await page.getByRole('button', { name: 'Redo' }).click();
       await expect(status).toContainText('1 drawing');
-      // The page saves shortly after the change: wait until the document is in localStorage.
-      await expect.poll(() => page.evaluate(() => Object.keys(localStorage).length)).toBeGreaterThan(0);
+      // The page saves shortly after the change (the undo saved an empty document before): wait until the stored document holds the drawing.
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            Object.values(localStorage).some((value) => {
+              try {
+                return (JSON.parse(value) as { drawings?: unknown[] }).drawings?.length === 1;
+              } catch {
+                return false;
+              }
+            })
+          )
+        )
+        .toBe(true);
       await page.reload();
       await expect(page.getByRole('status')).toContainText('1 drawing');
     });

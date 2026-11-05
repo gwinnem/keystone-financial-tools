@@ -1997,7 +1997,8 @@
                 "Adapters render it into a polite ARIA live region (optional, on by default)."
               ],
               "tasks": ["Add announcements.", "Adapter live regions.", "Tests."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             },
             {
               "id": "E09-F03-S02",
@@ -2006,7 +2007,8 @@
               "sds": ["NFR-A11Y-001"],
               "acceptance": ["Keyboard-only walkthrough of every tool documented in the docs keyboard reference.", "Findings are fixed or recorded as issues before release."],
               "tasks": ["Run the review.", "Fix or file findings."],
-              "labels": ["a11y"]
+              "labels": ["a11y"],
+              "status": "done"
             }
           ]
         },

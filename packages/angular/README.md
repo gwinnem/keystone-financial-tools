@@ -48,6 +48,7 @@ export class ChartComponent {
 | `messages` | Every user-visible text: the English ones with the `messages` option of `attach` over them (a signal); the English ones until a host is attached |
 | `drawings`, `drawings$` | The drawings of the store |
 | `textEdit`, `textEdit$` | The note editor that is open, or null |
+| `announcement`, `announcement$` | The latest screen-reader message (an empty string until there is one, and after `detach`); render it with `<keystone-live-region>` |
 | `store` | The store the tools draw into: the one in the options, otherwise one that belongs to the service |
 | `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`, `setMagnet`, `setTheme`, `setOptions` | The controller's actions; they do nothing (and `undo` and `redo` give false) until a host is attached |
 
@@ -77,6 +78,15 @@ export class ChartComponent {
   `keystone-financial-tools-core`. What it leaves out is the engine behind the tools (geometry, hit-testing, the
   interaction machine, snapping and the history internals); a test of the repository (FR-FW-050) fails when the
   core gets an export that this package neither exports nor lists as left out.
+
+## Announcements and `KeystoneLiveRegionComponent`
+
+The tools say what the person did (a drawing placed, selected, deleted, undone or redone) so that a screen reader
+user knows (NFR-A11Y-001). Render the service's `announcement` once with `<keystone-live-region [message]="tools.announcement()" />`:
+a visually hidden polite live region (`aria-live="polite"`, `aria-atomic="true"`). A message that repeats is read again.
+The texts are the `announce.*` keys of the messages, so they can be translated. Turn it off with `announcements: false`
+in the options of `attach`. `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE`, `liveRegionText` and `formatMessage`
+are exported for your own region.
 
 ## `KeystoneTextEditorComponent`
 

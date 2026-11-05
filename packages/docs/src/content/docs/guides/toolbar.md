@@ -91,8 +91,17 @@ A key that is not in the table, and a text that is empty, throw a `RangeError` w
 | `editor.note` | Note text |
 | `editor.confirm` | Confirm |
 | `editor.cancel` | Cancel |
+| `announce.placed` | {tool} placed |
+| `announce.selected` | {tool} selected |
+| `announce.selectedMany` | {count} drawings selected |
+| `announce.deleted` | {tool} deleted |
+| `announce.deletedMany` | {count} drawings deleted |
+| `announce.undone` | Undone |
+| `announce.redone` | Redone |
 
 The default note editor has no buttons, only its accessible name (`editor.note`). `editor.confirm` and `editor.cancel` are for an editor of your own.
+
+The `announce.*` texts are what the tools say to a screen reader after an action, see [the keyboard reference](/guides/keyboard/). `{tool}` is replaced by the text of the tool (`tool.<kind>`) and `{count}` by the number of drawings; keep the placeholders in your translation.
 
 ## Keyboard shortcuts
 

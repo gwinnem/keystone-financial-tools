@@ -1,5 +1,6 @@
 export * from './lib/drawing.service';
 export * from './lib/drawing-tools.service';
+export * from './lib/live-region.component';
 export * from './lib/text-editor.component';
 // The public API of the core, so an application imports it all from this package and never from the core (AR-5, FR-FW-050).
 // What is left out, and why, is listed in packages/typescript/__tests__/parity-exceptions.ts; the parity test fails for anything else.
@@ -112,6 +113,7 @@ export {
   DRAWING_KINDS,
   DrawingError,
   DrawingStore,
+  formatMessage,
   formatPrice,
   formatShortcut,
   HOST_API_VERSION,
@@ -122,6 +124,8 @@ export {
   KIND_OPTION_KEYS,
   LIGHT_THEME,
   LINE_STYLES,
+  LIVE_REGION_ATTRIBUTES,
+  liveRegionText,
   matchShortcut,
   MAX_LEVELS,
   MAX_SEQUENCE,
@@ -148,4 +152,5 @@ export {
   validateHost,
   validateOptions,
   validateStyle,
+  VISUALLY_HIDDEN_STYLE,
 } from 'keystone-financial-tools-core';

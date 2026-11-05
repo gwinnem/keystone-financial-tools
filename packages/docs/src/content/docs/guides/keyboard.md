@@ -30,6 +30,18 @@ Everything the tools do can be done with the keyboard. Keys reach the tools whil
 | Ctrl/Cmd + Enter | Editing a text note | Confirm the text |
 | Escape | Editing a text note | Cancel the editing |
 
+## Keyboard-only walkthrough
+
+Every tool can be used without a pointer. The e2e suite (`keyboard-walkthrough.spec.ts`) runs these steps for all eight tools.
+
+1. Tab to the tool's toolbar button and press Enter. For the trend line, horizontal line, rectangle, Fibonacci retracement and text note you can instead press Alt with T, H, R, F or N while the chart has the focus.
+2. Tab to the chart.
+3. Press Enter to place the first anchor at the keyboard cursor. A horizontal line and a text note need only this one. For a text note the editor opens: type the text and press Ctrl+Enter, or Escape to cancel.
+4. For a tool with two anchors, move the cursor with the arrow keys (Shift for ten steps) and press Enter again. Escape before that cancels the drawing.
+5. Press Ctrl+A to select, then arrow keys to move the drawing, Enter to edit a note, Ctrl+D to duplicate, Delete or Backspace to delete, Ctrl+Z and Ctrl+Y to undo and redo.
+
+The Fibonacci arcs, fans and time zones tools are chosen with their toolbar button (see Tool shortcuts below).
+
 ## Locked drawings
 
 A locked drawing can be selected but not moved, resized, edited or deleted by interaction. When Delete, an arrow key or a drag would change one, the tools leave it alone and raise the `blocked` event with its id.
@@ -49,3 +61,11 @@ Ctrl or Cmd with Z undoes, and Ctrl or Cmd with Shift and Z, or with Y, redoes. 
 ## Tool shortcuts
 
 Alt with T, H, R, F or N chooses the trend line, horizontal line, rectangle, Fibonacci retracement or text note tool. You can change them or turn them off with the `shortcuts` option, see [Build a toolbar](/guides/toolbar/). A shortcut for a tool that is not in the `tools` option is not handled.
+
+The Fibonacci arcs, Fibonacci fans and Fibonacci time zones tools have no default shortcut. Choose them with their toolbar button (Tab to it and press Enter), or give them a key with the `shortcuts` option.
+
+## Announcements for screen readers
+
+The controller raises the `announce` event with a short message after what the person did: a drawing placed ("Trend line placed"), selected ("Trend line selected", "2 drawings selected"), deleted ("Trend line deleted", "2 drawings deleted"), and "Undone" or "Redone". A text note is announced when its editor confirms it. Moving, nudging, hovering and choosing a tool say nothing. The messages are in the `messages` option (`announce.*`), so they can be translated.
+
+The adapters turn the event into an `announcement` value and a live region component (`KeystoneLiveRegion` in Vue and React, `keystone-live-region` in Angular). Render it once on the page. With the TypeScript package, use `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE` and `liveRegionText` from the core. Turn the announcements off with `announcements: false` in the adapters. A locked drawing that blocks a key is not announced yet; listen to `blocked` if you need it.

@@ -1,5 +1,6 @@
 import { createDrawingTools, TextEditor, type DrawingKind } from 'keystone-financial-tools-typescript';
 import { ACTION_LABELS, button, CHART_LABEL, createSurface, element, openStore } from './demo';
+import { mountLiveRegion } from './live-region-dom';
 import { mountTextEditor } from './text-editor-dom';
 import { nextMagnet, statusText } from './toolbar';
 
@@ -50,6 +51,7 @@ async function start(): Promise<void> {
 
   surface.mount(chart, () => controller.getScene());
   mountTextEditor(chart, editor, controller.messages['editor.note']);
+  mountLiveRegion(document.body, controller);
   window.playground = { host: surface.host, tools: controller, store, bars: surface.bars };
 }
 

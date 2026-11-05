@@ -1,5 +1,5 @@
 import { createApp, defineComponent, h, onBeforeUnmount, onMounted, ref, type VNode } from 'vue';
-import { KeystoneTextEditor, useDrawingTools } from 'keystone-financial-tools-vue';
+import { KeystoneLiveRegion, KeystoneTextEditor, useDrawingTools } from 'keystone-financial-tools-vue';
 import { ACTION_LABELS, CHART_LABEL, createSurface, openStore } from './demo';
 import { nextMagnet, statusText } from './toolbar';
 
@@ -12,7 +12,7 @@ async function start(): Promise<void> {
     setup() {
       const chart = ref<HTMLElement | null>(null);
       const drawingTools = useDrawingTools(surface.host, { store, magnet: 'off' });
-      const { tools, state, toolbar, messages, drawings, textEdit } = drawingTools;
+      const { tools, state, toolbar, messages, drawings, textEdit, announcement } = drawingTools;
       let unmount: (() => void) | undefined;
       onMounted(() => {
         unmount = surface.mount(chart.value as HTMLElement, () => tools.getScene());
@@ -46,7 +46,9 @@ async function start(): Promise<void> {
             action('magnet', ACTION_LABELS.magnet, false, state.value.magnet !== 'off', () => drawingTools.setMagnet(nextMagnet(state.value.magnet))),
           ]),
           h('div', { id: 'chart', ref: chart, tabindex: 0, role: 'application', 'aria-label': CHART_LABEL }, [h(KeystoneTextEditor, { session: textEdit.value, label: messages['editor.note'] })]),
-          h('output', { id: 'status', 'aria-live': 'polite' }, statusText(state.value, drawings.value.length)),
+          // The status line is not a live region: the announcements are (the two would say everything twice).
+          h('output', { id: 'status', 'aria-live': 'off' }, statusText(state.value, drawings.value.length)),
+          h(KeystoneLiveRegion, { id: 'announcer', message: announcement.value }),
         ]);
     },
   });

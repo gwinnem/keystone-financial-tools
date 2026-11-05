@@ -19,7 +19,7 @@ import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
 import { DRAWING_KINDS, isDrawingKind } from './kinds';
-import { resolveMessages, type MessageOverrides, type Messages } from './messages';
+import { formatMessage, resolveMessages, type MessageKey, type MessageOverrides, type Messages } from './messages';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
 import type { SceneItem, SceneOptions } from './scene/types';
@@ -137,6 +137,14 @@ export interface DrawingToolsEvents {
   /** Any value of the state changed. */
   state: DrawingToolsState;
   blocked: DrawingToolsBlocked;
+  /**
+   * A message for a screen reader (NFR-A11Y-001, NFR-I18N-001): a drawing was placed, the selection changed
+   * to something, drawings were deleted, or an undo or redo was done. It is made from the `announce.*` entries of
+   * `messages`, so it is in the language of the application. One message for each action, however many
+   * things changed with it (a placement also selects the new drawing: only "placed" is raised). The adapters
+   * show it in a polite live region.
+   */
+  announce: string;
   error: DrawingToolsError;
 }
 
@@ -181,10 +189,11 @@ const EMPTY_SCENE: readonly SceneItem[] = Object.freeze([]);
 const MAGNET_MODES: readonly MagnetMode[] = ['off', 'weak', 'strong'];
 
 type Placing = Extract<InteractionState, { type: 'placing' }>;
+type AnnounceKey = Extract<MessageKey, `announce.${string}`>;
 type Listeners = { [E in DrawingToolsEventName]: Set<(payload: DrawingToolsEvents[E]) => void> };
 
 function createListeners(): Listeners {
-  return { change: new Set(), selection: new Set(), tool: new Set(), interaction: new Set(), state: new Set(), blocked: new Set(), error: new Set() };
+  return { change: new Set(), selection: new Set(), tool: new Set(), interaction: new Set(), state: new Set(), blocked: new Set(), announce: new Set(), error: new Set() };
 }
 
 interface DragBase {
@@ -287,6 +296,12 @@ class DrawingToolsController implements DrawingTools {
   private snap: Point | null = null;
   private keyboardCursor: Point | null = null;
   private session: DragSession | null = null;
+  // What the entry point in progress has to say to a screen reader: the last word wins, and it is raised once the state is published.
+  private announcement: string | null = null;
+  // The id of the text note that is waiting for its editor: it is announced as placed when the editor confirms it, and not at all when it cancels.
+  private fresh: string | null = null;
+  // More than 0 while an action changes the store itself (delete, undo, redo): the selection that follows from it is part of what the action announces.
+  private acting = 0;
   // The history transaction of the last new text note: it is open while the editor is, so the note and its text are one entry and a cancelled editor takes the note back without one.
   private note: HistoryTransaction | null = null;
   // Set from every pointer and key event before anything reads it.
@@ -364,22 +379,15 @@ class DrawingToolsController implements DrawingTools {
   }
 
   remove(ids: readonly string[]): void {
-    this.run(
-      'action',
-      () =>
-        this.store.batch(() => {
-          for (const id of ids) this.store.remove(id);
-        }),
-      undefined
-    );
+    this.run('action', () => this.removeDrawings(ids), undefined);
   }
 
   undo(): boolean {
-    return this.run('action', () => this.history.undo(), false);
+    return this.run('action', () => this.undoStep(), false);
   }
 
   redo(): boolean {
-    return this.run('action', () => this.history.redo(), false);
+    return this.run('action', () => this.redoStep(), false);
   }
 
   setMagnet(mode: MagnetMode): void {
@@ -495,6 +503,7 @@ class DrawingToolsController implements DrawingTools {
     if (this.destroyed) return;
     try {
       this.publish();
+      this.flushAnnouncement();
       // A listener may have destroyed the tools while the state was published.
       if (!this.destroyed) this.host.requestRender();
     } catch (error) {
@@ -533,6 +542,79 @@ class DrawingToolsController implements DrawingTools {
     }
   }
 
+  // ---- announcements (NFR-A11Y-001) -------------------------------------------------------------------
+
+  /** Says something to a screen reader once this entry point is done; a later call replaces an earlier one. */
+  private announce(key: AnnounceKey, values: Readonly<Record<string, string | number>> = {}): void {
+    this.announcement = formatMessage(this.messages[key], values);
+  }
+
+  private flushAnnouncement(): void {
+    const message = this.announcement;
+    this.announcement = null;
+    if (message !== null) this.emit('announce', message);
+  }
+
+  /** The name of the tool that places drawings of `kind`. */
+  private toolName(kind: DrawingKind): string {
+    return this.messages[`tool.${kind}`];
+  }
+
+  /** One drawing is named by its tool, several are counted. */
+  private announceDrawings(one: AnnounceKey, many: AnnounceKey, drawings: readonly Drawing[]): void {
+    if (drawings.length === 1) this.announce(one, { tool: this.toolName((drawings[0] as Drawing).kind) });
+    else this.announce(many, { count: drawings.length });
+  }
+
+  private undoStep(): boolean {
+    return this.step(() => this.history.undo(), 'announce.undone');
+  }
+
+  private redoStep(): boolean {
+    return this.step(() => this.history.redo(), 'announce.redone');
+  }
+
+  /** Undo or redo: announced with `key` when it did something. */
+  private step(change: () => boolean, key: AnnounceKey): boolean {
+    const done = this.act(change);
+    if (done) this.announce(key);
+    return done;
+  }
+
+  /** Removes drawings (one store change) and announces those that were there. */
+  private removeDrawings(ids: readonly string[]): void {
+    const removed = [...new Set(ids)].flatMap((id) => {
+      const drawing = this.store.get(id);
+      return drawing === undefined ? [] : [drawing];
+    });
+    this.act(() =>
+      this.store.batch(() => {
+        for (const id of ids) this.store.remove(id);
+      })
+    );
+    if (removed.length > 0) this.announceDrawings('announce.deleted', 'announce.deletedMany', removed);
+  }
+
+  /** Runs a change of the store that has its own announcement: the selection the change leads to is not announced on top of it. */
+  private act<T>(change: () => T): T {
+    this.acting++;
+    try {
+      return change();
+    } finally {
+      this.acting--;
+    }
+  }
+
+  /** The selection changed to these drawings: said unless something more specific was (placed, deleted, undone). While a note is edited there is nothing to say yet. */
+  private announceSelection(ids: readonly string[], interaction: InteractionState): void {
+    if (ids.length === 0 || this.acting > 0 || this.announcement !== null || interaction.type === 'editing-text') return;
+    this.announceDrawings(
+      'announce.selected',
+      'announce.selectedMany',
+      ids.map((id) => this.store.get(id) as Drawing)
+    );
+  }
+
   /** Makes the next state snapshot (the same object when nothing changed) and raises the events for what changed. */
   private publish(): void {
     const previous = this.state;
@@ -553,6 +635,7 @@ class DrawingToolsController implements DrawingTools {
       toolbar,
     };
     this.state = next;
+    if (next.selection !== previous.selection) this.announceSelection(next.selection, interaction);
     if (next.activeTool !== previous.activeTool) this.emit('tool', next.activeTool);
     if (next.selection !== previous.selection) this.emit('selection', next.selection);
     if (next.interaction !== previous.interaction) this.emit('interaction', next.interaction);
@@ -593,9 +676,7 @@ class DrawingToolsController implements DrawingTools {
   private perform(effect: InteractionEffect): void {
     switch (effect.type) {
       case 'remove':
-        this.store.batch(() => {
-          for (const id of effect.ids) this.store.remove(id);
-        });
+        this.removeDrawings(effect.ids);
         return;
       case 'blocked':
         this.emit('blocked', { code: 'KFT-E-LOCKED', ids: effect.ids });
@@ -667,9 +748,9 @@ class DrawingToolsController implements DrawingTools {
   private shortcut(action: ShortcutAction): boolean {
     switch (action.type) {
       case 'undo':
-        return this.history.undo();
+        return this.undoStep();
       case 'redo':
-        return this.history.redo();
+        return this.redoStep();
       case 'tool':
         return this.allowed.has(action.tool) && !this.feed({ type: 'activate', tool: action.tool }).ignored;
     }
@@ -786,6 +867,9 @@ class DrawingToolsController implements DrawingTools {
       this.note?.cancel();
       throw error;
     }
+    // A note is announced when its editor confirms it (a cancelled one is taken back), anything else now.
+    if (note) this.fresh = id;
+    else this.announce('announce.placed', { tool: this.toolName(tool) });
     this.feed({ type: 'placement-complete', id, stay: this.stayInTool, edit: note });
   }
 
@@ -891,6 +975,8 @@ class DrawingToolsController implements DrawingTools {
       () => {
         this.feed({ type: 'edit-result', text: answer ?? null });
         this.endNote(answer === null);
+        if (answer !== null && this.fresh === drawingId) this.announce('announce.placed', { tool: this.toolName('text-note') });
+        this.fresh = null;
       },
       undefined
     );

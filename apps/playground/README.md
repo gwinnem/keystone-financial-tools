@@ -23,7 +23,9 @@ It runs against the sources of `packages/core` and `packages/typescript`: no bui
   Cmd are left alone. Zoom and scroll tell the viewport listeners, so the tools redraw by themselves.
 - A toolbar (`role="toolbar"`) built from the tools' own toolbar state, with the labels from `messages`: a
   button for each of the eight tools, Undo, Redo, Delete and Magnet. Tool and magnet buttons are toggles
-  (`aria-pressed`); the status line is a live region.
+  (`aria-pressed`); the status line is an `<output>` with `aria-live="off"`, so that the announcements are not spoken twice.
+- A visually hidden polite live region (`#announcer`, `live-region-dom.ts` on the TypeScript and embed pages, `KeystoneLiveRegion` on
+  the framework pages) that says what was placed, selected, deleted, undone or redone (NFR-A11Y-001).
 - The scene of `createDrawingTools(host)` on an overlay canvas: shapes, handles, the placement
   preview and the snap indicator, plus a simple Fibonacci renderer (the line between the anchors and
   the levels of a retracement; arcs, fans and time zones show the line only, although the tools
@@ -66,6 +68,7 @@ the base `/playground/`, into `packages/docs/public/playground` (`vite.embed.con
 | `src/dom.ts` | `bindInput`: pointer events (with capture) and key events on the chart element | e2e |
 | `src/render.ts` | Candles, volume and the scene on the canvases | e2e |
 | `src/text-editor-dom.ts` | `mountTextEditor`: the DOM editor of the text note | e2e |
+| `src/live-region-dom.ts` | `mountLiveRegion`: the announcements live region of the TypeScript and embed pages | e2e |
 | `src/embed-params.ts` | `toolFromSearch`, `unknownToolMessage`: the `?tool=` of the embed page | Unit tests, 100% coverage |
 | `src/main.ts`, `src/embed.ts`, `src/demo.ts`, the framework pages | Wire the pages together; the pages expose `window.playground` | e2e |
 

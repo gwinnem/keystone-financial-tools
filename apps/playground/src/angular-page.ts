@@ -2,7 +2,7 @@
 import '@angular/compiler';
 import { Component, ElementRef, InjectionToken, ViewChild, computed, inject, type AfterViewInit, type OnDestroy } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { KeystoneDrawingToolsService, KeystoneTextEditorComponent } from 'keystone-financial-tools-angular';
+import { KeystoneDrawingToolsService, KeystoneLiveRegionComponent, KeystoneTextEditorComponent } from 'keystone-financial-tools-angular';
 import type { DrawingStore, ToolbarEntry } from 'keystone-financial-tools-angular';
 import { ACTION_LABELS, CHART_LABEL, createSurface, openStore, type Surface } from './demo';
 import { nextMagnet, statusText } from './toolbar';
@@ -17,7 +17,7 @@ const DEMO = new InjectionToken<Demo>('demo');
 
 @Component({
   selector: 'app-root',
-  imports: [KeystoneTextEditorComponent],
+  imports: [KeystoneTextEditorComponent, KeystoneLiveRegionComponent],
   providers: [KeystoneDrawingToolsService],
   template: `
     <div id="toolbar" role="toolbar" [attr.aria-label]="tools.messages()['toolbar.label']">
@@ -34,7 +34,8 @@ const DEMO = new InjectionToken<Demo>('demo');
     <div id="chart" #chart tabindex="0" role="application" [attr.aria-label]="chartLabel">
       <keystone-text-editor [session]="tools.textEdit()" [label]="tools.messages()['editor.note']" />
     </div>
-    <output id="status" aria-live="polite">{{ status() }}</output>
+    <output id="status" aria-live="off">{{ status() }}</output>
+    <keystone-live-region id="announcer" [message]="tools.announcement()" />
   `,
 })
 class AppComponent implements AfterViewInit, OnDestroy {

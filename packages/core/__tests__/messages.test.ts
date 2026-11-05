@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TOOL_CATALOG } from '../src/catalog';
 import { DRAWING_KINDS } from '../src/kinds';
-import { DEFAULT_MESSAGES, resolveMessages, type MessageKey } from '../src/messages';
+import { DEFAULT_MESSAGES, formatMessage, resolveMessages, type MessageKey } from '../src/messages';
 import { TEXT_EDITOR_LABEL } from '../src/text-editor';
 
 // NFR-I18N-001: the message table of every user-visible text, and the merge of the overrides.
@@ -26,7 +26,20 @@ describe('DEFAULT_MESSAGES', () => {
       'editor.note': 'Note text',
       'editor.confirm': 'Confirm',
       'editor.cancel': 'Cancel',
+      'announce.placed': '{tool} placed',
+      'announce.selected': '{tool} selected',
+      'announce.selectedMany': '{count} drawings selected',
+      'announce.deleted': '{tool} deleted',
+      'announce.deletedMany': '{count} drawings deleted',
+      'announce.undone': 'Undone',
+      'announce.redone': 'Redone',
     });
+  });
+
+  it('has the placeholders the announcements are filled with: {tool} for one drawing, {count} for several, none for undo and redo', () => {
+    for (const key of ['announce.placed', 'announce.selected', 'announce.deleted'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{tool}');
+    for (const key of ['announce.selectedMany', 'announce.deletedMany'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{count}');
+    for (const key of ['announce.undone', 'announce.redone'] as const) expect(DEFAULT_MESSAGES[key], key).not.toContain('{');
   });
 
   it('has a tool label for every drawing kind', () => {
@@ -118,5 +131,44 @@ describe('resolveMessages', () => {
     overrides['tool.rectangle'] = 'Viereck';
     expect(messages['tool.rectangle']).toBe('Rechteck');
     expect(DEFAULT_MESSAGES['tool.rectangle']).toBe('Rectangle');
+  });
+});
+
+describe('formatMessage', () => {
+  it('puts the values in the placeholders', () => {
+    expect(formatMessage(DEFAULT_MESSAGES['announce.placed'], { tool: 'Trend line' })).toBe('Trend line placed');
+    expect(formatMessage(DEFAULT_MESSAGES['announce.deletedMany'], { count: 3 })).toBe('3 drawings deleted');
+  });
+
+  it('puts a value in every place of its placeholder, and fills several placeholders', () => {
+    expect(formatMessage('{a}-{b}-{a}', { a: 'x', b: 2 })).toBe('x-2-x');
+  });
+
+  it('keeps a placeholder it has no value for, and text without placeholders as it is', () => {
+    expect(formatMessage('{tool} of {count}', { tool: 'Line' })).toBe('Line of {count}');
+    expect(formatMessage('Undone', { tool: 'Line' })).toBe('Undone');
+    expect(formatMessage('', {})).toBe('');
+  });
+
+  it('gives a translation that leaves the placeholder out as it is', () => {
+    expect(formatMessage('Platziert', { tool: 'Trendlinie' })).toBe('Platziert');
+  });
+
+  it('takes the value as text: a value with a $ pattern or a placeholder in it is not read again', () => {
+    expect(formatMessage('{tool} placed', { tool: '$& {count}' })).toBe('$& {count} placed');
+    expect(formatMessage('{tool}', { tool: '$1$$' })).toBe('$1$$');
+  });
+
+  it('does not take the name of an inherited property for a value', () => {
+    expect(formatMessage('{toString} {constructor}', {})).toBe('{toString} {constructor}');
+  });
+
+  it('writes a zero and an empty text', () => {
+    expect(formatMessage('{count} left', { count: 0 })).toBe('0 left');
+    expect(formatMessage('[{tool}]', { tool: '' })).toBe('[]');
+  });
+
+  it('only reads {word} as a placeholder', () => {
+    expect(formatMessage('{ tool } {} {tool-x} {{tool}}', { tool: 'T' })).toBe('{ tool } {} {tool-x} {T}');
   });
 });

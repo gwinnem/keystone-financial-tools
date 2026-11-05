@@ -2,6 +2,15 @@
 
 ## 0.1.0 (unreleased)
 
+- Accessibility (E09-F03, NFR-A11Y-001): the controller raises a new `announce` event with a short message after a
+  drawing is placed, selected, deleted, or an undo or redo (a text note once its editor confirms it; moving,
+  nudging, hovering and choosing a tool say nothing). The messages are the new `announce.*` keys of the messages
+  table, so they can be translated; `formatMessage` fills their `{tool}` and `{count}` placeholders. The core exports
+  `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE` and `liveRegionText`. The Vue, React and Angular adapters take
+  `announcements` (default on), expose `announcement`, and ship a live region (`KeystoneLiveRegion`,
+  `keystone-live-region`). The playground renders one on every page, and its status line is `aria-live="off"`.
+  e2e: announcements on all four pages, and a keyboard-only walkthrough of every tool. The keyboard guide notes that
+  the arcs, fans and time zones tools have no default shortcut.
 - Size budgets (E09-F02-S02): `pnpm --filter keystone-financial-tools-budgets size:check` minifies (terser) and
   gzips the built core, TypeScript, Vue, React and Angular bundles and fails when the core is over 25 kB or a
   package over 3 kB (NFR-SIZE-001), naming the file and the sizes. A missing build says to run `pnpm build`. CI runs

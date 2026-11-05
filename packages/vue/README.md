@@ -18,6 +18,7 @@ It takes the options of `createDrawingTools` and returns:
 - `messages`: every user-visible text, the English ones with the `messages` option over them (a plain object).
   See [Translate the texts](#translate-the-texts).
 - `textEdit`: a ref with the text editor that is open, or `null`.
+- `announcement`: a ref with the latest screen-reader message. See [Announcements](#announcements).
 - The actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`, `redo`,
   `setMagnet`, `setTheme` and `setOptions`.
 
@@ -59,7 +60,7 @@ undoes. `enabled` follows the `tools` option. `TOOL_CATALOG` and the types `Tool
 
 Every text comes from one table (NFR-I18N-001): `DEFAULT_MESSAGES` has the English text of the tool
 labels (`tool.<kind>`), the toolbar groups (`group.<group>`), `toolbar.label`, and the note editor
-(`editor.note`, `editor.confirm`, `editor.cancel`). Put your texts over them with the `messages` option; a
+(`editor.note`, `editor.confirm`, `editor.cancel`) and the announcements (`announce.<name>`, with `{tool}` and `{count}` placeholders). Put your texts over them with the `messages` option; a
 key that is not in the table, or an empty text, throws a `RangeError`. Read the result from `messages`:
 
 ```vue
@@ -70,6 +71,19 @@ const { toolbar, messages, textEdit } = useDrawingTools(props.host, { messages: 
 <template>
   <KeystoneTextEditor :session="textEdit" :label="messages['editor.note']" />
 </template>
+```
+
+### Announcements
+
+The tools say what the person did (a drawing placed, selected, deleted, undone or redone) so that a screen reader
+user knows (NFR-A11Y-001). `useDrawingTools` keeps the latest message in `announcement`; render it once with
+`KeystoneLiveRegion`, a visually hidden polite live region (`aria-live="polite"`, `aria-atomic="true"`). A message that
+repeats is read again. The texts are the `announce.*` keys of the messages, so they can be translated. Turn it off with
+`announcements: false`. `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE`, `liveRegionText` and `formatMessage` are
+exported for your own region.
+
+```vue
+<KeystoneLiveRegion :message="announcement" />
 ```
 
 ### The public API of the core

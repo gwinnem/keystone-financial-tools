@@ -6,6 +6,7 @@ import {
   DrawingStore,
   IDLE_STATE,
   IDLE_TOOLBAR,
+  liveRegionText,
   TextEditor,
   type Drawing,
   type DrawingHost,
@@ -30,6 +31,11 @@ export interface KeystoneDrawingToolsOptions extends Omit<DrawingToolsOptions, '
    * empty and not editable.
    */
   readonly editText?: DrawingToolsOptions['editText'] | false;
+  /**
+   * Keep `announcement` up to date with the `announce` events of the tools (NFR-A11Y-001), for a live region such as
+   * `KeystoneLiveRegionComponent`. Default true; with `false` `announcement` stays empty.
+   */
+  readonly announcements?: boolean;
 }
 
 /** The state before a host is attached and after it is detached. */
@@ -46,7 +52,7 @@ const IDLE_TOOLS_STATE: DrawingToolsState = Object.freeze({
 
 /**
  * The drawing tools for one chart (FR-FW-030): `attach` creates the controller for a host and the
- * service keeps `state`, `toolbar`, `messages`, `drawings` and the open note editor in signals and observables. It only maps
+ * service keeps `state`, `toolbar`, `messages`, `drawings`, the open note editor and the `announcement` in signals and observables. It only maps
  * the controller's events to Angular; everything else is the core's.
  *
  * Provide it where the chart is, so every chart has its own and it is destroyed with the chart:
@@ -58,13 +64,14 @@ const IDLE_TOOLS_STATE: DrawingToolsState = Object.freeze({
  * ```ts
  * @Component({
  *   selector: 'app-chart',
- *   imports: [KeystoneTextEditorComponent],
+ *   imports: [KeystoneTextEditorComponent, KeystoneLiveRegionComponent],
  *   providers: [KeystoneDrawingToolsService],
  *   template: `
  *     @for (tool of tools.toolbar(); track tool.id) {
  *       <button [disabled]="!tool.enabled" [attr.aria-pressed]="tool.active" (click)="tools.activate(tool.id)">{{ tools.messages()[tool.labelKey] }}</button>
  *     }
- *     <keystone-text-editor [session]="tools.textEdit()" [label]="tools.messages()['editor.note']" />`,
+ *     <keystone-text-editor [session]="tools.textEdit()" [label]="tools.messages()['editor.note']" />
+ *     <keystone-live-region [message]="tools.announcement()" />`,
  * })
  * export class ChartComponent {
  *   readonly tools = inject(KeystoneDrawingToolsService);
@@ -82,6 +89,7 @@ export class KeystoneDrawingToolsService {
   private readonly stateChannel = new Channel<DrawingToolsState>(IDLE_TOOLS_STATE);
   private readonly drawingsChannel = new Channel<readonly Drawing[]>(this.owned.list());
   private readonly editChannel = new Channel<TextEditSession | null>(null);
+  private readonly announcementChannel = new Channel<string>('');
   // A signal only: nothing observes the texts as a stream, so there is nothing to complete.
   private readonly messagesSource = signal<Messages>(DEFAULT_MESSAGES);
   private attached = this.owned;
@@ -107,6 +115,12 @@ export class KeystoneDrawingToolsService {
   readonly drawings: Signal<readonly Drawing[]> = this.drawingsChannel.value;
   /** The note editor that is open, or null. Show it with `KeystoneTextEditorComponent` or your own editor. */
   readonly textEdit: Signal<TextEditSession | null> = this.editChannel.value;
+  /**
+   * What a screen reader is to be told (NFR-A11Y-001): the last `announce` message of the tools, in the language of the
+   * `messages` option; a message that repeats the one before it has a no-break space added so that it is read again. Empty
+   * until the first one, and again after `detach`. Show it with `KeystoneLiveRegionComponent`, or in a polite live region of your own.
+   */
+  readonly announcement: Signal<string> = this.announcementChannel.value;
 
   /** `tools` as an observable; it emits the current value on subscribe and completes when the service is destroyed. */
   readonly tools$: Observable<DrawingTools | null> = this.toolsChannel.changes;
@@ -118,6 +132,8 @@ export class KeystoneDrawingToolsService {
   );
   readonly drawings$: Observable<readonly Drawing[]> = this.drawingsChannel.changes;
   readonly textEdit$: Observable<TextEditSession | null> = this.editChannel.changes;
+  /** `announcement` as an observable; it emits the current value on subscribe and completes when the service is destroyed. */
+  readonly announcement$: Observable<string> = this.announcementChannel.changes;
 
   constructor() {
     // The editor belongs to the service and goes with it, so there is nothing to unsubscribe from.
@@ -129,6 +145,7 @@ export class KeystoneDrawingToolsService {
       this.stateChannel.complete();
       this.drawingsChannel.complete();
       this.editChannel.complete();
+      this.announcementChannel.complete();
     });
   }
 
@@ -151,6 +168,7 @@ export class KeystoneDrawingToolsService {
     const editText = given === undefined ? this.editor.edit : given === false ? undefined : given;
     const created = createDrawingTools(host, { ...options, store: this.attached, editText });
     created.on('state', (state) => this.stateChannel.set(state));
+    if (options?.announcements !== false) created.on('announce', (message) => this.announcementChannel.set(liveRegionText(this.announcementChannel.value(), message)));
     this.toolsChannel.set(created);
     this.messagesSource.set(created.messages);
     this.stateChannel.set(created.getState());
@@ -166,6 +184,7 @@ export class KeystoneDrawingToolsService {
     this.toolsChannel.set(null);
     this.messagesSource.set(DEFAULT_MESSAGES);
     this.stateChannel.set(IDLE_TOOLS_STATE);
+    this.announcementChannel.set('');
   }
 
   /** The actions do nothing, and `undo` and `redo` give false, until a host is attached. */

@@ -26,7 +26,7 @@ export function Toolbar({ host }: { host: DrawingHost | null }): JSX.Element {
 ```
 
 - It returns `tools` (the controller, `null` until a host exists), `store`, `state`, `toolbar`, `messages`,
-  `drawings`, `textEdit` and the actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`,
+  `drawings`, `textEdit`, `announcement` and the actions `activate`, `deactivate`, `select`, `clearSelection`, `remove`, `undo`,
   `redo`, `setMagnet`, `setTheme` and `setOptions`. Without a host the state is idle and the actions
   do nothing (`undo` and `redo` return `false`).
 - `host` can be `null` or `undefined`. A new host gets a new controller; the old one is destroyed.
@@ -66,6 +66,19 @@ first render, also before there is a host, and that is read once like the other 
 const { toolbar, messages, textEdit } = useDrawingTools(host, { messages: { 'tool.trend-line': 'Trendlinie', 'editor.note': 'Notiztext' } });
 // ...
 <KeystoneTextEditor session={textEdit} label={messages['editor.note']} />
+```
+
+### Announcements
+
+The tools say what the person did (a drawing placed, selected, deleted, undone or redone) so that a screen reader
+user knows (NFR-A11Y-001). `useDrawingTools` returns the latest message as `announcement` (an empty string until
+there is one); render it once with `KeystoneLiveRegion`, a visually hidden polite live region (`aria-live="polite"`,
+`aria-atomic="true"`). A message that repeats is read again. The texts are the `announce.*` keys of the messages, so
+they can be translated. Turn it off with `announcements: false`. `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE`,
+`liveRegionText` and `formatMessage` are exported for your own region.
+
+```tsx
+<KeystoneLiveRegion message={announcement} />
 ```
 
 ### The public API of the core

@@ -2,6 +2,8 @@ export type { UseDrawings } from './use-drawings';
 export { useDrawings } from './use-drawings';
 export type { UseDrawingTools, UseDrawingToolsOptions } from './use-drawing-tools';
 export { useDrawingTools } from './use-drawing-tools';
+export type { KeystoneLiveRegionProps } from './keystone-live-region';
+export { KeystoneLiveRegion } from './keystone-live-region';
 export type { KeystoneTextEditorProps } from './keystone-text-editor';
 export { KeystoneTextEditor } from './keystone-text-editor';
 // The public API of the core, so an application imports it all from this package and never from the core (AR-5, FR-FW-050).
@@ -115,6 +117,7 @@ export {
   DRAWING_KINDS,
   DrawingError,
   DrawingStore,
+  formatMessage,
   formatPrice,
   formatShortcut,
   HOST_API_VERSION,
@@ -125,6 +128,8 @@ export {
   KIND_OPTION_KEYS,
   LIGHT_THEME,
   LINE_STYLES,
+  LIVE_REGION_ATTRIBUTES,
+  liveRegionText,
   matchShortcut,
   MAX_LEVELS,
   MAX_SEQUENCE,
@@ -151,4 +156,5 @@ export {
   validateHost,
   validateOptions,
   validateStyle,
+  VISUALLY_HIDDEN_STYLE,
 } from 'keystone-financial-tools-core';

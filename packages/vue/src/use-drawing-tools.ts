@@ -1,6 +1,7 @@
 import { computed, onScopeDispose, shallowRef, type Ref } from 'vue';
 import {
   createDrawingTools,
+  liveRegionText,
   TextEditor,
   type Drawing,
   type DrawingHost,
@@ -26,6 +27,11 @@ export interface UseDrawingToolsOptions extends Omit<DrawingToolsOptions, 'editT
    * leaves new notes empty and not editable.
    */
   readonly editText?: DrawingToolsOptions['editText'] | false;
+  /**
+   * Keep `announcement` up to date with the `announce` events of the tools (NFR-A11Y-001), for a live region
+   * such as `KeystoneLiveRegion`. Default true; with `false` `announcement` stays empty.
+   */
+  readonly announcements?: boolean;
 }
 
 /** What `useDrawingTools` returns. */
@@ -51,6 +57,12 @@ export interface UseDrawingTools {
   readonly drawings: Readonly<Ref<readonly Drawing[]>>;
   /** The note editor that is open, or null. Show it with `KeystoneTextEditor` or your own editor. */
   readonly textEdit: Readonly<Ref<TextEditSession | null>>;
+  /**
+   * What a screen reader is to be told (NFR-A11Y-001): the last `announce` message of the tools, in the language of the
+   * `messages` option; a message that repeats the one before it has a no-break space added so that it is read again. Empty
+   * until the first one. Show it with `KeystoneLiveRegion`, or in a polite live region of your own.
+   */
+  readonly announcement: Readonly<Ref<string>>;
   activate(kind: DrawingKind): void;
   deactivate(): void;
   select(ids: readonly string[]): void;
@@ -65,18 +77,19 @@ export interface UseDrawingTools {
 
 /**
  * The drawing tools for a Vue component (FR-FW-010): creates the controller for `host`, and keeps
- * `state`, `toolbar`, `drawings` and the open note editor in refs, and gives the `messages`. It only maps the controller's events to
+ * `state`, `toolbar`, `drawings`, the open note editor and the `announcement` in refs, and gives the `messages`. It only maps the controller's events to
  * refs; everything else is the core's. The controller is destroyed, and the host's listeners removed,
  * when the calling effect scope (for example the component) is disposed.
  *
  * @example
  * ```ts
- * const { tools, state, toolbar, messages, drawings, textEdit, activate, undo } = useDrawingTools(host, { magnet: 'weak', messages: { 'tool.trend-line': 'Trendlinie' } });
+ * const { tools, state, toolbar, messages, drawings, textEdit, announcement, activate, undo } = useDrawingTools(host, { magnet: 'weak', messages: { 'tool.trend-line': 'Trendlinie' } });
  * // in the host's overlay render pass:
  * for (const item of tools.getScene()) paint(item);
  * // in the template:
  * // <button v-for="tool in toolbar" :key="tool.id" :disabled="!tool.enabled" :aria-pressed="tool.active" @click="activate(tool.id)">{{ messages[tool.labelKey] }}</button>
  * // <KeystoneTextEditor :session="textEdit" :label="messages['editor.note']" />
+ * // <KeystoneLiveRegion :message="announcement" />
  * ```
  */
 export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOptions): UseDrawingTools {
@@ -87,9 +100,15 @@ export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOpti
   const state = shallowRef(tools.getState());
   const toolbar = computed(() => state.value.toolbar);
   const textEdit = shallowRef<TextEditSession | null>(null);
+  const announcement = shallowRef('');
   tools.on('state', (next) => {
     state.value = next;
   });
+  if (options?.announcements !== false) {
+    tools.on('announce', (message) => {
+      announcement.value = liveRegionText(announcement.value, message);
+    });
+  }
   editor.subscribe((session) => {
     textEdit.value = session;
   });
@@ -107,6 +126,7 @@ export function useDrawingTools(host: DrawingHost, options?: UseDrawingToolsOpti
     messages: tools.messages,
     drawings,
     textEdit,
+    announcement,
     activate: (kind) => tools.activate(kind),
     deactivate: () => tools.deactivate(),
     select: (ids) => tools.select(ids),

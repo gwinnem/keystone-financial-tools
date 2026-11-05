@@ -13,7 +13,8 @@ export function nextMagnet(mode: MagnetMode): MagnetMode {
 }
 
 /**
- * The status line under the chart, for people and for screen readers (it is a live region).
+ * The status line under the chart, for people to read. It is not a live region: the announcements of the tools are (NFR-A11Y-001), and
+ * a status line that was one as well would say everything twice.
  *
  * @example
  * ```ts

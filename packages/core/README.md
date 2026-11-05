@@ -579,14 +579,36 @@ tools.destroy(); // when the chart goes away
   is not a letter or a digit.
 - **Messages** (NFR-I18N-001): every user-visible text is a key of `DEFAULT_MESSAGES`: `tool.<kind>` (the
   `labelKey` of a toolbar entry), `group.lines`, `group.shapes`, `group.fibonacci`, `group.annotations`,
-  `toolbar.label`, `editor.note` (the accessible name of the note editor, `TEXT_EDITOR_LABEL`), `editor.confirm`
-  and `editor.cancel`. The `messages` option merges your texts over the English ones; `tools.messages` is the
+  `toolbar.label`, `editor.note` (the accessible name of the note editor, `TEXT_EDITOR_LABEL`), `editor.confirm`,
+  `editor.cancel` and the screen-reader announcements `announce.placed`, `announce.selected`, `announce.deleted`
+  (with `{tool}` in them), `announce.selectedMany`, `announce.deletedMany` (with `{count}`), `announce.undone` and
+  `announce.redone`; `formatMessage(template, values)` fills the placeholders. The `messages` option merges your texts over the English ones; `tools.messages` is the
   frozen result, and `resolveMessages(overrides)` makes the same table without the tools. No other text is
   written anywhere in the packages (a test of the repository fails for one).
 - **Events** (`on(event, listener)`, payload typed per name): `change` (`StoreChange`), `selection` (ids),
   `tool` (kind or null), `interaction` (the interaction state), `state` (every new snapshot, including magnet,
-  `canUndo` and `canRedo` changes), `blocked` (`{ code: 'KFT-E-LOCKED', ids }`, once per drag or key press)
-  and `error` (`{ source, message, error }`).
+  `canUndo` and `canRedo` changes), `blocked` (`{ code: 'KFT-E-LOCKED', ids }`, once per drag or key press),
+  `announce` (a message for a screen reader, see below) and `error` (`{ source, message, error }`).
+- **Announcements** (NFR-A11Y-001): the `announce` event carries one localised message for each action: a drawing
+  is placed (`Trend line placed`; a text note when its editor confirms it, nothing when it is cancelled), the
+  selection changes to one or more drawings (`Trend line selected`, `2 drawings selected`), drawings are deleted
+  (`Trend line deleted`, `2 drawings deleted`) and an undo or a redo is done (`Undone`, `Redone`). A placement that
+  selects the new drawing, a delete that leaves a selection and an undo that changes it raise only their own
+  message. Moving, nudging, hovering, clearing the selection and changing the tool say nothing. The messages are
+  `announce.*` in `tools.messages`, so they follow the `messages` option. Show them in a polite live region: the
+  adapters do (see their READMEs); without an adapter use `LIVE_REGION_ATTRIBUTES` (`aria-live`, `aria-atomic`),
+  `VISUALLY_HIDDEN_STYLE` and `liveRegionText(previousText, message)`, which makes a message that repeats a
+  different text so that it is read again:
+
+  ```ts
+  const region = document.createElement('div');
+  for (const [name, value] of Object.entries(LIVE_REGION_ATTRIBUTES)) region.setAttribute(name, value);
+  Object.assign(region.style, VISUALLY_HIDDEN_STYLE);
+  document.body.append(region);
+  tools.on('announce', (message) => {
+    region.textContent = liveRegionText(region.textContent ?? '', message);
+  });
+  ```
 - **Errors never reach the host** (NFR-REL-001): an exception in a handler, an action, a listener, the text
   editor or the history is caught and raised as an `error` event; an open drag is reverted and the store is
   left as it was. A listener that throws does not stop the other listeners.

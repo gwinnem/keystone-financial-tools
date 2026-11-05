@@ -7,7 +7,7 @@ The documentation site of the Keystone drawing tools, built with Astro and Starl
 The pages are Markdown files in `src/content/docs`:
 
 - `getting-started/`: one page each for TypeScript, Vue, React and Angular.
-- `guides/`: the host guide, the persistence guide and the keyboard reference.
+- `guides/`: the host guide, the persistence guide and the keyboard reference (with the keyboard-only walkthrough of every tool and the screen-reader announcements).
 - `tools/`: one page for each drawing kind (trend line, horizontal line, rectangle, the four Fibonacci tools and the text note).
 
 To add a page, create the file with a `title` and a `description` and add it to `src/site/pages.ts`; the

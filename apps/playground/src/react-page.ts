@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef, type ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { KeystoneTextEditor, useDrawingTools } from 'keystone-financial-tools-react';
+import { KeystoneLiveRegion, KeystoneTextEditor, useDrawingTools } from 'keystone-financial-tools-react';
 import { ACTION_LABELS, CHART_LABEL, createSurface, openStore } from './demo';
 import { nextMagnet, statusText } from './toolbar';
 
@@ -11,7 +11,7 @@ async function start(): Promise<void> {
 
   function App(): ReactElement {
     const chart = useRef<HTMLDivElement>(null);
-    const { tools, state, toolbar, messages, drawings, textEdit, activate, deactivate, remove, undo, redo, setMagnet } = useDrawingTools(surface.host, { store, magnet: 'off' });
+    const { tools, state, toolbar, messages, drawings, textEdit, announcement, activate, deactivate, remove, undo, redo, setMagnet } = useDrawingTools(surface.host, { store, magnet: 'off' });
     // The scene is asked for when the overlay is painted, by which time the tools may have been created.
     const toolsRef = useRef(tools);
     toolsRef.current = tools;
@@ -53,7 +53,9 @@ async function start(): Promise<void> {
         { id: 'chart', ref: chart, tabIndex: 0, role: 'application', 'aria-label': CHART_LABEL },
         createElement(KeystoneTextEditor, { session: textEdit, label: messages['editor.note'] })
       ),
-      createElement('output', { id: 'status', 'aria-live': 'polite' }, statusText(state, drawings.length))
+      // The status line is not a live region: the announcements are (the two would say everything twice).
+      createElement('output', { id: 'status', 'aria-live': 'off' }, statusText(state, drawings.length)),
+      createElement(KeystoneLiveRegion, { message: announcement })
     );
   }
 

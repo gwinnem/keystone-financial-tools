@@ -4,6 +4,25 @@ Framework-free API for the Keystone drawing tools. Re-exports `keystone-financia
 adds persistence: asynchronous repositories (memory, Web Storage, IndexedDB), auto-save, safe loading,
 export and import of drawings as text, and the 0.1 synchronous Web Storage helpers.
 
+## Announcements for screen readers
+
+The controller raises `announce` with a short message after a drawing is placed, selected, deleted, undone or redone
+(NFR-A11Y-001). Put it in a visually hidden polite live region:
+
+```ts
+import { LIVE_REGION_ATTRIBUTES, VISUALLY_HIDDEN_STYLE, liveRegionText } from 'keystone-financial-tools-typescript';
+
+const region = document.createElement('div');
+for (const [name, value] of Object.entries(LIVE_REGION_ATTRIBUTES)) region.setAttribute(name, value);
+Object.assign(region.style, VISUALLY_HIDDEN_STYLE);
+document.body.append(region);
+tools.on('announce', (message) => {
+  region.textContent = liveRegionText(region.textContent ?? '', message); // a repeated message is read again
+});
+```
+
+The texts are the `announce.*` keys of the `messages` option (`formatMessage` fills `{tool}` and `{count}`).
+
 ## Repositories
 
 A repository stores one document per scope (a symbol and, optionally, a timeframe). All of them

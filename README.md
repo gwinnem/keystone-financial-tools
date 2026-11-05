@@ -13,9 +13,9 @@ the chart package itself.
 |---|---|---|
 | `keystone-financial-tools-core` | `packages/core` | Drawing model, validation, `DrawingStore`, history, saved document format, `DrawingHost` contract, pixel geometry per kind (`geometryOf`), hit-testing (`hitTest`, `GeometryCache`), the scene a host draws (`buildScene`, `SceneCache`); `/testing` entry with a mock host and the host conformance kit |
 | `keystone-financial-tools-typescript` | `packages/typescript` | Framework-free API: the core plus persistence: async repositories (`MemoryRepository`, `WebStorageRepository`, `IndexedDbRepository`) and the 0.1 Web Storage helpers (`saveDrawings`, `loadDrawings`, `autoSave`) |
-| `keystone-financial-tools-vue` | `packages/vue` | Vue 3 composable (`useDrawings`) |
-| `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |
-| `keystone-financial-tools-angular` | `packages/angular` | Angular service (`KeystoneDrawingService`) |
+| `keystone-financial-tools-vue` | `packages/vue` | Vue 3 composables (`useDrawingTools`, `useDrawings`) and components (`KeystoneTextEditor`, `KeystoneLiveRegion`) |
+| `keystone-financial-tools-react` | `packages/react` | React hooks (`useDrawingTools`, `useDrawings`) and components (`KeystoneTextEditor`, `KeystoneLiveRegion`) |
+| `keystone-financial-tools-angular` | `packages/angular` | Angular services (`KeystoneDrawingToolsService`, `KeystoneDrawingService`) and components (`keystone-text-editor`, `keystone-live-region`) |
 | `keystone-financial-tools-docs` | `packages/docs` | The documentation site (Astro and Starlight): getting started per framework, host and persistence guides, keyboard reference and one page per tool |
 | `keystone-financial-tools-budgets` | `packages/budgets` | Private checks for CI: the performance budgets and baseline of the core bench (NFR-PERF) and the bundle size budgets (NFR-SIZE-001) |
 
@@ -69,7 +69,7 @@ same list without throwing. All anchors of a drawing must be on one y-axis.
 Drawings can also be `locked` (selectable but not editable by interaction), `hidden`, ordered with
 `zIndex`, and carry JSON-safe application data in `meta`. Each drawing can override the theme's
 style (`LIGHT_THEME`, `DARK_THEME`, applied at scene time) and set kind options such as Fibonacci
-levels, the time-zone sequence or trend-line extensions. `createId()` returns collision-safe ids
+levels, the time-zone sequence or trend-line extensions. The controller raises an `announce` event with a translatable message after a drawing is placed, selected, deleted, undone or redone, and the Vue, React and Angular packages render it into a polite live region (NFR-A11Y-001). `createId()` returns collision-safe ids
 (`crypto.randomUUID` when available). See the [core README](packages/core/README.md) for the field
 rules and every issue code.
 
