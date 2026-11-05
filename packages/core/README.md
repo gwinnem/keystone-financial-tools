@@ -849,7 +849,7 @@ stays as it was.
 Test helpers live in a separate entry so they never end up in production bundles.
 
 ```ts
-import { createMockHost, runHostConformance } from 'keystone-financial-tools-core/testing';
+import { createMockHost, runHostConformance, FIBONACCI_PARITY } from 'keystone-financial-tools-core/testing';
 ```
 
 `createMockHost(options)` is a deterministic in-memory host with linear scales:
@@ -894,6 +894,22 @@ runHostConformance(
   },
   { describe, it, expect },
 );
+```
+
+`FIBONACCI_PARITY` (version `FIBONACCI_PARITY_VERSION`, 1) is the fixture a chart tests its Fibonacci renderer
+against (QA-007). It has `scales` (the mock chart: 800 px wide, pane `price` 0 to 200 over 400 px, 60 s bars of
+10 px) and `cases`, seven in all for the four Fibonacci kinds. A case has a `name`, the `drawing`, its `levels`
+(`part`, with the expected `price`, `radius` or `time`) and the expected pixel `shapes`. Labels are not part of
+it. The tests of this package check it against `geometryOf` to 1e-9, so a chart whose renderer matches the
+fixture draws what the tools hit-test.
+
+```ts
+import { FIBONACCI_PARITY } from 'keystone-financial-tools-core/testing';
+
+const { scales, cases } = FIBONACCI_PARITY;
+for (const { name, drawing, shapes } of cases) {
+  it(name, () => expect(chart.renderFibonacci(drawing)).toEqual(shapes));
+}
 ```
 
 ## Saved documents

@@ -19,10 +19,19 @@ or the tests run against the old build. Screenshots and traces are kept for fail
 
 ## What is covered
 
-`tests/drawing-flows.spec.ts`: the toolbar, placing a trend line with two clicks, select and clear,
-move, resize by a handle, delete (key and button), undo and redo, magnet snap, and persistence
-across a reload. `tests/support.ts` converts bars and prices to page pixels through the page's
-`window.playground` test hook.
+| Spec | Covers |
+|---|---|
+| `tests/drawing-flows.spec.ts` | The toolbar and the first flows: a trend line placed with two clicks, select and clear, move, resize by a handle, delete (key and button), undo and redo, magnet snap, persistence across a reload. |
+| `tests/tools.spec.ts` | The same flows for each of the eight tools (the `TOOLS` table in `support.ts`): place by click and by drag, magnet snap, select, move, resize by a handle (not the text note), multi-select (Shift+click, Ctrl+A), delete with undo, undo and redo, reload. The text note adds its editor: confirm, Escape, Enter and double-click to edit. |
+| `tests/touch.spec.ts` | Tap-tap placement, select, delete and undo with touch. Runs only in the `mobile-chromium` project. |
+| `tests/keyboard.spec.ts` | A keyboard-only run (no mouse): Tab to the chart, Alt+T to choose the tool, place with the keyboard cursor and Enter, select, nudge and delete. An axe scan (`@axe-core/playwright`) of the toolbar on the four demo pages fails on serious or critical findings. |
+| viewport and demo page specs | Zoom and scroll, and the TypeScript, Vue, React and Angular pages. |
 
-Still to come with E08-F02: placing by drag, every tool, multi-select, text edit, the touch profile,
-the keyboard-only test and the axe scan.
+The projects are `chromium`, `firefox` and `webkit` (everything except `touch.spec.ts`) and
+`mobile-chromium` (Pixel 7 in landscape, 915 x 412 so that the 800 px chart fits; only
+`touch.spec.ts`). Touch drag is not covered: on touch the tools place on tap-tap.
+
+`tests/support.ts` holds the helpers. It converts bars and prices to page pixels through the page's
+`window.playground` test hook. The tests do not compute a drawing's pixels from its geometry: they ask the
+tools' own `hitTest` across the price pane to find a body or a handle (`bodyPoint`, `handlePoint`), so they
+hold for any shape and any later change of the geometry.
