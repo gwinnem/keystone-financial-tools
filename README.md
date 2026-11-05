@@ -17,6 +17,7 @@ the chart package itself.
 | `keystone-financial-tools-react` | `packages/react` | React hook (`useDrawings`) |
 | `keystone-financial-tools-angular` | `packages/angular` | Angular service (`KeystoneDrawingService`) |
 | `keystone-financial-tools-docs` | `packages/docs` | The documentation site (Astro and Starlight): getting started per framework, host and persistence guides, keyboard reference and one page per tool |
+| `keystone-financial-tools-budgets` | `packages/budgets` | Private checks for CI: the performance budgets and baseline of the core bench (NFR-PERF) and the bundle size budgets (NFR-SIZE-001) |
 
 ## Apps and end-to-end tests
 
@@ -94,6 +95,8 @@ pnpm test:coverage
 pnpm test:mutation
 pnpm --filter keystone-financial-tools-e2e test:e2e
 pnpm --filter keystone-financial-tools-docs dev   # the documentation site
+pnpm --filter keystone-financial-tools-core bench && pnpm --filter keystone-financial-tools-budgets bench:check
+pnpm --filter keystone-financial-tools-budgets size:check   # after pnpm build
 ```
 
 Requirements: Node 22.22.3+ or 24.15+ (Node 24 recommended), pnpm 12+. The documentation site

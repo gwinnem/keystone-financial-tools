@@ -239,7 +239,8 @@ theme, `measureText` and `priceFormatter` are fixed per cache: create a new one 
 following the host and the store and is safe to call twice.
 
 `pnpm --filter keystone-financial-tools-core bench` measures `hitTest` over 500 drawings with a warm
-cache (budget: 0.5 ms).
+cache (budget: 0.5 ms). It also writes `reports/bench/results.json`, which `keystone-financial-tools-budgets`
+(`bench:check`) checks against the time budgets and the recorded baseline.
 
 ## Scene
 
@@ -290,7 +291,8 @@ for (const item of scenes.get({ drawings: store.list(), cache, selected, hover, 
 `SceneCache(host)` returns the same array until something changes: any option (compared by reference, so
 pass the same object for an unchanged value) or the viewport. `invalidate()` forgets the scene and
 `destroy()` stops following the host; both are safe to repeat. `pnpm --filter keystone-financial-tools-core bench`
-also measures `buildScene` over 500 drawings (budget: 2 ms).
+also measures `buildScene` over 500 drawings and, through the controller, `getScene()` after a viewport change
+(budget: 2 ms).
 
 ## Interaction state machine
 

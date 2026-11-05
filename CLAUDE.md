@@ -37,6 +37,8 @@ SDS first, then `backlog.json`, then re-run the script with `-UpdateExisting`.
 - `packages/docs` (`keystone-financial-tools-docs`): the Astro/Starlight documentation site. Pages are
   Markdown in `src/content/docs`; the navigation and the keyboard table come from `src/site`. The build
   fails on a broken link. Needs Node 22.23.4+ or 24 (Astro 7).
+- `packages/budgets` (`keystone-financial-tools-budgets`): the performance and size budgets and the CLI that
+  checks them (`bench:check`, `bench:baseline`, `size:check`). Runs as TypeScript through Node type stripping.
 
 Drawings are stored in chart-agnostic coordinates (time, price, y-axis id), never pixels, so they
 survive zoom, scroll and layout changes.
@@ -64,6 +66,8 @@ pnpm test
 pnpm test:coverage
 pnpm test:mutation
 pnpm build
+pnpm --filter keystone-financial-tools-core bench   # then: pnpm --filter keystone-financial-tools-budgets bench:check
+pnpm --filter keystone-financial-tools-budgets size:check   # after pnpm build
 pnpm --filter keystone-financial-tools-e2e test:e2e   # Playwright, needs test:e2e:install once
 ```
 

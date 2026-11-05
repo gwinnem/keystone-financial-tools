@@ -2,6 +2,16 @@
 
 ## 0.1.0 (unreleased)
 
+- Size budgets (E09-F02-S02): `pnpm --filter keystone-financial-tools-budgets size:check` minifies (terser) and
+  gzips the built core, TypeScript, Vue, React and Angular bundles and fails when the core is over 25 kB or a
+  package over 3 kB (NFR-SIZE-001), naming the file and the sizes. A missing build says to run `pnpm build`. CI runs
+  it after the build.
+- Performance benchmarks with baselines (E09-F02-S01): new private package `keystone-financial-tools-budgets`. The
+  core bench (`pnpm --filter keystone-financial-tools-core bench`) now has a test per time budget with 500
+  drawings through the controller (`getScene()` 2 ms after a viewport change, `hitTest()` 0.5 ms, a pointer move
+  during a drag 1 ms) and writes `reports/bench/results.json`. `bench:check` fails when a mean is over its budget or
+  more than 20% above the recorded baseline (`packages/budgets/baseline/core-bench.json`, recorded with
+  `bench:baseline`). A `bench` CI job runs both and uploads the results as the `bench-results` artifact.
 - Live tool examples (E09-F01-S03): the page of each tool on the docs site has a *Try it* section with the playground
   embedded in an iframe, with only that tool enabled and already active, plus Undo, Redo, Delete and Magnet. The
   playground has a new `embed.html?tool=<kind>` page for it (in memory only; a missing or unknown tool says how to ask

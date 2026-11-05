@@ -1966,7 +1966,8 @@
                 "Vitest benches for 500 drawings: `getScene` ≤ 2 ms, `hitTest` ≤ 0.5 ms, drag move ≤ 1 ms on the CI baseline.",
                 "Results are stored as a CI artifact; a run more than 20% slower than the baseline fails."
               ],
-              "tasks": ["Write benches.", "Baseline compare script.", "CI job."]
+              "tasks": ["Write benches.", "Baseline compare script.", "CI job."],
+              "status": "done"
             },
             {
               "id": "E09-F02-S02",
@@ -1974,7 +1975,8 @@
               "userStory": "As a chart application developer, I want bundle size checked on every PR so that the library stays light.",
               "sds": ["NFR-SIZE-001"],
               "acceptance": ["CI measures min+gzip size: core ≤ 25 kB, each framework package ≤ 3 kB; exceeding fails.", "The `/testing` entry is excluded from the core budget."],
-              "tasks": ["Add a size-check script.", "CI step."]
+              "tasks": ["Add a size-check script.", "CI step."],
+              "status": "done"
             }
           ]
         },

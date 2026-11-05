@@ -62,6 +62,48 @@ jobs:
         # Includes the docs site (packages/docs): its links validator fails the build on a broken link.
         run: pnpm build
 
+      - name: Package sizes (NFR-SIZE-001)
+        # The core is at most 25 kB min+gzip and each framework package at most 3 kB, measured on the files the build just wrote.
+        run: pnpm --filter keystone-financial-tools-budgets size:check
+
+  bench:
+    name: Benchmarks (NFR-PERF)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Benchmarks (core)
+        # Writes packages/core/reports/bench/results.json.
+        run: pnpm --filter keystone-financial-tools-core bench
+
+      - name: Time budgets and baseline
+        # Fails when a benchmark is over its time budget or more than 20% slower than packages/budgets/baseline/core-bench.json.
+        run: pnpm --filter keystone-financial-tools-budgets bench:check
+
+      - name: Upload benchmark results
+        # The artifact is where a new baseline comes from, see packages/budgets/README.md.
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench-results
+          path: packages/core/reports/bench/results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest
@@ -109,7 +151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [core, typescript, vue, react, angular, docs]
+        package: [core, typescript, vue, react, angular, docs, budgets]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

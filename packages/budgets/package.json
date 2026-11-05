@@ -1,0 +1,30 @@
+{
+  "name": "keystone-financial-tools-budgets",
+  "version": "0.1.0",
+  "description": "Performance and bundle size budgets of the Keystone financial drawing tools: benchmark baseline check and min+gzip size check for CI",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench:check": "node src/cli.ts bench-check",
+    "bench:baseline": "node src/cli.ts bench-baseline",
+    "size:check": "node src/cli.ts size-check",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
+    "lint": "eslint src __tests__ vitest.config.ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "terser": "^5.51.2"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1171,6 +1171,30 @@ Decisions of E09-F01-S03 (live tool examples):
 - Known limit: the playground renders Fibonacci arcs, fans and time zones as a line between the anchors, which
   the three tool pages say.
 
+Decisions of E09-F02 (performance and size budgets; `packages/budgets`):
+
+- One private package, `keystone-financial-tools-budgets`, holds the budgets (`src/budgets.ts`: `PERF_BUDGETS`,
+  `SIZE_BUDGETS`) and the checks. Its CLI runs as TypeScript with Node's type stripping (`node src/cli.ts`), so it
+  needs no build, and its logic (`run.ts`) takes its file access as an `Io` object, so it is unit tested without
+  files.
+- Time budgets (`bench:check`): `packages/core/__tests__/perf.bench.ts` has one Vitest bench test per budget, named
+  `<requirement id> <label>`, run through the controller with 500 seeded drawings on the mock host. A budget
+  applies to every task of the tests whose name starts with its id; a missing test fails the check. NFR-PERF-001 is
+  measured cold: every run scrolls the viewport by one pixel and then calls `getScene()`, so the geometry and the
+  scene are built again, which is stricter than the warm `buildScene` bench. NFR-PERF-002 is measured with a warm
+  cache. NFR-PERF-003 is a pointer move during a drag of the top-most selected trend line among 500 drawings.
+- Baseline: `packages/budgets/baseline/core-bench.json` holds the mean of each benchmark (version 1). A run more
+  than 20% slower than its entry fails (`REGRESSION_TOLERANCE`), and an entry without a result fails. A benchmark
+  that is not in the baseline is reported only. Without a baseline file only the time budgets are checked, so a
+  first run in CI is not blocked; the baseline is recorded from the CI artifact `bench-results` (a local machine
+  is not CI's speed) with `bench:baseline` and committed.
+- Size budgets (`size:check`): the built files, minified with terser (module, default compression, no comments, not
+  even license comments) and gzipped at the default level (what the Vite build reports), so the angular package (which ng-packagr does not minify) is measured like the others. 1 kB is 1000
+  bytes. The `typescript` package is held to the same 3 kB as the framework adapters. The files are in
+  `SIZE_BUDGETS`, and a test checks that they are each package's `module` entry.
+- CI: `verify` runs `size:check` after the build; the `bench` job runs the core bench and `bench:check` and uploads
+  `packages/core/reports/bench/results.json`; `budgets` is in the mutation matrix.
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |
