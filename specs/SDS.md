@@ -976,7 +976,7 @@ Decisions of E07-F06 (parity and i18n, FR-FW-050, NFR-I18N-001, AR-5):
   option of `createDrawingTools` takes any of the keys; `resolveMessages` merges it over the English texts
   and throws a `RangeError` for a key that is not in the table (a typo would otherwise leave a text
   untranslated without a word) and for a text that is empty or not a string (an empty accessible name is
-  no name); a key set to `undefined` keeps its English text. The result is `DrawingTools.messages`, frozen. E09-F03 adds seven `announce.*` keys (23 in all), see the decisions of E09-F03.
+  no name); a key set to `undefined` keeps its English text. The result is `DrawingTools.messages`, frozen. E09-F03 adds seven `announce.*` keys (23 in all) and the follow-ups #174 and #175 three more (26 in all), see the decisions of E09-F03.
 - The toolbar entries do not carry the text: `messages[entry.labelKey]` is the label, so the state and its
   reference identity do not depend on the language, and the texts are read once, when the tools are created.
   The adapters give the table as `messages`: Vue and React as a plain object (React from the first render,
@@ -1199,7 +1199,9 @@ Decisions of E09-F03 (accessibility; NFR-A11Y-001):
 
 - `announce` event (`string`): the controller says what the person did, in the language of the `messages` option. The
   keys are `announce.placed` (`{tool} placed`), `announce.selected` (`{tool} selected`), `announce.selectedMany`
-  (`{count} drawings selected`), `announce.deleted`, `announce.deletedMany`, `announce.undone` and `announce.redone`;
+  (`{count} drawings selected`), `announce.deleted`, `announce.deletedMany`, `announce.undone`, `announce.redone`,
+  `announce.blocked` (`{tool} is locked`), `announce.blockedMany` (`{count} drawings are locked`) and
+  `announce.toolActive` (`{tool} tool active`);
   `formatMessage(template, values)` fills `{name}` placeholders (an unknown name is left as it is). `{tool}` is the
   tool's own message (`tool.<kind>`), so a translation of the tool names carries over.
 - One message per action, the last call wins: an action sets a pending announcement and `settle()` raises it after
@@ -1207,7 +1209,12 @@ Decisions of E09-F03 (accessibility; NFR-A11Y-001):
   changed to a non-empty one, nothing else is pending, the controller is not inside an action (`acting`: delete,
   undo and redo, so the selection that follows is not said on top of "deleted" or "undone") and no note is being
   edited. A new note is announced when its editor confirms it; a cancelled editor says nothing. Moving, nudging,
-  handle drags, hover and choosing a tool say nothing (the toolbar button has `aria-pressed`).
+  handle drags and hover say nothing. Follow-ups #174 and #175 (done before the first release): a `blocked` effect
+  (a locked drawing refuses Delete, an arrow key or a drag; once for each key press or drag) is announced as
+  `announce.blocked`, or `announce.blockedMany` for several, unless the same key press already said something, so a
+  delete that removed other drawings says "deleted" and not that a locked one stayed; a tool chosen by a keyboard
+  shortcut is announced as `announce.toolActive` when the machine accepted it, while `activate` (the toolbar button,
+  which has `aria-pressed`) stays silent.
 - The live region is the adapters' part: `LIVE_REGION_ATTRIBUTES` (`aria-live=polite`, `aria-atomic=true`, no `role`
   so that a page's own `role=status` does not clash), `VISUALLY_HIDDEN_STYLE` and `liveRegionText(previous, message)`
   come from the core. A message equal to the previous one gets a no-break space added, so the region's text changes
@@ -1218,8 +1225,8 @@ Decisions of E09-F03 (accessibility; NFR-A11Y-001):
   `e2e/tests/keyboard-walkthrough.spec.ts` (toolbar route for all eight tools, shortcut route for the five that have
   one, note editing). axe (WCAG 2.0/2.1 A and AA, serious and critical) runs on the whole of each demo page, with
   the live region. Fixed: duplicate speech from the status line. Documented: the arcs, fans and time zones tools
-  have no default shortcut. Known limits, recorded as issues: a locked drawing that blocks Delete or a nudge is
-  silent for a screen reader (`blocked` is not announced, #174), and choosing a tool by shortcut is not announced (#175).
+  have no default shortcut. Findings recorded as issues and then fixed: a locked drawing that blocked Delete or a nudge was silent
+  for a screen reader (#174), and choosing a tool by shortcut was not announced (#175); see the follow-ups above.
 
 Decisions of E09-F04 (release pipeline; DOC-004, NFR-COMP-001, D-7; `.github/workflows/release.yml`, the `release:*`
 scripts of `packages/budgets`):
@@ -1264,7 +1271,7 @@ scripts of `packages/budgets`):
 | NFR-SEC-001 | No `eval`/`Function`, no network access in core |
 | NFR-SEC-002 | Text is never interpreted as HTML; imported documents are validated before use |
 | NFR-REL-001 | Interaction never throws into the host: errors become `error` events and leave the store unchanged |
-| NFR-A11Y-001 | All actions are possible with the keyboard (placement via keyboard cursor, §9.4 nudging); playground toolbar meets WCAG 2.1 AA; placement, selection, deletion, undo and redo are announced through the `announce` event and a polite live region |
+| NFR-A11Y-001 | All actions are possible with the keyboard (placement via keyboard cursor, §9.4 nudging); playground toolbar meets WCAG 2.1 AA; placement, selection, deletion, undo and redo, a locked drawing that refuses a change and a tool chosen with a shortcut are announced through the `announce` event and a polite live region |
 | NFR-DOC-001 | Every public export has TSDoc with an example |
 | NFR-I18N-001 | All user-visible strings (labels, tool names) come from a replaceable message table |
 

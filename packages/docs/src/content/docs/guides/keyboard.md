@@ -44,7 +44,7 @@ The Fibonacci arcs, fans and time zones tools are chosen with their toolbar butt
 
 ## Locked drawings
 
-A locked drawing can be selected but not moved, resized, edited or deleted by interaction. When Delete, an arrow key or a drag would change one, the tools leave it alone and raise the `blocked` event with its id.
+A locked drawing can be selected but not moved, resized, edited or deleted by interaction. When Delete, an arrow key or a drag would change one, the tools leave it alone, raise the `blocked` event with its id and announce it to screen readers ("Trend line is locked", see below).
 
 ## Pointer actions
 
@@ -60,12 +60,12 @@ Ctrl or Cmd with Z undoes, and Ctrl or Cmd with Shift and Z, or with Y, redoes. 
 
 ## Tool shortcuts
 
-Alt with T, H, R, F or N chooses the trend line, horizontal line, rectangle, Fibonacci retracement or text note tool. You can change them or turn them off with the `shortcuts` option, see [Build a toolbar](/guides/toolbar/). A shortcut for a tool that is not in the `tools` option is not handled.
+Alt with T, H, R, F or N chooses the trend line, horizontal line, rectangle, Fibonacci retracement or text note tool. You can change them or turn them off with the `shortcuts` option, see [Build a toolbar](/guides/toolbar/). A shortcut for a tool that is not in the `tools` option is not handled. A shortcut announces the tool to screen readers ("Trend line tool active"), as nothing else tells a keyboard user on the chart that the tool changed.
 
 The Fibonacci arcs, Fibonacci fans and Fibonacci time zones tools have no default shortcut. Choose them with their toolbar button (Tab to it and press Enter), or give them a key with the `shortcuts` option.
 
 ## Announcements for screen readers
 
-The controller raises the `announce` event with a short message after what the person did: a drawing placed ("Trend line placed"), selected ("Trend line selected", "2 drawings selected"), deleted ("Trend line deleted", "2 drawings deleted"), and "Undone" or "Redone". A text note is announced when its editor confirms it. Moving, nudging, hovering and choosing a tool say nothing. The messages are in the `messages` option (`announce.*`), so they can be translated.
+The controller raises the `announce` event with a short message after what the person did: a drawing placed ("Trend line placed"), selected ("Trend line selected", "2 drawings selected"), deleted ("Trend line deleted", "2 drawings deleted"), and "Undone" or "Redone". A text note is announced when its editor confirms it. A locked drawing that refuses a delete, an arrow key or a drag is announced once for each key press or drag ("Trend line is locked", "2 drawings are locked"); when the same key press deleted other drawings, the announcement says that instead. A tool chosen with a keyboard shortcut is announced ("Trend line tool active"); one chosen with `activate` or a toolbar button is not, because the button reports it itself with `aria-pressed`. Moving, nudging and hovering say nothing. The messages are in the `messages` option (`announce.*`), so they can be translated.
 
-The adapters turn the event into an `announcement` value and a live region component (`KeystoneLiveRegion` in Vue and React, `keystone-live-region` in Angular). Render it once on the page. With the TypeScript package, use `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE` and `liveRegionText` from the core. Turn the announcements off with `announcements: false` in the adapters. A locked drawing that blocks a key is not announced yet; listen to `blocked` if you need it.
+The adapters turn the event into an `announcement` value and a live region component (`KeystoneLiveRegion` in Vue and React, `keystone-live-region` in Angular). Render it once on the page. With the TypeScript package, use `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE` and `liveRegionText` from the core. Turn the announcements off with `announcements: false` in the adapters.

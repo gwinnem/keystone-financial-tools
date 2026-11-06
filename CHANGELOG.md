@@ -16,8 +16,11 @@
   (`npm pack --dry-run` of every package: no test, fixture, source or source map in a tarball). The manual publish
   checklist (core, typescript, vue, react, angular) is in CLAUDE.md and in the new docs guide *Release and publish*.
 - Accessibility (E09-F03, NFR-A11Y-001): the controller raises a new `announce` event with a short message after a
-  drawing is placed, selected, deleted, or an undo or redo (a text note once its editor confirms it; moving,
-  nudging, hovering and choosing a tool say nothing). The messages are the new `announce.*` keys of the messages
+  drawing is placed, selected, deleted, or an undo or redo (a text note once its editor confirms it), when a locked
+  drawing refuses a delete, a nudge or a drag (`announce.blocked`, `announce.blockedMany`: "Trend line is locked"; a
+  delete that removed other drawings says that instead) and when a keyboard shortcut chooses a tool
+  (`announce.toolActive`: "Trend line tool active"; the toolbar button reports the tool itself with `aria-pressed`,
+  so `activate` stays silent). Moving, nudging and hovering say nothing. The messages are the new `announce.*` keys of the messages
   table, so they can be translated; `formatMessage` fills their `{tool}` and `{count}` placeholders. The core exports
   `LIVE_REGION_ATTRIBUTES`, `VISUALLY_HIDDEN_STYLE` and `liveRegionText`. The Vue, React and Angular adapters take
   `announcements` (default on), expose `announcement`, and ship a live region (`KeystoneLiveRegion`,

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "results": {
+    "hit-test.bench.ts > hitTest with 500 drawings and a warm cache > a point in the middle of the plot": 0.028331,
+    "hit-test.bench.ts > hitTest with 500 drawings and a warm cache > a point in the middle of the plot, 50 drawings selected": 0.0344241,
+    "hit-test.bench.ts > hitTest with 500 drawings and a warm cache > a point that hits nothing, touch": 0.0644698,
+    "perf.bench.ts > NFR-PERF-001 getScene() with 500 drawings > after a viewport change": 0.844134,
+    "perf.bench.ts > NFR-PERF-002 hitTest() with 500 drawings > a point in the middle of the plot": 0.0261693,
+    "perf.bench.ts > NFR-PERF-002 hitTest() with 500 drawings > a point that hits nothing": 0.0473265,
+    "perf.bench.ts > NFR-PERF-003 pointer move during a drag with 500 drawings > a move of the selected trend line": 0.00833741,
+    "scene.bench.ts > buildScene with 500 drawings and a warm cache > 50 selected, one hovered, a preview and a snap": 0.259152,
+    "scene.bench.ts > buildScene with 500 drawings and a warm cache > SceneCache with unchanged options": 0.000156738,
+    "scene.bench.ts > buildScene with 500 drawings and a warm cache > no state": 0.219179
+  }
+}

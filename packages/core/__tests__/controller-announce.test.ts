@@ -57,10 +57,10 @@ describe('placing', () => {
     const said = record(tools, 'announce');
     host.key('t', ALT);
     host.key('Enter');
-    expect(said).toStrictEqual([]);
+    expect(said).toStrictEqual(['Trend line tool active']);
     host.key('ArrowRight', { shiftKey: true });
     host.key('Enter');
-    expect(said).toStrictEqual(['Trend line placed']);
+    expect(said).toStrictEqual(['Trend line tool active', 'Trend line placed']);
   });
 
   it('announces every drawing of a row, also when the message is the same', () => {
@@ -311,7 +311,7 @@ describe('deleting', () => {
     expect(said).toStrictEqual([]);
   });
 
-  it('says nothing for a locked drawing, which Delete leaves alone, and announces the others', () => {
+  it('says that a locked drawing is locked, which Delete leaves alone, and announces the others that it deletes', () => {
     const { host, store, tools } = rig({ store: new DrawingStore([LOCKED, OTHER]) });
     const blocked = record(tools, 'blocked');
     tools.select(['l']);
@@ -319,7 +319,7 @@ describe('deleting', () => {
     host.key('Delete');
     expect(blocked).toHaveLength(1);
     expect(store.list()).toHaveLength(2);
-    expect(said).toStrictEqual([]);
+    expect(said).toStrictEqual(['Trend line is locked']);
     host.key('a', CTRL);
     said.length = 0;
     host.key('Delete');
@@ -333,6 +333,202 @@ describe('deleting', () => {
     host.key('a', CTRL);
     host.key('Delete');
     expect(said).toStrictEqual(['2 drawings selected', 'Rectangle deleted']);
+  });
+});
+
+describe('locked drawings', () => {
+  const LOCKED_OTHER: Drawing = { ...OTHER, locked: true };
+
+  it('announces the drawing that Delete leaves alone, with the name of its tool, once for each key press', () => {
+    const { host, tools } = rig({ store: new DrawingStore([LOCKED, OTHER]) });
+    const blocked = record(tools, 'blocked');
+    tools.select(['l']);
+    const said = record(tools, 'announce');
+    host.key('Delete');
+    expect(said).toStrictEqual(['Trend line is locked']);
+    host.key('Backspace');
+    expect(said).toStrictEqual(['Trend line is locked', 'Trend line is locked']);
+    expect(blocked).toHaveLength(2);
+    expect(tools.getState().selection).toStrictEqual(['l']);
+  });
+
+  it('counts the drawings when several locked ones are asked to change', () => {
+    const { host, tools } = rig({ store: new DrawingStore([LOCKED, LOCKED_OTHER]) });
+    host.key('a', CTRL);
+    const said = record(tools, 'announce');
+    host.key('Delete');
+    host.key('ArrowRight');
+    expect(said).toStrictEqual(['2 drawings are locked', '2 drawings are locked']);
+  });
+
+  it.each([['ArrowLeft'], ['ArrowRight'], ['ArrowUp'], ['ArrowDown']])('announces the drawing an %s key leaves alone, also with Shift', (key) => {
+    const { host, tools } = rig({ store: new DrawingStore([LOCKED]) });
+    tools.select(['l']);
+    const said = record(tools, 'announce');
+    host.key(key);
+    host.key(key, { shiftKey: true });
+    expect(said).toStrictEqual(['Trend line is locked', 'Trend line is locked']);
+  });
+
+  it('announces a drag that starts on a locked drawing once, and not what the pointer does after it', () => {
+    const { tools, drag } = rig({ store: new DrawingStore([LOCKED]) });
+    tools.select(['l']);
+    const said = record(tools, 'announce');
+    drag(
+      [200, 150],
+      [260, 190],
+      [
+        [220, 160],
+        [240, 170],
+      ]
+    );
+    expect(said).toStrictEqual(['Trend line is locked']);
+  });
+
+  it('says what a delete removed, and not that a locked drawing of the selection stays', () => {
+    const { host, tools } = rig({ store: new DrawingStore([LOCKED, OTHER]) });
+    host.key('a', CTRL);
+    const said = record(tools, 'announce');
+    host.key('Delete');
+    expect(said).toStrictEqual(['Rectangle deleted']);
+  });
+
+  it('says that a locked drawing stays when a nudge moves the others, and when a drag moves them', () => {
+    const { host, tools, drag } = rig({ store: new DrawingStore([LOCKED, OTHER]) });
+    host.key('a', CTRL);
+    const said = record(tools, 'announce');
+    host.key('ArrowRight');
+    expect(said).toStrictEqual(['Trend line is locked']);
+    drag([550, 300], [560, 310]);
+    expect(said).toStrictEqual(['Trend line is locked', 'Trend line is locked']);
+  });
+
+  it('says nothing more than the selection for a click on a locked drawing, and nothing for what is not locked', () => {
+    const { host, tools, click, drag } = rig({ store: new DrawingStore([LOCKED, OTHER]) });
+    const said = record(tools, 'announce');
+    click(200, 150);
+    expect(said).toStrictEqual(['Trend line selected']);
+    said.length = 0;
+    tools.select(['o']);
+    said.length = 0;
+    host.key('ArrowRight');
+    drag([550, 300], [560, 310]);
+    host.key('Delete');
+    expect(said).toStrictEqual(['Rectangle deleted']);
+  });
+
+  it('says nothing for a locked drawing that is gone', () => {
+    const { host, store, tools } = rig({ store: new DrawingStore([LOCKED]) });
+    tools.select(['l']);
+    store.remove('l');
+    const said = record(tools, 'announce');
+    host.key('Delete');
+    expect(said).toStrictEqual([]);
+  });
+
+  it('gives the announcement in the language of the application', () => {
+    const { host, tools } = rig({
+      store: new DrawingStore([LOCKED, LOCKED_OTHER]),
+      messages: { 'tool.trend-line': 'Trendlinie', 'announce.blocked': '{tool} ist gesperrt', 'announce.blockedMany': '{count} Zeichnungen sind gesperrt' },
+    });
+    tools.select(['l']);
+    const said = record(tools, 'announce');
+    host.key('Delete');
+    host.key('a', CTRL);
+    said.length = 0;
+    host.key('Delete');
+    expect(said).toStrictEqual(['2 Zeichnungen sind gesperrt']);
+    tools.select(['l']);
+    said.length = 0;
+    host.key('ArrowUp');
+    expect(said).toStrictEqual(['Trendlinie ist gesperrt']);
+  });
+});
+
+describe('tool shortcuts', () => {
+  it.each([
+    ['t', 'Trend line'],
+    ['h', 'Horizontal line'],
+    ['r', 'Rectangle'],
+    ['f', 'Fibonacci retracement'],
+    ['n', 'Text note'],
+  ])('announces the tool Alt+%s chooses', (key, name) => {
+    const { host, tools } = rig();
+    const said = record(tools, 'announce');
+    expect(host.key(key, ALT)).toBe(true);
+    expect(said).toStrictEqual([`${name} tool active`]);
+    expect(tools.getState().activeTool).not.toBeNull();
+  });
+
+  it('does not announce a tool that is chosen with activate, which is what the toolbar button does', () => {
+    const { tools } = rig();
+    const said = record(tools, 'announce');
+    tools.activate('trend-line');
+    tools.activate('rectangle');
+    expect(said).toStrictEqual([]);
+  });
+
+  it('announces every shortcut: a change of tool and the same tool again', () => {
+    const { host, tools } = rig();
+    const said = record(tools, 'announce');
+    host.key('t', ALT);
+    host.key('r', ALT);
+    host.key('r', ALT);
+    expect(said).toStrictEqual(['Trend line tool active', 'Rectangle tool active', 'Rectangle tool active']);
+  });
+
+  it('announces the tool chosen from a selection, and not that the selection is gone', () => {
+    const { host, tools } = rig({ store: TWO() });
+    tools.select(['l']);
+    const said = record(tools, 'announce');
+    host.key('r', ALT);
+    expect(tools.getState().selection).toStrictEqual([]);
+    expect(said).toStrictEqual(['Rectangle tool active']);
+  });
+
+  it('says nothing for a tool that is not allowed, and leaves the key to the host', () => {
+    const { host, tools } = rig({ tools: ['rectangle'] });
+    const said = record(tools, 'announce');
+    expect(host.key('t', ALT)).toBe(false);
+    expect(tools.getState().activeTool).toBeNull();
+    expect(said).toStrictEqual([]);
+  });
+
+  it('says nothing for a tool that is turned off or has no shortcut', () => {
+    const { host, tools } = rig({ shortcuts: { 'trend-line': null } });
+    const said = record(tools, 'announce');
+    expect(host.key('t', ALT)).toBe(false);
+    expect(said).toStrictEqual([]);
+  });
+
+  it('says nothing while the state cannot change tool, when a note is edited', () => {
+    const editor = deferredEditor();
+    const { host, tools, click } = rig({}, { editText: editor.editText });
+    tools.activate('text-note');
+    click(100, 200);
+    expect(tools.getState().interaction.type).toBe('editing-text');
+    const said = record(tools, 'announce');
+    expect(host.key('r', ALT)).toBe(false);
+    expect(said).toStrictEqual([]);
+  });
+
+  it('gives the announcement with the key of the shortcut option and in the language of the application', () => {
+    const { host, tools } = rig({ shortcuts: { 'trend-line': 'Alt+L' }, messages: { 'tool.trend-line': 'Trendlinie', 'announce.toolActive': 'Werkzeug {tool} aktiv' } });
+    const said = record(tools, 'announce');
+    host.key('l', ALT);
+    expect(said).toStrictEqual(['Werkzeug Trendlinie aktiv']);
+  });
+
+  it('is raised once, after the state is published, with the tool already active', () => {
+    const { host, tools } = rig();
+    let active: unknown;
+    const said = record(tools, 'announce');
+    tools.on('announce', () => {
+      active = tools.getState().activeTool;
+    });
+    host.key('t', ALT);
+    expect(said).toHaveLength(1);
+    expect(active).toBe('trend-line');
   });
 });
 

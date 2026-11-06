@@ -92,6 +92,17 @@ for (const { name, path } of PAGES) {
       await expect(live).toHaveText('Trend line deleted');
     });
 
+    test('announces the tool a keyboard shortcut chooses, and not the one a toolbar button chooses', async ({ page }) => {
+      await focusChart(page);
+      await page.keyboard.press('Alt+t');
+      await expect(live).toHaveText('Trend line tool active');
+      await page.keyboard.press('Alt+h');
+      await expect(live).toHaveText('Horizontal line tool active');
+      await page.getByRole('button', { name: 'Rectangle' }).click();
+      await expect(page.getByRole('button', { name: 'Rectangle' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(live).toHaveJSProperty('textContent', 'Horizontal line tool active');
+    });
+
     test('counts the drawings when several are selected or deleted', async ({ page }) => {
       await placeLine(page);
       await placeLine(page, 40);

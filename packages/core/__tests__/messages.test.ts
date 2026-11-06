@@ -33,12 +33,15 @@ describe('DEFAULT_MESSAGES', () => {
       'announce.deletedMany': '{count} drawings deleted',
       'announce.undone': 'Undone',
       'announce.redone': 'Redone',
+      'announce.blocked': '{tool} is locked',
+      'announce.blockedMany': '{count} drawings are locked',
+      'announce.toolActive': '{tool} tool active',
     });
   });
 
   it('has the placeholders the announcements are filled with: {tool} for one drawing, {count} for several, none for undo and redo', () => {
-    for (const key of ['announce.placed', 'announce.selected', 'announce.deleted'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{tool}');
-    for (const key of ['announce.selectedMany', 'announce.deletedMany'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{count}');
+    for (const key of ['announce.placed', 'announce.selected', 'announce.deleted', 'announce.blocked', 'announce.toolActive'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{tool}');
+    for (const key of ['announce.selectedMany', 'announce.deletedMany', 'announce.blockedMany'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{count}');
     for (const key of ['announce.undone', 'announce.redone'] as const) expect(DEFAULT_MESSAGES[key], key).not.toContain('{');
   });
 

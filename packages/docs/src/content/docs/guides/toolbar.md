@@ -98,10 +98,13 @@ A key that is not in the table, and a text that is empty, throw a `RangeError` w
 | `announce.deletedMany` | {count} drawings deleted |
 | `announce.undone` | Undone |
 | `announce.redone` | Redone |
+| `announce.blocked` | {tool} is locked |
+| `announce.blockedMany` | {count} drawings are locked |
+| `announce.toolActive` | {tool} tool active |
 
 The default note editor has no buttons, only its accessible name (`editor.note`). `editor.confirm` and `editor.cancel` are for an editor of your own.
 
-The `announce.*` texts are what the tools say to a screen reader after an action, see [the keyboard reference](/guides/keyboard/). `{tool}` is replaced by the text of the tool (`tool.<kind>`) and `{count}` by the number of drawings; keep the placeholders in your translation.
+The `announce.*` texts are what the tools say to a screen reader after an action, after a locked drawing refuses a change and after a shortcut chooses a tool, see [the keyboard reference](/guides/keyboard/). `{tool}` is replaced by the text of the tool (`tool.<kind>`) and `{count}` by the number of drawings; keep the placeholders in your translation.
 
 ## Keyboard shortcuts
 

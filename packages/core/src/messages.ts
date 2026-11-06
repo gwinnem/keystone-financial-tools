@@ -23,7 +23,10 @@ export type MessageKey =
   | 'announce.deleted'
   | 'announce.deletedMany'
   | 'announce.undone'
-  | 'announce.redone';
+  | 'announce.redone'
+  | 'announce.blocked'
+  | 'announce.blockedMany'
+  | 'announce.toolActive';
 
 /** Every message: a text for each key. */
 export type Messages = Readonly<Record<MessageKey, string>>;
@@ -66,6 +69,9 @@ export const DEFAULT_MESSAGES: Messages = deepFreeze<Messages>({
   'announce.deletedMany': '{count} drawings deleted',
   'announce.undone': 'Undone',
   'announce.redone': 'Redone',
+  'announce.blocked': '{tool} is locked',
+  'announce.blockedMany': '{count} drawings are locked',
+  'announce.toolActive': '{tool} tool active',
 });
 
 /**

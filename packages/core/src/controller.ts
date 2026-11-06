@@ -139,7 +139,8 @@ export interface DrawingToolsEvents {
   blocked: DrawingToolsBlocked;
   /**
    * A message for a screen reader (NFR-A11Y-001, NFR-I18N-001): a drawing was placed, the selection changed
-   * to something, drawings were deleted, or an undo or redo was done. It is made from the `announce.*` entries of
+   * to something, drawings were deleted, an undo or redo was done, locked drawings refused a delete, a nudge
+   * or a drag, or a keyboard shortcut chose a tool. It is made from the `announce.*` entries of
    * `messages`, so it is in the language of the application. One message for each action, however many
    * things changed with it (a placement also selects the new drawing: only "placed" is raised). The adapters
    * show it in a polite live region.
@@ -566,6 +567,23 @@ class DrawingToolsController implements DrawingTools {
     else this.announce(many, { count: drawings.length });
   }
 
+  /** Locked drawings refused a change: said when the same key or drag has said nothing else (a delete that removed the others says that), so one press is one message. */
+  private announceBlocked(ids: readonly string[]): void {
+    if (this.announcement !== null) return;
+    this.announceDrawings(
+      'announce.blocked',
+      'announce.blockedMany',
+      ids.map((id) => this.store.get(id) as Drawing)
+    );
+  }
+
+  /** A tool shortcut: the tool changes without the toolbar button, which reports it itself with `aria-pressed`, so the shortcut says it. Returns false when the machine ignores it. */
+  private activateByShortcut(tool: DrawingKind): boolean {
+    const done = !this.feed({ type: 'activate', tool }).ignored;
+    if (done) this.announce('announce.toolActive', { tool: this.toolName(tool) });
+    return done;
+  }
+
   private undoStep(): boolean {
     return this.step(() => this.history.undo(), 'announce.undone');
   }
@@ -680,6 +698,7 @@ class DrawingToolsController implements DrawingTools {
         return;
       case 'blocked':
         this.emit('blocked', { code: 'KFT-E-LOCKED', ids: effect.ids });
+        this.announceBlocked(effect.ids);
         return;
       case 'drag-start':
         this.startDrag(effect);
@@ -752,7 +771,7 @@ class DrawingToolsController implements DrawingTools {
       case 'redo':
         return this.redoStep();
       case 'tool':
-        return this.allowed.has(action.tool) && !this.feed({ type: 'activate', tool: action.tool }).ignored;
+        return this.allowed.has(action.tool) && this.activateByShortcut(action.tool);
     }
   }
 

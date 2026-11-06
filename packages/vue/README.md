@@ -75,7 +75,7 @@ const { toolbar, messages, textEdit } = useDrawingTools(props.host, { messages: 
 
 ### Announcements
 
-The tools say what the person did (a drawing placed, selected, deleted, undone or redone) so that a screen reader
+The tools say what the person did (a drawing placed, selected, deleted, undone or redone; a locked drawing that refuses a change; a tool chosen with a shortcut) so that a screen reader
 user knows (NFR-A11Y-001). `useDrawingTools` keeps the latest message in `announcement`; render it once with
 `KeystoneLiveRegion`, a visually hidden polite live region (`aria-live="polite"`, `aria-atomic="true"`). A message that
 repeats is read again. The texts are the `announce.*` keys of the messages, so they can be translated. Turn it off with

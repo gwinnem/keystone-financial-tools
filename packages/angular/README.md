@@ -81,7 +81,7 @@ export class ChartComponent {
 
 ## Announcements and `KeystoneLiveRegionComponent`
 
-The tools say what the person did (a drawing placed, selected, deleted, undone or redone) so that a screen reader
+The tools say what the person did (a drawing placed, selected, deleted, undone or redone; a locked drawing that refuses a change; a tool chosen with a shortcut) so that a screen reader
 user knows (NFR-A11Y-001). Render the service's `announcement` once with `<keystone-live-region [message]="tools.announcement()" />`:
 a visually hidden polite live region (`aria-live="polite"`, `aria-atomic="true"`). A message that repeats is read again.
 The texts are the `announce.*` keys of the messages, so they can be translated. Turn it off with `announcements: false`

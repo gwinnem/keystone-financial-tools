@@ -6,8 +6,8 @@ export and import of drawings as text, and the 0.1 synchronous Web Storage helpe
 
 ## Announcements for screen readers
 
-The controller raises `announce` with a short message after a drawing is placed, selected, deleted, undone or redone
-(NFR-A11Y-001). Put it in a visually hidden polite live region:
+The controller raises `announce` with a short message after a drawing is placed, selected, deleted, undone or redone, when a locked drawing refuses a change and when a
+keyboard shortcut chooses a tool (NFR-A11Y-001). Put it in a visually hidden polite live region:
 
 ```ts
 import { LIVE_REGION_ATTRIBUTES, VISUALLY_HIDDEN_STYLE, liveRegionText } from 'keystone-financial-tools-typescript';
