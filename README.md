@@ -17,7 +17,9 @@ the chart package itself.
 | `keystone-financial-tools-react` | `packages/react` | React hooks (`useDrawingTools`, `useDrawings`) and components (`KeystoneTextEditor`, `KeystoneLiveRegion`) |
 | `keystone-financial-tools-angular` | `packages/angular` | Angular services (`KeystoneDrawingToolsService`, `KeystoneDrawingService`) and components (`keystone-text-editor`, `keystone-live-region`) |
 | `keystone-financial-tools-docs` | `packages/docs` | The documentation site (Astro and Starlight): getting started per framework, host and persistence guides, keyboard reference and one page per tool |
-| `keystone-financial-tools-budgets` | `packages/budgets` | Private checks for CI: the performance budgets and baseline of the core bench (NFR-PERF) and the bundle size budgets (NFR-SIZE-001) |
+| `keystone-financial-tools-budgets` | `packages/budgets` | Private checks for CI and for releases: the performance budgets and baseline of the core bench (NFR-PERF), the bundle size budgets (NFR-SIZE-001) and the release checks (one version, changelog notes, tarball contents) |
+
+The first five packages (core, typescript, vue, react, angular) are published to npm, by hand, all with one version; the docs site, the budgets, the playground and the e2e tests are private. See [Releasing](#releasing).
 
 ## Apps and end-to-end tests
 
@@ -101,6 +103,21 @@ pnpm --filter keystone-financial-tools-budgets size:check   # after pnpm build
 
 Requirements: Node 22.22.3+ or 24.15+ (Node 24 recommended), pnpm 12+. The documentation site
 (`packages/docs`) needs Node 22.23.4+ or 24 (Astro 7).
+
+## Releasing
+
+A tag `v*` on `main` runs the Release workflow (`.github/workflows/release.yml`): it checks that the tag, the
+version of the five packages and the CHANGELOG.md section agree, runs the full verification, the mutation tests
+and the e2e tests, and creates a GitHub release with the release notes and the tarballs of the packages. It never
+publishes to npm (D-7): the maintainer publishes the tarballs by hand, in the order core, typescript, vue, react,
+angular. The checklist is in [CLAUDE.md](CLAUDE.md) and in the docs guide *Release and publish*.
+
+```bash
+pnpm --filter keystone-financial-tools-budgets release:check          # version, packages, changelog (add --tag v1.0.0)
+pnpm --filter keystone-financial-tools-budgets release:notes --version 1.0.0
+pnpm --filter keystone-financial-tools-budgets release:prepare        # after pnpm build: Angular's workspace range
+pnpm --filter keystone-financial-tools-budgets release:pack-check     # npm pack --dry-run of the five packages
+```
 
 ## Documentation
 

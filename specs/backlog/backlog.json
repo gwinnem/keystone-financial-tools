@@ -2028,7 +2028,8 @@
                 "A release workflow on tags `v*` builds all packages, runs the full test, mutation and e2e suites and attaches the build artifacts; it never publishes to npm (D-7).",
                 "All packages share one version; the CHANGELOG section for the tag is used as the release notes."
               ],
-              "tasks": ["Write the release workflow.", "Document the release steps in CLAUDE.md."]
+              "tasks": ["Write the release workflow.", "Document the release steps in CLAUDE.md."],
+              "status": "done"
             },
             {
               "id": "E09-F04-S02",
@@ -2041,7 +2042,8 @@
                 "`workspace:*` dependencies are replaced by the released version in the published manifests (pnpm publish behaviour or an explicit step in the checklist).",
                 "The release workflow contains no publish step (D-7)."
               ],
-              "tasks": ["Make the packages publishable.", "Write the publish checklist.", "Dry-run the publish with `npm pack` for every package."]
+              "tasks": ["Make the packages publishable.", "Write the publish checklist.", "Dry-run the publish with `npm pack` for every package."],
+              "status": "done"
             }
           ]
         }

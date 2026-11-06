@@ -1,0 +1,225 @@
+name: Release
+
+# Runs when a tag `v*` is pushed (E09-F04-S01): checks the release, runs the full verification (type-check, lint, parity, unit tests with
+# coverage, build, size budgets), the mutation tests of every package and the end-to-end tests, and then creates a GitHub release with the
+# release notes (the CHANGELOG.md section of the version) and the tarballs of the five packages.
+#
+# This workflow never publishes to npm (D-7): publishing is a manual step of the maintainer with the checklist in CLAUDE.md. The tarballs it
+# attaches are what `npm publish <file>` takes, and they are the ones `pack-check` verified.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+  HUSKY: '0'
+
+jobs:
+  check:
+    name: Check the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The whole history, to tell whether the tagged commit is on main.
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: The tagged commit is on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Version, tag and changelog
+        # All five packages have the version of the root package.json, which is the version of the tag, and CHANGELOG.md has a dated section
+        # with notes for it.
+        run: pnpm --filter keystone-financial-tools-budgets release:check --tag "$GITHUB_REF_NAME"
+
+  verify:
+    name: Verify (Node 24)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check (all packages)
+        run: pnpm type-check
+
+      - name: Lint (all packages)
+        run: pnpm lint
+
+      - name: Parity and messages (all packages)
+        run: pnpm --filter keystone-financial-tools-typescript test:parity
+
+      - name: Unit tests (with 90% coverage gates)
+        run: pnpm test:coverage
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Package sizes (NFR-SIZE-001)
+        run: pnpm --filter keystone-financial-tools-budgets size:check
+
+  e2e:
+    name: End-to-end (Playwright)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers (Chromium, Firefox, WebKit)
+        run: pnpm --filter keystone-financial-tools-e2e test:e2e:install
+
+      - name: End-to-end tests
+        run: pnpm --filter keystone-financial-tools-e2e test:e2e
+
+      - name: Upload report and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  mutation:
+    name: Mutation (${{ matrix.package }})
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [core, typescript, vue, react, angular, docs, budgets]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Mutation tests (${{ matrix.package }})
+        run: pnpm --filter keystone-financial-tools-${{ matrix.package }} test:mutation
+
+      - name: Upload mutation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/reports/mutation/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  release:
+    name: GitHub release
+    needs: [check, verify, e2e, mutation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Creates the release and uploads the files to it. Nothing here can publish to npm: there is no npm token in this workflow.
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Prepare the Angular manifest
+        # ng-packagr copies the `workspace:*` range of the core into packages/angular/dist/package.json; npm cannot install that.
+        run: pnpm --filter keystone-financial-tools-budgets release:prepare
+
+      - name: Tarballs hold only what is published
+        # No tests, fixtures, sources or source maps in any tarball, and every manifest is publishable.
+        run: pnpm --filter keystone-financial-tools-budgets release:pack-check
+
+      - name: Pack the packages
+        # pnpm pack replaces the workspace ranges of the four packages that are packed from their own folder; Angular is packed from dist.
+        run: |
+          mkdir release
+          for package in core typescript vue react; do
+            pnpm --dir "packages/$package" pack --pack-destination "$GITHUB_WORKSPACE/release"
+          done
+          npm pack ./packages/angular/dist --pack-destination "$GITHUB_WORKSPACE/release"
+          ls -l release
+
+      - name: Release notes
+        # The CHANGELOG.md section of the version of the tag.
+        run: pnpm --filter keystone-financial-tools-budgets release:notes --tag "$GITHUB_REF_NAME" --out release/notes.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=""
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" release/*.tgz --title "$GITHUB_REF_NAME" --notes-file release/notes.md --verify-tag $flags

@@ -17,6 +17,7 @@ export const GUIDES: readonly PageEntry[] = [
   { slug: 'guides/persistence', label: 'Save and load drawings' },
   { slug: 'guides/toolbar', label: 'Build a toolbar' },
   { slug: 'guides/keyboard', label: 'Keyboard reference' },
+  { slug: 'guides/releasing', label: 'Release and publish' },
 ];
 
 /** One page for each drawing kind, in the order of the core's `DRAWING_KINDS`; the slug ends with the kind. */

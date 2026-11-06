@@ -43,7 +43,10 @@ SDS first, then `backlog.json`, then re-run the script with `-UpdateExisting`.
 Drawings are stored in chart-agnostic coordinates (time, price, y-axis id), never pixels, so they
 survive zoom, scroll and layout changes.
 
-Package names are un-scoped (`keystone-financial-tools-*`). Packages are private, `UNLICENSED`.
+Package names are un-scoped (`keystone-financial-tools-*`). The five library packages (core, typescript, vue,
+react, angular) are publishable to npm, `UNLICENSED`, and share one version (the `version` of the root
+`package.json`); the root, docs, budgets, playground and e2e are private. Nothing publishes automatically (D-7):
+see Releasing.
 
 ## Stack
 
@@ -69,6 +72,7 @@ pnpm build
 pnpm --filter keystone-financial-tools-core bench   # then: pnpm --filter keystone-financial-tools-budgets bench:check
 pnpm --filter keystone-financial-tools-budgets size:check   # after pnpm build
 pnpm --filter keystone-financial-tools-e2e test:e2e   # Playwright, needs test:e2e:install once
+pnpm --filter keystone-financial-tools-budgets release:check   # version, packages and changelog of a release (see Releasing)
 ```
 
 ## Quality gates
@@ -77,7 +81,43 @@ pnpm --filter keystone-financial-tools-e2e test:e2e   # Playwright, needs test:e
 - Mutation testing: Stryker in every package, floor 100% (`break: 100`). Mutants that cannot be
   killed get a `// Stryker disable next-line <Mutator>` comment with a stated reason.
 - Husky pre-commit runs lint-staged (ESLint, Prettier), format check, type-check, lint and unit
-  tests with coverage. Mutation testing runs in CI for changes headed to main.
+  tests with coverage. Mutation testing runs in CI for changes headed to main, and in the Release workflow.
+- No source maps in the published builds (a map embeds the TypeScript source), and Angular builds in partial
+  compilation mode (`tsconfig.lib.json`), the only mode npm may publish.
+
+## Releasing
+
+Two separate steps. The workflow `.github/workflows/release.yml` runs on a tag `v*` and **never publishes to npm**
+(D-7, no npm token): it checks the release, runs the full verification, the mutation tests of every package and the
+e2e tests, then creates a GitHub release with the CHANGELOG.md section as notes and the five tarballs. Publishing is
+manual. The checks are the `release:*` scripts of `packages/budgets` (`packages/budgets/README.md`); the same steps
+are in the docs guide *Release and publish* (`packages/docs/src/content/docs/guides/releasing.md`).
+
+**Release checklist**
+
+1. Bump the version in the root `package.json` and in `packages/core`, `typescript`, `vue`, `react` and `angular`
+   together (one version for all).
+2. Date the section in `CHANGELOG.md`: `## 1.0.0 (2026-11-10)`, no `(unreleased)`. It is the release notes.
+3. `pnpm --filter keystone-financial-tools-budgets release:check` passes.
+4. Build, unit (coverage), mutation (0 survivors) and e2e are green; merge `dev` into `main` through a pull request.
+5. Tag the commit on `main` and push the tag: `git tag v1.0.0; git push origin v1.0.0`. The Release workflow
+   verifies and creates the GitHub release with the tarballs.
+
+**Publish checklist (manual, after the release)**
+
+1. `pnpm install --frozen-lockfile; pnpm build`
+2. `pnpm --filter keystone-financial-tools-budgets release:prepare` (replaces `workspace:*` in
+   `packages/angular/dist/package.json`; `pnpm pack` does it for the others)
+3. `pnpm --filter keystone-financial-tools-budgets release:pack-check` (the dry run: `npm pack --dry-run` of every
+   package; no tests, fixtures, sources or source maps in a tarball)
+4. Pack: `pnpm --dir packages/<core|typescript|vue|react> pack --pack-destination <abs>\release` for each, and
+   `npm pack ./packages/angular/dist --pack-destination <abs>\release` (or take the tarballs of the GitHub release)
+5. `npm publish release/<name>-<version>.tgz` in the order core, typescript, vue, react, angular (add `--tag next`
+   for a version with a hyphen). Never `npm publish` from a package folder: it keeps `workspace:*` in the manifest.
+6. `npm view keystone-financial-tools-core version` shows the new version; the published Angular manifest lists the
+   core at that version.
+
+The release workflow must never contain an `npm publish` step or an npm token (D-7).
 
 ## Working agreement
 

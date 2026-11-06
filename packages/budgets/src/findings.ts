@@ -1,5 +1,5 @@
 /** What a check found wrong. */
-export type FindingKind = 'over-budget' | 'no-benchmark' | 'regression' | 'missing' | 'over-size';
+export type FindingKind = 'over-budget' | 'no-benchmark' | 'regression' | 'missing' | 'over-size' | 'release';
 
 /** One failure of a budget or baseline check; any finding fails the run. */
 export interface Finding {

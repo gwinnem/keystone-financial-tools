@@ -1,7 +1,8 @@
 # keystone-financial-tools-budgets
 
 Private package (not published). It holds the performance and size budgets of the project and the checks CI runs
-against them. The CLI is TypeScript run by Node's type stripping (`node src/cli.ts`), so it needs no build.
+against them, and the checks of a release (E09-F04). The CLI is TypeScript run by Node's type stripping
+(`node src/cli.ts`), so it needs no build.
 
 ## Budgets
 
@@ -25,7 +26,34 @@ pnpm --filter keystone-financial-tools-budgets size:check   # needs the build
 ```
 
 Exit codes: 0 all within budget, 1 a budget or the baseline is broken (or the input is missing), 2 wrong usage.
-Options: `--results <file>`, `--baseline <file>`, `--root <folder>`.
+Options: `--results <file>`, `--baseline <file>`, `--root <folder>`, and for the release commands `--tag <vX.Y.Z>`,
+`--version <X.Y.Z>` and `--out <file>`.
+
+## Release checks
+
+The published packages and their order are in `src/release.ts`: core, typescript, vue, react, angular (Angular is
+packed from `packages/angular/dist`). All have the version of the root `package.json`.
+
+```bash
+pnpm --filter keystone-financial-tools-budgets release:check [--tag v1.0.0]
+pnpm --filter keystone-financial-tools-budgets release:notes --tag v1.0.0 [--out release/notes.md]   # or --version 1.0.0
+pnpm build
+pnpm --filter keystone-financial-tools-budgets release:prepare
+pnpm --filter keystone-financial-tools-budgets release:pack-check
+```
+
+- `release:check` fails for a package with another version than the root, a private package, a package without
+  `files` with `dist`, `exports` or `types`, a tag that is not `v` and the version, and a CHANGELOG.md without a
+  section `## <version>` that has notes or whose heading still says `(unreleased)`.
+- `release:notes` prints the CHANGELOG.md section of the version (used as the release notes), or writes it to `--out`.
+- `release:prepare` replaces the `workspace:` ranges in `packages/angular/dist/package.json` by the version (the
+  built manifest is not a pnpm package, so pnpm cannot do it). Run it after every build of Angular.
+- `release:pack-check` runs `npm pack --dry-run --json` in the publish folder of each package and fails for a test,
+  fixture, source file, source map, build or test configuration or report in a tarball, and for a manifest npm
+  cannot publish. It needs npm on the path.
+
+The checklist for a release and for the manual publish is in the root CLAUDE.md and in the docs guide *Release and
+publish*; the Release workflow runs these checks and never publishes.
 
 ## Baseline
 

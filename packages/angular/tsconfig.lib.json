@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "rootDir": "src", "noEmit": false, "declaration": true, "paths": {}, "types": [] },
+  "compilerOptions": { "rootDir": "src", "noEmit": false, "declaration": true, "declarationMap": false, "sourceMap": false, "paths": {}, "types": [] },
+  "angularCompilerOptions": { "compilationMode": "partial" },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts", "src/test-helpers/**"]
 }

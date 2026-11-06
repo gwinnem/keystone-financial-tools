@@ -37,10 +37,24 @@ export function perfReport(scene = 1, hit = 0.2, drag = 0.5, extra: TestSpec[] =
   );
 }
 
-/** An `Io` on a map of files; `lines` collects what is logged. */
-export function memoryIo(files: Record<string, string> = {}): { readonly io: Io; readonly files: Map<string, string>; readonly lines: string[] } {
+/** A command that was run: what, with which arguments and in which folder. */
+export interface RunCall {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly cwd: string;
+}
+
+/**
+ * An `Io` on a map of files; `lines` collects what is logged and `runs` the commands that were run. `outputs` answers a command by the
+ * folder it runs in (a missing folder rejects, as a failing command does).
+ */
+export function memoryIo(
+  files: Record<string, string> = {},
+  outputs: Record<string, string> = {}
+): { readonly io: Io; readonly files: Map<string, string>; readonly lines: string[]; readonly runs: RunCall[] } {
   const store = new Map(Object.entries(files));
   const lines: string[] = [];
+  const runs: RunCall[] = [];
   const io: Io = {
     readText: async (path) => {
       const text = store.get(path);
@@ -51,11 +65,17 @@ export function memoryIo(files: Record<string, string> = {}): { readonly io: Io;
       store.set(path, text);
     },
     exists: async (path) => store.has(path),
+    run: async (command, args, cwd) => {
+      runs.push({ command, args, cwd });
+      const output = outputs[cwd];
+      if (output === undefined) throw new Error(`${command} failed in ${cwd}`);
+      return output;
+    },
     log: (line) => {
       lines.push(line);
     },
   };
-  return { io, files: store, lines };
+  return { io, files: store, lines, runs };
 }
 
 /** `length` hexadecimal characters from a seeded generator; gzip cannot shrink them below about half their number of bytes. */

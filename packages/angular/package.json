@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "description": "Angular services for Keystone financial drawing tools",
   "license": "UNLICENSED",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gwinnem/keystone-financial-tools.git",
+    "directory": "packages/angular"
+  },
   "sideEffects": false,
   "peerDependencies": {
     "@angular/common": ">=22.0.0",

@@ -31,7 +31,8 @@ export default defineConfig({
       fileName: (f) => (f === 'es' ? 'index.js' : 'index.umd.cjs'),
     },
     target: 'es2020',
-    sourcemap: true,
+    // No source maps in the release: a map embeds the original TypeScript (E09-F04-S02: no source maps in the tarballs).
+    sourcemap: false,
     rolldownOptions: {
       external: ['vue', /^keystone-financial-tools-core/],
       output: {

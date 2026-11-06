@@ -1221,6 +1221,37 @@ Decisions of E09-F03 (accessibility; NFR-A11Y-001):
   have no default shortcut. Known limits, recorded as issues: a locked drawing that blocks Delete or a nudge is
   silent for a screen reader (`blocked` is not announced, #174), and choosing a tool by shortcut is not announced (#175).
 
+Decisions of E09-F04 (release pipeline; DOC-004, NFR-COMP-001, D-7; `.github/workflows/release.yml`, the `release:*`
+scripts of `packages/budgets`):
+
+- One version for the five published packages (core, typescript, vue, react, angular): the `version` of the root
+  `package.json`. `release:check` fails for another version in a package, a private package, a package without `files`
+  with `dist`, `exports` and `types`, a tag that is not `v<version>`, and a changelog without a section
+  `## <version>` that has notes and no `(unreleased)` in its heading (a release is dated). The changelog section of the
+  version is the release notes of the GitHub release (`release:notes`, DOC-004).
+- The workflow runs on a pushed tag `v*`, after checking that the commit is on `main`. It runs the same
+  verification as CI (type-check, lint, parity, unit tests with 90% coverage, build, size budgets), the mutation tests
+  of every package (all seven, 100%) and the e2e tests, and only when all pass creates the GitHub release (a version
+  with a hyphen is a pre-release) with the notes and the five tarballs. It has no publish step, no npm token, no
+  `id-token` and no registry (D-7); a unit test reads the workflow and fails when one appears. Only the release job
+  can write to the repository (`contents: write`).
+- Packages are publishable: `private` is removed from the five, `repository` is added, the licence stays
+  `UNLICENSED`. The Vue, React and TypeScript builds write no source maps (a map embeds the TypeScript source; the
+  core already wrote none outside `--mode dev`). Angular is built in partial compilation mode
+  (`angularCompilerOptions.compilationMode: partial` in `tsconfig.lib.json`): ng-packagr marks a fully compiled library
+  as not publishable.
+- `workspace:*` ranges: `pnpm pack` replaces them in the four packages packed from their own folder (so the tarball
+  is packed with pnpm, then published with `npm publish <tarball>`; `npm publish` from a folder would keep them).
+  Angular is packed from `packages/angular/dist`, whose manifest ng-packagr copies with the range; `release:prepare`
+  replaces it (`workspace:*` becomes the version, `^` and `~` a range from it).
+- `release:pack-check` is the dry run: `npm pack --dry-run --json` in the publish folder of each package, failing for a
+  test, fixture, source file, source map, build or test configuration or report in a tarball, no `package.json`, no
+  `dist/` files, and a manifest that is private, has no `exports` or `types`, or still has a `workspace:` range
+  (Angular). It lives in `packages/budgets`, which already holds the CI checks and the mutation setup, so no new
+  package and no new dependency.
+- Publishing is manual (D-7), in the order core, typescript, vue, react, angular, from the tarballs of the GitHub
+  release or made locally. The checklist is in CLAUDE.md and in the docs guide *Release and publish*.
+
 ## 15. Non-functional requirements
 
 | Id | Requirement |
@@ -1247,7 +1278,7 @@ Decisions of E09-F03 (accessibility; NFR-A11Y-001):
 | M4 Adapters and integration | Framework adapters, toolbar model, playground, e2e, chart integration | E07, E08 |
 | M5 Release | Licensing, docs site, performance, accessibility, release pipeline | E09, E10 |
 
-Releases are published to npm manually (D-7); the release workflow only builds, tests and tags.
+Releases are published to npm manually (D-7); the release workflow checks, builds and tests, and creates a GitHub release with the notes and the tarballs, and never publishes.
 
 Change flow: SDS update, then backlog update (`backlog.json`, re-run the script with
 `-UpdateExisting`), then code, then tests and docs. Source-of-truth precedence: this SDS > code >

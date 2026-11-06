@@ -16,12 +16,13 @@ describe('the pages of the site', () => {
     ]);
   });
 
-  it('has a host guide, a persistence guide, a toolbar guide and a keyboard reference', () => {
+  it('has a host guide, a persistence guide, a toolbar guide, a keyboard reference and the release and publish checklist', () => {
     expect(GUIDES).toStrictEqual([
       { slug: 'guides/host', label: 'Implement a host' },
       { slug: 'guides/persistence', label: 'Save and load drawings' },
       { slug: 'guides/toolbar', label: 'Build a toolbar' },
       { slug: 'guides/keyboard', label: 'Keyboard reference' },
+      { slug: 'guides/releasing', label: 'Release and publish' },
     ]);
   });
 
@@ -59,6 +60,27 @@ describe('the pages of the site', () => {
 
   it('gives every page its label as the title', () => {
     for (const { slug, label } of ALL) expect(frontmatter(readPage(slug)), slug).toContain(`title: ${label}\n`);
+  });
+});
+
+describe('the release and publish page (E09-F04)', () => {
+  const page = readPage('guides/releasing');
+
+  it('has the checklist for a release and for the manual publish, in the order of the packages', () => {
+    expect(page).toContain('\n## Release a version\n');
+    expect(page).toContain('\n## Publish to npm\n');
+    const order = ['core', 'typescript', 'vue', 'react', 'angular'].map((id) => page.indexOf(`npm publish release/keystone-financial-tools-${id}-`));
+    expect(order.every((index) => index > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toStrictEqual(order);
+  });
+
+  it('names the commands of the release checks', () => {
+    for (const script of ['release:check', 'release:prepare', 'release:pack-check']) expect(page, script).toContain(`keystone-financial-tools-budgets ${script}`);
+  });
+
+  it('says that nothing publishes automatically', () => {
+    expect(page).toContain('Publishing to npm is **manual**');
+    expect(page).toContain('D-7');
   });
 });
 

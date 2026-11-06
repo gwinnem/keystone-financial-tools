@@ -24,6 +24,11 @@ describe('parseArgs', () => {
     expect(Object.fromEntries(options)).toStrictEqual({ results: 'c.json', baseline: 'b.json', root: '/x' });
   });
 
+  it('reads the options of the release commands', () => {
+    const { options } = parseArgs(['release-notes', '--tag', 'v1.0.0', '--version', '1.0.0', '--out', 'notes.md']);
+    expect(Object.fromEntries(options)).toStrictEqual({ tag: 'v1.0.0', version: '1.0.0', out: 'notes.md' });
+  });
+
   it.each([
     ['an unknown option', ['bench-check', '--other', 'x'], 'Unknown option --other.'],
     ['an option that only starts like a known one', ['bench-check', '--resultsX', 'x'], 'Unknown option --resultsX.'],
@@ -39,7 +44,9 @@ describe('parseArgs', () => {
 
 describe('main: the command line', () => {
   it('has a usage line that names the commands and the options', () => {
-    expect(USAGE).toBe('Usage: cli.ts <bench-check | bench-baseline | size-check> [--results <file>] [--baseline <file>] [--root <dir>]');
+    expect(USAGE).toBe(
+      'Usage: cli.ts <bench-check | bench-baseline | size-check | release-check | release-notes | publish-prepare | pack-check> [--results <file>] [--baseline <file>] [--root <dir>] [--tag <vX.Y.Z>] [--version <X.Y.Z>] [--out <file>]'
+    );
   });
 
   it('prints the usage and returns 2 for no command and for an unknown command', async () => {

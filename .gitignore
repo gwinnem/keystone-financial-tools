@@ -17,6 +17,8 @@ test-results/
 **/reports/mutation/
 # Benchmark report (packages/core), read by packages/budgets
 **/reports/bench/
+# Tarballs and release notes made for a release (packages/budgets release commands, release workflow)
+release/
 stryker.log
 .turbo/
 .env

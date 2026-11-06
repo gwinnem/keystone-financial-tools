@@ -2,6 +2,19 @@
 
 ## 0.1.0 (unreleased)
 
+- Release pipeline (E09-F04, DOC-004, NFR-COMP-001, D-7): a tag `v*` runs the new Release workflow
+  (`.github/workflows/release.yml`), which checks that the tag, the version of the five packages and the CHANGELOG.md
+  section agree and that the tagged commit is on `main`, runs the type-check, lint, parity, unit tests with coverage,
+  build, size budgets, the mutation tests of every package and the e2e tests, and then creates a GitHub release with
+  the CHANGELOG.md section as the notes and the tarballs of the five packages. It never publishes to npm and holds no
+  npm token. The packages `keystone-financial-tools-core`, `-typescript`, `-vue`, `-react` and `-angular` are
+  publishable (`private` removed, `repository` added) and share one version. The Vue, React and TypeScript builds no
+  longer write source maps, and the Angular library is built in partial compilation mode (the only mode npm may
+  publish). New `release:*` scripts in `keystone-financial-tools-budgets`: `release:check` (one version, publishable
+  manifests, the tag, a dated changelog section with notes), `release:notes` (the changelog section of a version),
+  `release:prepare` (replaces `workspace:*` in `packages/angular/dist/package.json`) and `release:pack-check`
+  (`npm pack --dry-run` of every package: no test, fixture, source or source map in a tarball). The manual publish
+  checklist (core, typescript, vue, react, angular) is in CLAUDE.md and in the new docs guide *Release and publish*.
 - Accessibility (E09-F03, NFR-A11Y-001): the controller raises a new `announce` event with a short message after a
   drawing is placed, selected, deleted, or an undo or redo (a text note once its editor confirms it; moving,
   nudging, hovering and choosing a tool say nothing). The messages are the new `announce.*` keys of the messages
