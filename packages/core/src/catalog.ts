@@ -6,7 +6,7 @@ import type { DrawingKind } from './types';
 /** How the tools are grouped in a toolbar. */
 export type ToolGroup = 'lines' | 'shapes' | 'fibonacci' | 'annotations';
 
-/** The licence tier a tool belongs to (SDS 12; the split is a proposal until OD-2 is decided). */
+/** The licence tier a tool belongs to (SDS 12, FR-LIC-002): the trend line and horizontal line are community; the rectangle, the text note and the four Fibonacci tools are professional. */
 export type ToolTier = 'community' | 'professional';
 
 /**
@@ -14,7 +14,7 @@ export type ToolTier = 'community' | 'professional';
  *
  * @example
  * ```ts
- * const entry: ToolCatalogEntry = { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'community' };
+ * const entry: ToolCatalogEntry = { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'professional' };
  * ```
  */
 export interface ToolCatalogEntry {
@@ -44,12 +44,12 @@ export interface ToolCatalogEntry {
 export const TOOL_CATALOG: readonly ToolCatalogEntry[] = deepFreeze<readonly ToolCatalogEntry[]>([
   { id: 'trend-line', labelKey: 'tool.trend-line', group: 'lines', icon: 'trend-line', shortcut: 'Alt+T', tier: 'community' },
   { id: 'horizontal-line', labelKey: 'tool.horizontal-line', group: 'lines', icon: 'horizontal-line', shortcut: 'Alt+H', tier: 'community' },
-  { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'community' },
+  { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'professional' },
   { id: 'fibonacci-retracement', labelKey: 'tool.fibonacci-retracement', group: 'fibonacci', icon: 'fibonacci-retracement', shortcut: 'Alt+F', tier: 'professional' },
   { id: 'fibonacci-arcs', labelKey: 'tool.fibonacci-arcs', group: 'fibonacci', icon: 'fibonacci-arcs', shortcut: null, tier: 'professional' },
   { id: 'fibonacci-fans', labelKey: 'tool.fibonacci-fans', group: 'fibonacci', icon: 'fibonacci-fans', shortcut: null, tier: 'professional' },
   { id: 'fibonacci-time-zones', labelKey: 'tool.fibonacci-time-zones', group: 'fibonacci', icon: 'fibonacci-time-zones', shortcut: null, tier: 'professional' },
-  { id: 'text-note', labelKey: 'tool.text-note', group: 'annotations', icon: 'text-note', shortcut: 'Alt+N', tier: 'community' },
+  { id: 'text-note', labelKey: 'tool.text-note', group: 'annotations', icon: 'text-note', shortcut: 'Alt+N', tier: 'professional' },
 ]);
 
 /**

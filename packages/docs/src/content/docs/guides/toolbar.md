@@ -30,14 +30,14 @@ The static list without `active` and `enabled` is `TOOL_CATALOG`, exported by ev
 | --- | --- | --- | --- |
 | `trend-line` | lines | Alt+T | community |
 | `horizontal-line` | lines | Alt+H | community |
-| `rectangle` | shapes | Alt+R | community |
+| `rectangle` | shapes | Alt+R | professional |
 | `fibonacci-retracement` | fibonacci | Alt+F | professional |
 | `fibonacci-arcs` | fibonacci | none | professional |
 | `fibonacci-fans` | fibonacci | none | professional |
 | `fibonacci-time-zones` | fibonacci | none | professional |
-| `text-note` | annotations | Alt+N | community |
+| `text-note` | annotations | Alt+N | professional |
 
-The tier is a proposal until the licensing is decided. The toolbar does not check a licence yet: `enabled` follows the `tools` option, so a tool you leave out of `tools` is shown disabled and `activate` refuses it. Change it at run time with `setOptions({ tools })`.
+The tier is the split of the licensing: Community has the trend line and horizontal line, and Professional adds the rectangle, the text note, the four Fibonacci tools and undo/redo. Saving drawings is Professional Plus, and your own storage adapters are Enterprise (see the licensing decisions in the SDS). The toolbar does not check a licence yet: `enabled` follows the `tools` option, so a tool you leave out of `tools` is shown disabled and `activate` refuses it. Change it at run time with `setOptions({ tools })`.
 
 ## Render it
 

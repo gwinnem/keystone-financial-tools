@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- Tier split (E10-F01-S01, FR-LIC-002, OD-2, DOC-004): the drawing tools follow the five tiers of keystone-license.
+  Community has the trend line, horizontal line and selection (move/resize, delete) and the memory
+  repository; Professional adds the rectangle, the text note, magnet snapping, undo/redo and the four Fibonacci tools; Professional Plus adds
+  persistence (the Web Storage and IndexedDB repositories, the 0.1 helpers, import/export); Enterprise adds the plugin
+  API and storage adapters; Developer passes every feature for 90 days with a watermark. `TOOL_CATALOG` now gives the
+  `rectangle` and `text-note` the tier `professional`, and `REPOSITORY_TIERS` gives Web Storage and IndexedDB `professional-plus`
+  (`RepositoryTier` is `'community' | 'professional-plus'`). Nothing checks a licence yet: the gate is E10-F02.
+
 - Release pipeline (E09-F04, DOC-004, NFR-COMP-001, D-7): a tag `v*` runs the new Release workflow
   (`.github/workflows/release.yml`), which checks that the tag, the version of the five packages and the CHANGELOG.md
   section agree and that the tagged commit is on `main`, runs the type-check, lint, parity, unit tests with coverage,

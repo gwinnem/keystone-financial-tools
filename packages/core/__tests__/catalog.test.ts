@@ -12,12 +12,12 @@ describe('TOOL_CATALOG', () => {
     const expected: ToolCatalogEntry[] = [
       { id: 'trend-line', labelKey: 'tool.trend-line', group: 'lines', icon: 'trend-line', shortcut: 'Alt+T', tier: 'community' },
       { id: 'horizontal-line', labelKey: 'tool.horizontal-line', group: 'lines', icon: 'horizontal-line', shortcut: 'Alt+H', tier: 'community' },
-      { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'community' },
+      { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'professional' },
       { id: 'fibonacci-retracement', labelKey: 'tool.fibonacci-retracement', group: 'fibonacci', icon: 'fibonacci-retracement', shortcut: 'Alt+F', tier: 'professional' },
       { id: 'fibonacci-arcs', labelKey: 'tool.fibonacci-arcs', group: 'fibonacci', icon: 'fibonacci-arcs', shortcut: null, tier: 'professional' },
       { id: 'fibonacci-fans', labelKey: 'tool.fibonacci-fans', group: 'fibonacci', icon: 'fibonacci-fans', shortcut: null, tier: 'professional' },
       { id: 'fibonacci-time-zones', labelKey: 'tool.fibonacci-time-zones', group: 'fibonacci', icon: 'fibonacci-time-zones', shortcut: null, tier: 'professional' },
-      { id: 'text-note', labelKey: 'tool.text-note', group: 'annotations', icon: 'text-note', shortcut: 'Alt+N', tier: 'community' },
+      { id: 'text-note', labelKey: 'tool.text-note', group: 'annotations', icon: 'text-note', shortcut: 'Alt+N', tier: 'professional' },
     ];
     expect(TOOL_CATALOG).toStrictEqual(expected);
   });
@@ -40,8 +40,16 @@ describe('TOOL_CATALOG', () => {
     expect(new Set(shortcuts).size).toBe(5);
   });
 
-  it('puts the four Fibonacci tools in the professional tier, as the proposal of FR-LIC-002 has it', () => {
-    expect(TOOL_CATALOG.filter((entry) => entry.tier === 'professional').map((entry) => entry.id)).toStrictEqual(['fibonacci-retracement', 'fibonacci-arcs', 'fibonacci-fans', 'fibonacci-time-zones']);
+  it('puts the trend line and horizontal line in the community tier and the rectangle, the text note and the four Fibonacci tools in the professional tier (FR-LIC-002)', () => {
+    expect(TOOL_CATALOG.filter((entry) => entry.tier === 'community').map((entry) => entry.id)).toStrictEqual(['trend-line', 'horizontal-line']);
+    expect(TOOL_CATALOG.filter((entry) => entry.tier === 'professional').map((entry) => entry.id)).toStrictEqual([
+      'rectangle',
+      'fibonacci-retracement',
+      'fibonacci-arcs',
+      'fibonacci-fans',
+      'fibonacci-time-zones',
+      'text-note',
+    ]);
   });
 
   it('is frozen, entries included', () => {

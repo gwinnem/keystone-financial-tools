@@ -115,8 +115,8 @@ describe('RepositoryError and repositoryFailure', () => {
 });
 
 describe('REPOSITORY_TIERS', () => {
-  it('puts Web Storage and memory in Community and IndexedDB in Professional (FR-LIC-002, OD-2)', () => {
-    expect(REPOSITORY_TIERS).toStrictEqual({ memory: 'community', 'web-storage': 'community', indexeddb: 'professional' });
+  it('puts the memory repository in Community and Web Storage and IndexedDB in Professional Plus (FR-LIC-002)', () => {
+    expect(REPOSITORY_TIERS).toStrictEqual({ memory: 'community', 'web-storage': 'professional-plus', indexeddb: 'professional-plus' });
     expect(Object.isFrozen(REPOSITORY_TIERS)).toBe(true);
   });
 });

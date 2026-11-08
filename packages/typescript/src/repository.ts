@@ -134,16 +134,17 @@ export function parseStored(text: string | null, key: string, scope?: DrawingSco
 /** The repositories of this package. */
 export type RepositoryKind = 'memory' | 'web-storage' | 'indexeddb';
 
-/** The license tiers of FR-LIC-002 (proposal, OD-2). */
-export type RepositoryTier = 'community' | 'professional';
+/** The license tiers a repository can belong to (FR-LIC-002). */
+export type RepositoryTier = 'community' | 'professional-plus';
 
 /**
- * The tier each repository belongs to under the proposed split of FR-LIC-002 (OD-2, still open):
- * Web Storage persistence is Community, the IndexedDB repository is Professional. The memory
- * repository is for tests and server-side rendering.
+ * The tier each repository belongs to (FR-LIC-002): persistence, that is saving and restoring drawings, is
+ * Professional Plus, so the Web Storage and IndexedDB repositories are. The memory repository keeps nothing
+ * between sessions, so it is not persistence: it is Community, for tests and server-side rendering. A
+ * repository of your own is the Enterprise feature `storage-adapters`.
  */
 export const REPOSITORY_TIERS: Readonly<Record<RepositoryKind, RepositoryTier>> = Object.freeze({
   memory: 'community',
-  'web-storage': 'community',
-  indexeddb: 'professional',
+  'web-storage': 'professional-plus',
+  indexeddb: 'professional-plus',
 });

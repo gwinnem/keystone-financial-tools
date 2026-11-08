@@ -777,9 +777,9 @@ Decisions of E06-F02 (repositories):
   single `setItem`, so a refused write leaves the previous document and nothing partial. The
   IndexedDB repository keeps one record per scope in the `drawings` object store of a version 1
   database (`UPGRADES[n]` takes version n to n + 1) and retries a failed open on the next call.
-- Tiers: `REPOSITORY_TIERS` records Web Storage and memory as Community and IndexedDB as
-  Professional, following the proposal of FR-LIC-002; OD-2 stays open; `TOOL_CATALOG` (E07-F05) carries
-  the same proposal in its `tier`, to be changed when OD-2 is decided.
+- Tiers: `REPOSITORY_TIERS` records the memory repository as Community and Web Storage and IndexedDB
+  as Professional Plus (the `persistence` feature), following FR-LIC-002 (OD-2 is closed);
+  `TOOL_CATALOG` (E07-F05) carries the tool split in its `tier`.
 
 Decisions of E06-F01 (0.1 helpers):
 
@@ -919,9 +919,8 @@ Decisions of E07-F05 (headless toolbar model, FR-FW-040, FR-FW-041):
 - `TOOL_CATALOG` is a frozen list in the order of `DRAWING_KINDS`. An entry has `id`, `labelKey`
   (`tool.<id>`, the key of the label in the message table, `DEFAULT_MESSAGES` of E07-F06), `group`, `icon` (the id, a name for the application to map to an icon), `shortcut`
   (the default, or null) and `tier`. Groups: `lines` (trend line, horizontal line), `shapes` (rectangle),
-  `fibonacci` (the four Fibonacci tools) and `annotations` (text note). Tiers follow the proposal of
-  FR-LIC-002: text note, lines and rectangle `community`, the Fibonacci tools `professional`; OD-2 stays
-  open.
+  `fibonacci` (the four Fibonacci tools) and `annotations` (text note). Tiers follow
+  FR-LIC-002 (OD-2 is closed): lines `community`, the rectangle, the text note and the Fibonacci tools `professional`.
 - The toolbar is part of the controller's state, `DrawingToolsState.toolbar`, not computed in each adapter,
   so the three adapters cannot differ: one `ToolbarEntry` (the catalog entry with `active`, `enabled`
   and the shortcut in use) per tool. `active` is the tool placing drawings now (also while its note is
@@ -1024,9 +1023,24 @@ can start while E07 is still open):
 
 - FR-LIC-001: Tools and features are gated by a `LicenseContext` from keystone-license; without a
   license the Community tier applies.
-- FR-LIC-002: Proposed tiers (OD-2): **Community**: trend line, horizontal line, rectangle, text
-  note, selection, move/resize, delete, undo/redo, Web Storage persistence. **Professional**: the
-  four Fibonacci tools, magnet snapping, IndexedDB repository, import/export with merge.
+- FR-LIC-002: Tiers (decided, OD-2 closed on 2026-11-08, following the tier model of keystone-license, SDS
+  product-tiers-and-entitlements §7.8). The five tiers are Community, Professional, Professional Plus,
+  Enterprise and Developer. A feature names the lowest tier that has it; a higher tier has everything of the
+  lower ones (rank: Community, Professional, Professional Plus, Enterprise).
+  - **Community**: `trend-line`, `horizontal-line`, `selection` (selection, move/resize, delete). The memory
+    repository is Community too: it keeps nothing between sessions, so it is not persistence.
+  - **Professional**: `rectangle`, `text-note`, `magnet-snapping`, `fibonacci` (the four Fibonacci tools),
+    `undo-redo`.
+  - **Professional Plus**: `persistence` (saving and restoring drawings: the Web Storage and IndexedDB
+    repositories, the 0.1 helpers, import/export with merge).
+  - **Enterprise**: `plugin-api` (drawing tools of your own; not built, after 1.0) and `storage-adapters`
+    (a `DrawingRepository` of your own).
+  - **Developer** is not a rung of that ladder and no feature names it: a Developer licence passes every
+    feature for 90 days from its issue date and shows the non-blocking watermark; once it has expired the
+    blocking notice shows. A paid licence beats a Developer one.
+  The feature ids are the keys of the `features` map given to `getLicenseContext` (FR-LIC-001). This table is
+  the table of this product, which keystone-license lets each product own and refine. It is also the table to
+  reconcile with keystone-charts-financial (#3765), whose tiers are the same five.
 - FR-LIC-003: Activating a gated tool emits a `blocked` event with `KFT-E-LICENSE`; loaded documents
   that contain gated kinds are still rendered read-only (data is never lost).
 
@@ -1141,7 +1155,7 @@ Decisions of E08-F03 (keystone-charts-financial integration):
 - Host guide (E08-F03-S01, FR-INTG-001, DOC-003): `guides/host.md` is extended (no new page) with transforms,
   events, the overlay pass, the Fibonacci items, the fixture and `runHostConformance`, each with a skeleton.
 - The chart's side (the issue in keystone-charts-financial that replaces its E19 placeholder, the reconciliation
-  of its tier plan with FR-LIC-002 (OD-2, deferred) and its CI run of `runHostConformance`, FR-INTG-002) is
+  of its tier plan with FR-LIC-002 (OD-2, closed) and its CI run of `runHostConformance`, FR-INTG-002) is
   tracked in the chart repository (gwinnem/keystone-charts-financial#3765).
 
 Decisions of E09-F01-S02 (generated API reference; `packages/docs`):
@@ -1312,6 +1326,6 @@ tests > docs > backlog.
 | Id | Question | Proposal | Owner |
 |---|---|---|---|
 | OD-1 | Time-only anchors for time zones | Closed by D-5 | - |
-| OD-2 | Tier split between Community and Professional | Proposal in FR-LIC-002. **Deferred (2026-10-28):** decided later, before E10-F01-S02 and E10-F02 start | gwinnem |
+| OD-2 | Tier split of the drawing tools over the five tiers | **Closed (2026-11-08):** the split of FR-LIC-002 (Community, Professional, Professional Plus, Enterprise, Developer), from §7.8 of the tier SDS of keystone-license | gwinnem |
 | OD-3 | Drawings per timeframe visibility (show a drawing only on some timeframes) | Defer to after 1.0; document field reserved in `meta` | gwinnem |
 | OD-4 | Additional tools after 1.0 (ray, parallel channel, arrow, price range, date range, pitchfork) | Separate epic after M5 | gwinnem |
