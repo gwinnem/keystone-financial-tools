@@ -19,6 +19,7 @@ import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
 import { DRAWING_KINDS, isDrawingKind } from './kinds';
+import { createLicenseGate, type DrawingFeature, type LicenseContext, type LicenseGate, type LicenseSource } from './license';
 import { formatMessage, resolveMessages, type MessageKey, type MessageOverrides, type Messages } from './messages';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
@@ -65,6 +66,13 @@ export interface DrawingToolsOptions {
   readonly gestures?: GestureOptions;
   /** Formats the price on the label of a horizontal line (FR-SC-001). Default: 2 decimals. */
   readonly priceFormatter?: PriceFormatter;
+  /**
+   * The license (FR-LIC-001): the `LicenseContext` that `getLicenseContext` of keystone-license returns, or its
+   * manager, or any object with `canUseFeature(feature)`. The tools never verify a license and do not import
+   * keystone-license (AR-1): the application passes the result in. Without one the Community tier applies, see
+   * `FEATURE_TIERS`. Anything that is not a license is an error at creation.
+   */
+  readonly license?: LicenseContext | LicenseSource;
   /** The y-axis a keyboard cursor starts on before the first anchor is placed. Default `price`. */
   readonly defaultYAxisId?: string;
   /** Makes the ids of new drawings. Default `createId`. */
@@ -170,6 +178,10 @@ export interface DrawingTools {
   /** Returns false when there is nothing to undo. */
   undo(): boolean;
   redo(): boolean;
+  /** Whether the license allows the feature: false above the Community tier when there is no license (FR-LIC-001). Never throws. */
+  canUseFeature(feature: DrawingFeature): boolean;
+  /** Whether the license allows the tool of this kind: `canUseFeature` of the feature the kind needs (the four Fibonacci tools are one). */
+  canUseTool(kind: DrawingKind): boolean;
   /** Sets the stored magnet mode (`off`, `weak` or `strong`). */
   setMagnet(mode: MagnetMode): void;
   setTheme(theme: DrawingTheme): void;
@@ -289,6 +301,7 @@ class DrawingToolsController implements DrawingTools {
   private magnet: MagnetMode;
   private stayInTool: boolean;
   private allowed: ReadonlySet<DrawingKind>;
+  private readonly gate: LicenseGate;
   private readonly shortcuts: ToolShortcuts;
   private readonly bindings: readonly ShortcutBinding[];
   private toolbar: readonly ToolbarEntry[];
@@ -317,6 +330,7 @@ class DrawingToolsController implements DrawingTools {
     assertHost(host);
     const magnet = options.magnet ?? 'off';
     assertMagnet(magnet);
+    this.gate = createLicenseGate(options.license);
     this.magnet = magnet;
     this.allowed = options.tools === undefined ? new Set(DRAWING_KINDS) : toolSet(options.tools);
     const resolved = resolveShortcuts(options.shortcuts);
@@ -389,6 +403,14 @@ class DrawingToolsController implements DrawingTools {
 
   redo(): boolean {
     return this.run('action', () => this.redoStep(), false);
+  }
+
+  canUseFeature(feature: DrawingFeature): boolean {
+    return this.gate.canUse(feature);
+  }
+
+  canUseTool(kind: DrawingKind): boolean {
+    return this.gate.canUseTool(kind);
   }
 
   setMagnet(mode: MagnetMode): void {

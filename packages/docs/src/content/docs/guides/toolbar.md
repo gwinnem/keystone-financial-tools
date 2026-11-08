@@ -39,6 +39,30 @@ The static list without `active` and `enabled` is `TOOL_CATALOG`, exported by ev
 
 The tier is the split of the licensing: Community has the trend line and horizontal line, and Professional adds the rectangle, the text note, the four Fibonacci tools and undo/redo. Saving drawings is Professional Plus, and your own storage adapters are Enterprise (see the licensing decisions in the SDS). The toolbar does not check a licence yet: `enabled` follows the `tools` option, so a tool you leave out of `tools` is shown disabled and `activate` refuses it. Change it at run time with `setOptions({ tools })`.
 
+## Pass your license
+
+The tools never verify a license and do not import keystone-license: you pass the result in. Give `FEATURE_TIERS` to `getLicenseContext` as its `features`, so the license decides with the same table, and pass the context (or its manager, or any object with `canUseFeature(feature)`) as the `license` option. Without one the Community tier applies.
+
+```ts
+import { createDrawingTools, FEATURE_TIERS } from 'keystone-financial-tools-core';
+import { getLicenseContext } from 'keystone-license-core';
+
+const license = getLicenseContext({ packageName: 'keystone-financial-tools-core', packageVersion: '0.1.0', features: FEATURE_TIERS });
+const tools = createDrawingTools(host, { license });
+
+tools.canUseTool('rectangle'); // true on Professional and above
+tools.canUseFeature('persistence'); // true on Professional Plus and above
+```
+
+| Tier | Features |
+| --- | --- |
+| Community | `trend-line`, `horizontal-line`, `selection` |
+| Professional | `rectangle`, `text-note`, `fibonacci` (the four tools), `magnet-snapping`, `undo-redo` |
+| Professional Plus | `persistence` |
+| Enterprise | `plugin-api`, `storage-adapters` |
+
+A Developer license has every feature for 90 days. `canUseFeature` and `canUseTool` answer from the license each time they are asked and never throw: a license that throws is answered as Community. Nothing refuses a tool yet, so use them to decide what your toolbar shows until the gate arrives.
+
 ## Render it
 
 A button for each entry, disabled when the tool is not enabled, and pressed when it is active:

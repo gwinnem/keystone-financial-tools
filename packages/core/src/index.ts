@@ -77,6 +77,8 @@ export { createDrawingTools } from './controller';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export type { ToolbarEntry, ToolCatalogEntry, ToolGroup, ToolTier } from './catalog';
 export { IDLE_TOOLBAR, TOOL_CATALOG, toolbarEntries } from './catalog';
+export type { DrawingFeature, FeatureTier, LicenseContext, LicenseGate, LicenseSource } from './license';
+export { createLicenseGate, FEATURE_TIERS, TOOL_FEATURES } from './license';
 export type { MessageKey, MessageOverrides, Messages } from './messages';
 export { DEFAULT_MESSAGES, formatMessage, resolveMessages } from './messages';
 export { LIVE_REGION_ATTRIBUTES, liveRegionText, VISUALLY_HIDDEN_STYLE } from './live-region';
