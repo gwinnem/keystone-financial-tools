@@ -2122,6 +2122,329 @@
           ]
         }
       ]
+    },
+    {
+      "id": "E11",
+      "title": "Drawing catalog growth and chart integration",
+      "milestone": "M4 Adapters and integration",
+      "labels": ["area:core"],
+      "sds": ["FR-INT-010..019 (to be added)"],
+      "description": "Close the gap to the drawing sets of competing chart products and prepare the tools for the keystone-financial-workspace chart panel: new line, channel, arrow and annotation kinds, three-point Fibonacci, host contract v3 with the measuring tools, an inspector and object-list model, and verification against keystone-charts-financial. Record the requirements in the SDS before any code (SDS change flow).",
+      "features": [
+        {
+          "id": "E11-F01",
+          "title": "Lines, channels and arrows",
+          "sds": ["FR-INT-010"],
+          "description": "Vertical line, ray and extended-line presets, parallel and disjoint channels and the arrow kinds.",
+          "why": "the line family covers what traders place most, and the catalog matches the competing products",
+          "stories": [
+            {
+              "id": "E11-F01-S01",
+              "title": "Vertical line",
+              "userStory": "As a trader, I want a vertical line at a time so that I can mark events such as earnings or a session open.",
+              "sds": ["FR-INT-010"],
+              "acceptance": [
+                "`vertical-line` is a drawing kind with one anchor; only the time is used and the line spans every pane.",
+                "The line is drawn through the host's pane list (E11-F04-S01) and hit-tested by its x distance.",
+                "Style, lock, hide, move, delete, undo and persistence work as for the other kinds; an optional label sits over the time axis."
+              ],
+              "tasks": ["Add the kind, anchor count and options.", "Geometry, hit-test and scene items.", "Golden geometry fixture and unit tests."]
+            },
+            {
+              "id": "E11-F01-S02",
+              "title": "Ray and extended-line presets",
+              "userStory": "As a trader, I want a ray and an infinite line so that I can project a trend without drawing to the edge.",
+              "sds": ["FR-INT-011"],
+              "acceptance": [
+                "The toolbar catalog has `ray` and `extended-line` entries that place a trend line with `extendRight` or both extension options set; no new drawing kind and no document version change.",
+                "Labels, shortcuts and announcements are translatable through the messages table.",
+                "Saved documents load unchanged in older versions of the package."
+              ],
+              "tasks": ["Add the catalog entries and messages.", "Placement tests for both presets."]
+            },
+            {
+              "id": "E11-F01-S03",
+              "title": "Parallel channel",
+              "userStory": "As a trader, I want a parallel channel so that I can frame a trend between two lines.",
+              "sds": ["FR-INT-012"],
+              "acceptance": [
+                "`parallel-channel` takes three anchors: two define the base line and the third sets the offset of the parallel line.",
+                "Options: fill between the lines, optional centre line, `extendLeft` and `extendRight`.",
+                "Hit-testing covers both lines, the fill and the handles; three-click placement works by click and by drag, and by tap on touch."
+              ],
+              "tasks": ["Geometry for the offset line, fill and centre line.", "Three-anchor placement state machine.", "Tests including reversed anchors and vertical base lines."]
+            },
+            {
+              "id": "E11-F01-S04",
+              "title": "Disjoint channel",
+              "userStory": "As a trader, I want a channel whose lines are not parallel so that I can mark converging or diverging ranges.",
+              "sds": ["FR-INT-013"],
+              "acceptance": [
+                "`disjoint-channel` takes four anchors, two for each line, with a fill between them.",
+                "Crossing lines are handled: the fill is drawn as two triangles and hit-tests correctly.",
+                "Extension options work on both lines."
+              ],
+              "tasks": ["Geometry for the two-line fill including crossings.", "Four-anchor placement.", "Golden fixture and tests."]
+            },
+            {
+              "id": "E11-F01-S05",
+              "title": "Arrow, arrow up and arrow down",
+              "userStory": "As a trader, I want arrows so that I can point at a move or mark a buy or sell.",
+              "sds": ["FR-INT-014"],
+              "acceptance": [
+                "`arrow` takes two anchors and draws a line with a head at the second; `arrow-up` and `arrow-down` take one anchor and draw a fixed-size glyph.",
+                "Glyph size is in CSS pixels, independent of zoom, and scales with the style `lineWidth`.",
+                "Hit-testing covers the shaft, the head and the glyph box."
+              ],
+              "tasks": ["Add the three kinds.", "Geometry and scene items for heads and glyphs.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E11-F02",
+          "title": "Text annotations",
+          "sds": ["FR-INT-015"],
+          "description": "Comment, callout and note kinds next to the existing text note.",
+          "why": "traders annotate with more than plain text, and notes must not cover the chart",
+          "stories": [
+            {
+              "id": "E11-F02-S01",
+              "title": "Comment",
+              "userStory": "As a trader, I want a text box on the chart so that my comments are easy to read.",
+              "sds": ["FR-INT-015"],
+              "acceptance": [
+                "`comment` takes one anchor and draws its text inside a box with fill, border and padding from the style.",
+                "Editing uses the host's `editText`; multi-line text (Shift+Enter) is kept.",
+                "The box is clipped to the plot area and stays readable at the edges."
+              ],
+              "tasks": ["Add the kind and text layout.", "Hit-test the box.", "Tests for long and multi-line text."]
+            },
+            {
+              "id": "E11-F02-S02",
+              "title": "Callout",
+              "userStory": "As a trader, I want a text box with an arrow to a point so that I can explain a specific bar or price.",
+              "sds": ["FR-INT-016"],
+              "acceptance": [
+                "`callout` takes two anchors: the box position and the target; a pointer joins them.",
+                "Moving either anchor keeps the other fixed; handles for both are available.",
+                "Locked, hidden and z-order behave as for the other kinds."
+              ],
+              "tasks": ["Add the kind and pointer geometry.", "Two-anchor placement and handles.", "Tests."]
+            },
+            {
+              "id": "E11-F02-S03",
+              "title": "Note with hover text",
+              "userStory": "As a trader, I want a small icon with text on hover so that long notes do not cover the chart.",
+              "sds": ["FR-INT-017"],
+              "acceptance": [
+                "`note` takes one anchor and draws an icon; its scene item carries a `tooltip` text that the host shows on hover or focus.",
+                "The mock host and the conformance kit check the tooltip field.",
+                "The text is available to assistive technology through the live region and the object list."
+              ],
+              "tasks": ["Add the kind and the scene tooltip field.", "Extend the conformance kit.", "Tests."]
+            }
+          ]
+        },
+        {
+          "id": "E11-F03",
+          "title": "Trend-based Fibonacci",
+          "sds": ["FR-INT-018"],
+          "description": "The three-point Fibonacci extension next to the four existing Fibonacci kinds.",
+          "why": "traders project targets from the first leg and a retracement point",
+          "stories": [
+            {
+              "id": "E11-F03-S01",
+              "title": "Fibonacci trend-based extension",
+              "userStory": "As a trader, I want Fibonacci levels projected from three points so that I can estimate targets after a pullback.",
+              "sds": ["FR-INT-018"],
+              "acceptance": [
+                "`fibonacci-trend-based` takes three anchors: the first leg and the point it is projected from; levels, labels, prices and `reverse` options work like retracement.",
+                "The Fibonacci parity fixture is extended with the new kind and its version is increased; the core tests check it to 1e-9.",
+                "Level count, colours and extension options are editable; the default levels are documented."
+              ],
+              "tasks": ["Add the kind and geometry.", "Extend `FIBONACCI_PARITY` and bump `FIBONACCI_PARITY_VERSION`.", "Scenario tests for up and down legs."],
+              "labels": ["tool:fibonacci"]
+            }
+          ]
+        },
+        {
+          "id": "E11-F04",
+          "title": "Host contract v3 and measuring tools",
+          "sds": ["FR-INT-019"],
+          "description": "A small extension of the host contract for panes, bar counts and volume, and the measuring tools that need it.",
+          "why": "measuring is one of the most used tools, and it needs data the host owns",
+          "stories": [
+            {
+              "id": "E11-F04-S01",
+              "title": "Host contract v3",
+              "userStory": "As a chart developer, I want a versioned contract extension so that tools can span panes and measure bars and volume without reading chart internals.",
+              "sds": ["FR-INT-019"],
+              "acceptance": [
+                "`HOST_API_VERSION` is 3; the contract adds `paneIds()`, `barsBetween(from, to)` and optional `volumeBetween(from, to)`.",
+                "Hosts of version 2 keep working: tools that need a v3 member are disabled with a clear reason and a `blocked` event.",
+                "The conformance kit, mock host, playground host and host guide are updated; the migration is described in the CHANGELOG."
+              ],
+              "tasks": ["Extend `DrawingHost` and the host check.", "Update the mock host and conformance kit.", "Update the playground and the host guide."]
+            },
+            {
+              "id": "E11-F04-S02",
+              "title": "Transient measure tool",
+              "userStory": "As a trader, I want a quick measure between two points so that I can read the move without keeping a drawing.",
+              "sds": ["FR-INT-019"],
+              "acceptance": [
+                "The `measure` tool shows the time span, bar count, price difference and percent between two points and is removed when the user clicks away or presses Escape.",
+                "It is not stored, not in the undo history and not part of the saved document.",
+                "It works by click, drag and tap; the values are announced once through the live region."
+              ],
+              "tasks": ["Add a transient interaction state.", "Scene item and label layout.", "Tests for the lifecycle and for no persistence."]
+            },
+            {
+              "id": "E11-F04-S03",
+              "title": "Date range and price range",
+              "userStory": "As a trader, I want persistent date and price range measures so that I can keep key distances on the chart.",
+              "sds": ["FR-INT-019"],
+              "acceptance": [
+                "`date-range` shows time difference and bar count, plus summed volume when the host provides `volumeBetween`.",
+                "`price-range` shows the price difference as a value and as a percent.",
+                "Both are normal drawings: stored, editable, lockable and undoable."
+              ],
+              "tasks": ["Add the two kinds and label formatting.", "Tests with and without volume support."]
+            },
+            {
+              "id": "E11-F04-S04",
+              "title": "Date and price range",
+              "userStory": "As a trader, I want one measure that shows both the time and the price range so that I can read a swing in one box.",
+              "sds": ["FR-INT-019"],
+              "acceptance": [
+                "`date-and-price-range` combines the two measures in one box with one set of handles.",
+                "Labels follow the translation table and the instrument's tick size for rounding."
+              ],
+              "tasks": ["Add the kind.", "Tests including reversed anchors."]
+            }
+          ]
+        },
+        {
+          "id": "E11-F05",
+          "title": "Catalog, toolbar and docs for the new kinds",
+          "sds": ["FR-INT-010..019"],
+          "description": "Everything around the new kinds: catalog entries, shortcuts, messages, documentation, e2e tests and tier mapping.",
+          "why": "a kind is only finished when users can find it, reach it by keyboard and read about it",
+          "stories": [
+            {
+              "id": "E11-F05-S01",
+              "title": "Catalog, shortcuts and messages",
+              "userStory": "As a trader, I want every new tool in the toolbar with a shortcut and a translated label so that I can reach it quickly.",
+              "sds": ["FR-INT-010..019"],
+              "acceptance": [
+                "`TOOL_CATALOG` lists each new tool with group, icon, shortcut and tier; the toolbar model and the message table have the new keys.",
+                "Announcements exist for placement, selection and blocked states of each new kind.",
+                "The adapter parity test passes: every new export is in the Vue, React and Angular packages."
+              ],
+              "tasks": ["Add catalog entries and messages.", "Update the parity allow-list and tests."]
+            },
+            {
+              "id": "E11-F05-S02",
+              "title": "Docs, playground and e2e for the new kinds",
+              "userStory": "As a chart application developer, I want a documented page and a live example for each tool so that I can see how it behaves.",
+              "sds": ["DOC-001", "QA-004"],
+              "acceptance": [
+                "Each new kind has a docs page with a live example and the playground can place it.",
+                "Playwright covers place by click and drag, select, move, resize, delete, undo and redo, and reload persistence for each kind in Chromium, Firefox and WebKit.",
+                "READMEs, the keyboard reference and the CHANGELOG are updated."
+              ],
+              "tasks": ["Write the docs pages.", "Add playground entries.", "Add e2e scenarios."]
+            },
+            {
+              "id": "E11-F05-S03",
+              "title": "Tier mapping of the new tools",
+              "userStory": "As the product owner, I want the new tools mapped to tiers so that gating matches the commercial model.",
+              "sds": ["OD-2", "FR-LIC-002"],
+              "acceptance": [
+                "The tier of each new tool is decided together with OD-2 and recorded in the SDS and `FEATURE_TIERS`.",
+                "Documents saved with gated kinds load read-only after a downgrade, as for the Fibonacci kinds."
+              ],
+              "tasks": ["Record the decision.", "Update `FEATURE_TIERS` and tests."],
+              "labels": ["decision", "licensing"]
+            }
+          ]
+        },
+        {
+          "id": "E11-F06",
+          "title": "Inspector and object list",
+          "sds": ["FR-INT-020"],
+          "description": "Headless models for editing a selected drawing and for managing all drawings, so that applications build their own panels over one tested engine.",
+          "why": "the settings popup and the object tree of competing products are UI over state that the engine should own",
+          "stories": [
+            {
+              "id": "E11-F06-S01",
+              "title": "Inspector model",
+              "userStory": "As an application developer, I want the editable fields of a selected drawing as a model so that I can build a settings panel without duplicating rules.",
+              "sds": ["FR-INT-020"],
+              "acceptance": [
+                "The controller exposes an inspector state for the selection: style fields, kind options, text, lock, hide and z-order, with limits and current values.",
+                "Every change goes through the controller and history as one undo step and is validated with the existing issue codes.",
+                "Several selected drawings show shared fields and a mixed state for the others."
+              ],
+              "tasks": ["Define the inspector state and actions.", "Wire changes through history.", "Unit tests for single and multiple selection."]
+            },
+            {
+              "id": "E11-F06-S02",
+              "title": "Object list model",
+              "userStory": "As an application developer, I want an ordered list of drawings as a model so that I can build an object tree.",
+              "sds": ["FR-INT-021"],
+              "acceptance": [
+                "The list has id, kind, label, locked, hidden and z-order for each drawing in paint order.",
+                "Select, hide, lock, delete and reorder actions are single undo steps; selecting in the list selects on the chart.",
+                "The list is stable across store changes and cheap to update for 500 drawings (benchmark)."
+              ],
+              "tasks": ["Define the list state and actions.", "Add a benchmark.", "Tests."]
+            },
+            {
+              "id": "E11-F06-S03",
+              "title": "Inspector and object list in the adapters",
+              "userStory": "As a Vue, React or Angular developer, I want the inspector and the object list as composables and services so that I do not touch the core.",
+              "sds": ["FR-FW-050"],
+              "acceptance": [
+                "The Vue and React composables and the Angular service expose both models with the same names.",
+                "The parity test (FR-FW-050) passes and the docs have a guide with a settings panel example for each framework."
+              ],
+              "tasks": ["Expose the models in the three adapters.", "Write the guide.", "Parity test update."]
+            }
+          ]
+        },
+        {
+          "id": "E11-F07",
+          "title": "Chart integration verification",
+          "sds": ["FR-INT-022"],
+          "description": "Checks that the tools run on keystone-charts-financial, not only on the playground host.",
+          "why": "a contract that only one reference host passes is not yet proven",
+          "stories": [
+            {
+              "id": "E11-F07-S01",
+              "title": "Conformance against the chart package",
+              "userStory": "As the maintainer, I want the host conformance kit to run against the real chart host so that contract drift is caught early.",
+              "sds": ["FR-INT-022"],
+              "acceptance": [
+                "A consumer test (in the chart repo or a shared integration job) runs `runHostConformance` against keystone-charts-financial's DrawingHost for one and for several panes.",
+                "The Fibonacci parity fixture is checked against the chart's renderer output.",
+                "A failing check names the contract member that differs."
+              ],
+              "tasks": ["Agree where the consumer test lives.", "Add it to CI of the repo that owns it.", "Document how to run it."]
+            },
+            {
+              "id": "E11-F07-S02",
+              "title": "Persistence guide for applications",
+              "userStory": "As an application developer, I want a guide to saving drawings per symbol and timeframe so that I can connect them to my document store.",
+              "sds": ["FR-PERSIST-010"],
+              "acceptance": [
+                "The persistence guide shows a repository over a generic document store with scope, debounced saving and import with merge or replace.",
+                "The guide states what happens to drawings of an unknown kind or version."
+              ],
+              "tasks": ["Write the guide and a code example.", "Link it from the host guide."]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

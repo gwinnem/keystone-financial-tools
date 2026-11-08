@@ -19,7 +19,7 @@ interface DrawingRepository {
 
 - `MemoryRepository` keeps documents in memory, for tests and server-side rendering.
 - `WebStorageRepository(storage, prefix?)` uses `localStorage`, `sessionStorage` or any object with `getItem`, `setItem` and `removeItem`.
-- `IndexedDbRepository({ dbName })` keeps one IndexedDB record per scope.
+- `IndexedDbRepository({ dbName })` keeps one IndexedDB record per scope. It rejects when IndexedDB is missing (for example on the server) or the database has a newer version, and tries again on the next call.
 
 ```ts
 import { WebStorageRepository } from 'keystone-financial-tools-typescript';
@@ -74,6 +74,24 @@ if (report.issue !== undefined) console.warn(report.issue.message);
 
 `merge` adds the drawings and renames ids that are taken; `replace` swaps the content of the store. The import is one change (one store notification). Pass `history: false` to keep it out of the undo history.
 
+## Migrate from the 0.1 helpers
+
+The synchronous Web Storage helpers of 0.1 (`saveDrawings`, `loadDrawings` and the storage form `autoSave(store, storage, key)`) keep working with unchanged signatures and are marked `@deprecated`. They take a raw storage key and share the text format, the key rules and the `KFT-E-JSON` issue of `WebStorageRepository`: under the key `keystone-drawings:AAPL` they read and write the same entry as `WebStorageRepository(localStorage)` does for `{ symbol: 'AAPL' }`.
+
+```ts
+// before
+saveDrawings(store, localStorage, 'chart-aapl');
+const restored = loadDrawings(localStorage, 'chart-aapl');
+
+// after
+const repository = new WebStorageRepository(localStorage);
+await repository.save({ symbol: 'AAPL' }, store.toJSON());
+const { document, issue } = await repository.load({ symbol: 'AAPL' });
+```
+
+- Data saved under a custom key is not found by a repository, which uses `scopeKey`. Move it once: read it with `loadDrawings(localStorage, 'chart-aapl')`, then `repository.save` it.
+- `autoSave(store, repository, scope)` (debounced) replaces the storage form of `autoSave`, and `loadStore(repository, scope)` replaces `loadDrawings`: it never throws for stored data and reports what it skipped.
+
 ## Your own backend
 
 Implement the three methods and use `readStored(value, scope)` so that corrupt data and documents of another scope follow the same rules as the built-in repositories.
@@ -96,6 +114,8 @@ class RestRepository implements DrawingRepository {
   }
 }
 ```
+
+The package's `__tests__/repository-contract.ts` is the contract every repository passes (empty load, round trip, copies, scopes kept apart, remove); run it against your own implementation the way the three repositories do.
 
 ## Next
 
