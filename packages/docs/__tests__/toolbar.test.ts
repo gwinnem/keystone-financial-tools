@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MESSAGES, FEATURE_TIERS, TOOL_CATALOG } from 'keystone-financial-tools-core';
+import { DEFAULT_MESSAGES, TOOL_CATALOG } from 'keystone-financial-tools-core';
 import { readPage } from './support';
 
 const page = readPage('guides/toolbar');
@@ -17,25 +17,8 @@ describe('the toolbar guide (FR-FW-040, FR-FW-041)', () => {
   });
 
   it('has no row that is not a field, a tool, a key or a table head', () => {
-    // Heads and their lines (4 tables), 8 fields, the tools, the messages, 2 keys, and the head, line and 4 tiers of the license table.
-    expect(rows).toHaveLength(8 + 8 + TOOL_CATALOG.length + Object.keys(DEFAULT_MESSAGES).length + 2 + 6);
-  });
-
-  it('lists every feature of FEATURE_TIERS on the row of its tier (FR-LIC-002)', () => {
-    const tiers = ['Community', 'Professional', 'Professional Plus', 'Enterprise'];
-    for (const [feature, tier] of Object.entries(FEATURE_TIERS)) {
-      const label = tiers.find((name) => name.toLowerCase().replace(' ', '-') === tier);
-      const row = rows.find((line) => line.startsWith(`| ${label} | `));
-      expect(row, feature).toContain(`\`${feature}\``);
-    }
-    expect(rows.filter((line) => tiers.some((name) => line.startsWith(`| ${name} | \``)))).toHaveLength(tiers.length);
-  });
-
-  it('explains how to pass the license, and that Developer has every feature', () => {
-    expect(page).toContain('features: FEATURE_TIERS');
-    expect(page).toContain('{ license }');
-    expect(page).toContain('`canUseTool`');
-    expect(page).toContain('A Developer license has every feature for 90 days.');
+    // Heads and their lines (4 tables), 8 fields, the tools, the messages and 2 keys.
+    expect(rows).toHaveLength(8 + 8 + TOOL_CATALOG.length + Object.keys(DEFAULT_MESSAGES).length + 2);
   });
 
   it('has a row for every message, with its English text (NFR-I18N-001)', () => {

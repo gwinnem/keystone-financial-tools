@@ -1044,22 +1044,9 @@ can start while E07 is still open):
 - FR-LIC-003: Activating a gated tool emits a `blocked` event with `KFT-E-LICENSE`; loaded documents
   that contain gated kinds are still rendered read-only (data is never lost).
 
-Decisions of E10-F01-S02 (license context; `packages/core/src/license.ts`):
-
-- The core takes the license in and verifies nothing (AR-1): `DrawingToolsOptions.license` is a `LicenseContext`
-  (`{ manager }`, what `getLicenseContext` of keystone-license returns) or a `LicenseSource` (`canUseFeature(feature)`,
-  what its manager is). Both are structural types of the core, so it has no dependency on keystone-license. Anything
-  else is a `RangeError` at creation, like a bad `magnet`.
-- `FEATURE_TIERS` is the table of FR-LIC-002 and is what the application gives `getLicenseContext` as `features`, so the
-  license and the tools decide with one table. `TOOL_FEATURES` maps a drawing kind to its feature (the four Fibonacci
-  kinds are `fibonacci`); a test pins every `TOOL_CATALOG` `tier` to the tier of its feature.
-- Without a license only the Community features are allowed. With one the license decides, each time it is asked, so a
-  license that is set later or expires is followed (`setLicense` of keystone-license re-evaluates the manager). Only
-  `true` is a yes. A source that throws is answered as no license for that question: a broken license never opens a
-  gate and never throws into the host (NFR-REL-001).
-- `DrawingTools.canUseFeature(feature)` and `canUseTool(kind)` are the answer. They are pure and still answer after
-  `destroy`. Nothing is gated by them yet: the toolbar `enabled` flag, `activate`, `blocked` and read-only documents are
-  E10-F02 (FR-LIC-003).
+Status: none of this is built. The license option, the gate and the read-only drawings were taken out on 2026-11-09 and
+are built after all other issues are closed (E10 #167 and its features stay open). Until then every tool and feature
+works, and the `tier` of `TOOL_CATALOG` and `REPOSITORY_TIERS` are information only.
 
 ## 13. Testing and quality
 

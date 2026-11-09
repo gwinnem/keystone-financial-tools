@@ -125,7 +125,7 @@ function removeSelected(state: Selected, ctx: InteractionContext): InteractionRe
   return go(selection(locked, null), effects);
 }
 
-/** An arrow key: nudge the unlocked selected drawings, and report the locked ones as blocked; ignored when none of them exists. */
+/** An arrow key: nudge the unlocked selected drawings and report the locked ones as blocked; ignored when none of them exists. */
 function nudgeSelected(state: Selected, step: { readonly bars: number; readonly pixels: number }, ctx: InteractionContext): InteractionResult {
   const { unlocked, locked } = partitionByLock(state.ids, ctx);
   const effects: InteractionEffect[] = [];
@@ -142,10 +142,10 @@ function startDrag(state: Selected, input: Extract<InteractionInput, { type: 'dr
     const handle = Number(target.part.slice(HANDLE_PREFIX.length));
     return go({ type: 'dragging-handle', drawingId: target.id, handle, selection: state.ids }, [{ type: 'drag-start', mode: 'handle', drawingId: target.id, handle, origin: input.origin }]);
   }
-  const { unlocked: ids, locked } = partitionByLock(state.ids, ctx);
-  const effects: InteractionEffect[] = [{ type: 'drag-start', mode: 'move', ids, origin: input.origin }];
+  const { unlocked, locked } = partitionByLock(state.ids, ctx);
+  const effects: InteractionEffect[] = [{ type: 'drag-start', mode: 'move', ids: unlocked, origin: input.origin }];
   if (locked.length > 0) effects.push({ type: 'blocked', ids: locked });
-  return go({ type: 'moving', ids, selection: state.ids }, effects);
+  return go({ type: 'moving', ids: unlocked, selection: state.ids }, effects);
 }
 
 function syncSelected(state: Selected, ctx: InteractionContext): InteractionResult {

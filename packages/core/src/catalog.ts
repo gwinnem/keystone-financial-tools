@@ -66,13 +66,16 @@ export const TOOL_CATALOG: readonly ToolCatalogEntry[] = deepFreeze<readonly Too
 export interface ToolbarEntry extends ToolCatalogEntry {
   /** The tool is the one placing drawings now. */
   readonly active: boolean;
-  /** The tool can be activated: it is in the `tools` option. */
+  /**
+   * The tool can be activated: it is in the `tools` option.
+   */
   readonly enabled: boolean;
 }
 
 /**
  * The toolbar for a chart: every catalog entry with `active` (it is `activeTool`), `enabled` (it is in
- * `allowed`) and the shortcut in use. `DrawingToolsState.toolbar` is this, kept up to date.
+ * `allowed`) and the shortcut in use.
+ * `DrawingToolsState.toolbar` is this, kept up to date.
  *
  * @example
  * ```ts
