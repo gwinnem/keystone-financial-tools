@@ -15,6 +15,7 @@ export type {
   JsonValue,
   KindOptions,
   LineStyle,
+  PanePosition,
   StoreChange,
   StoreOperation,
 } from './types';
@@ -52,12 +53,14 @@ export {
   constrainAngle,
   constrainMove,
   dragHandle,
+  dragPatch,
   handleSnap,
   KEYBOARD_CURSOR_INSET_PX,
   keyboardCursorStart,
   moveDrawings,
   moveKeyboardCursor,
   nudgeAnchors,
+  nudgeDrawing,
   SHIFT_STEP_FACTOR,
 } from './interaction/move';
 export type { TextEditorKeyAction, TextEditorKeyEvent, TextEditorListener, TextEditSession } from './text-editor';

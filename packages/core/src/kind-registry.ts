@@ -2,7 +2,10 @@ import type { ToolGroup } from './catalog';
 import type { DrawingHost, Point, Rect } from './host';
 import type { HandlePoint, GeometryOptions, Shape } from './geometry/types';
 import { deepFreeze } from './object';
-import type { Drawing, DrawingKind, KindOptions } from './types';
+import type { Drawing, DrawingKind, KindOptions, PanePosition } from './types';
+
+/** Where a pane-anchored kind sits when a drawing has no `position`: the middle of the pane. */
+export const DEFAULT_PANE_POSITION: PanePosition = Object.freeze({ x: 0.5, y: 0.5 });
 
 /**
  * How many anchors a kind takes: `min` to `max`, both whole numbers with `1 <= min <= max`. A fixed kind has
@@ -48,6 +51,12 @@ export interface KindDefinition {
   readonly defaults: KindOptions;
   /** The group of the kind in a toolbar. */
   readonly group: ToolGroup;
+  /**
+   * `data` (default): the anchors are points of the chart. `pane` (D-10): the drawing has one anchor that only names the pane (its time
+   * and price are ignored) and `options.position`, fractions 0..1 of the pane, places it; the `points` of the geometry
+   * context is that one plot point. A pane kind needs the anchor rule 1 to 1.
+   */
+  readonly space?: 'data' | 'pane';
   /** The shapes of a drawing of the kind for the current frame. */
   readonly geometry: (context: KindGeometryContext) => Shape[];
   /** The grab points of a drawing. Default: one `handle:<n>` at each anchor. */
@@ -79,11 +88,13 @@ function checkDefinition(definition: KindDefinition): void {
   if (!Number.isInteger(min) || !Number.isInteger(max) || min < 1 || max < min) {
     throw new RangeError(`The anchor rule of ${definition.id} needs whole numbers with 1 <= min <= max.`);
   }
+  if (definition.space === 'pane' && (min !== 1 || max !== 1)) throw new RangeError(`The pane kind ${definition.id} takes exactly one anchor.`);
 }
 
 function add(definition: KindDefinition, isDefault: boolean): () => void {
   checkDefinition(definition);
-  const entry: KindDefinition = deepFreeze({ ...definition, anchors: { ...definition.anchors }, defaults: { ...definition.defaults } });
+  const defaults = definition.space === 'pane' ? { position: DEFAULT_PANE_POSITION, ...definition.defaults } : { ...definition.defaults };
+  const entry: KindDefinition = deepFreeze({ ...definition, anchors: { ...definition.anchors }, defaults });
   definitions.set(entry.id, entry);
   kinds.push(entry.id);
   if (isDefault) defaultTools.push(entry.id);

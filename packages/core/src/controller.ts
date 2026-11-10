@@ -13,20 +13,21 @@ import { duplicateDrawing } from './interaction/duplicate';
 import type { Gesture, GestureOptions } from './interaction/gesture';
 import { GestureRecogniser } from './interaction/gesture';
 import { reduceInteraction } from './interaction/machine';
-import { dragHandle, handleSnap, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeAnchors } from './interaction/move';
+import { dragPatch, handleSnap, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeDrawing } from './interaction/move';
 import { lockAngle, PLACEMENT_START, placementPreview, placementSnap, reducePlacement, type PlacementInput, type PlacementProgress } from './interaction/placement';
 import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
 import { DEFAULT_TOOLS, isDrawingKind } from './kinds';
 import { formatMessage, resolveMessages, type MessageKey, type MessageOverrides, type Messages } from './messages';
+import { isPaneKind, positionAt } from './pane-space';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
 import type { SceneItem, SceneOptions } from './scene/types';
 import { resolveShortcuts, shortcutAction, type ShortcutAction, type ShortcutBinding, type ShortcutOptions, type ToolShortcuts } from './shortcuts';
 import { DrawingStore } from './store';
 import { resolveStyle, type DrawingTheme } from './theme';
-import type { Anchor, Drawing, DrawingKind, StoreChange } from './types';
+import type { Anchor, Drawing, DrawingKind, DrawingPatch, StoreChange } from './types';
 
 /**
  * Options of `createDrawingTools`. Everything is optional.
@@ -915,7 +916,7 @@ class DrawingToolsController implements DrawingTools {
     const note = tool === 'text-note';
     this.note = note ? this.history.transaction() : null;
     try {
-      this.store.add(note ? { id, kind: tool, anchors, text: '' } : { id, kind: tool, anchors });
+      this.store.add(note ? { id, kind: tool, anchors, text: '' } : { id, kind: tool, anchors, ...this.paneOptions(tool, anchors) });
     } catch (error) {
       // Nothing was added: the entry only needs closing.
       this.note?.cancel();
@@ -925,6 +926,12 @@ class DrawingToolsController implements DrawingTools {
     if (note) this.fresh = id;
     else this.announce('announce.placed', { tool: this.toolName(tool) });
     this.feed({ type: 'placement-complete', id, stay: this.stayInTool, edit: note });
+  }
+
+  /** A pane-anchored drawing (D-10) is placed where the pointer was: its position in the pane. Nothing for the other kinds. */
+  private paneOptions(tool: DrawingKind, anchors: readonly Anchor[]): Pick<DrawingPatch, 'options'> {
+    const rect = isPaneKind(tool) ? this.host.paneRect((anchors[0] as Anchor).yAxisId) : null;
+    return rect === null ? {} : { options: { position: positionAt(rect, anchorToPoint(anchors[0] as Anchor, this.host)) } };
   }
 
   /** The y-axis of a keyboard cursor: the one of the first anchor once there is one. */
@@ -966,12 +973,14 @@ class DrawingToolsController implements DrawingTools {
     const magnet = effectiveMagnet(this.magnet, this.modifiers.invert);
     if ('drawings' in session) {
       this.store.batch(() => {
-        for (const moved of moveDrawings(session.drawings, session.origin, point, shift, this.host)) this.store.update(moved.id, { anchors: moved.anchors });
+        for (const moved of moveDrawings(session.drawings, session.origin, point, shift, this.host)) {
+          this.store.update(moved.id, moved.options === undefined ? { anchors: moved.anchors } : { anchors: moved.anchors, options: moved.options });
+        }
       });
       return;
     }
-    const anchors = dragHandle(session.drawing, session.handle, session.origin, point, shift, this.host, magnet);
-    if (anchors !== null) this.store.update(session.drawing.id, { anchors });
+    const patch = dragPatch(session.drawing, session.handle, session.origin, point, shift, this.host, magnet);
+    if (patch !== null) this.store.update(session.drawing.id, patch);
     this.snap = handleSnap(session.drawing, session.handle, session.origin, point, shift, this.host, magnet);
   }
 
@@ -987,13 +996,13 @@ class DrawingToolsController implements DrawingTools {
   /** Arrow keys: one `nudge` transaction, so quick nudges are one history entry. */
   private nudge(ids: readonly string[], bars: number, pixels: number): void {
     const moves = ids.flatMap((id) => {
-      const anchors = nudgeAnchors(this.store.get(id) as Drawing, bars, pixels, this.host);
-      return anchors === null ? [] : [{ id, anchors }];
+      const patch = nudgeDrawing(this.store.get(id) as Drawing, bars, pixels, this.host);
+      return patch === null ? [] : [{ id, patch }];
     });
     const tx = this.history.transaction('nudge');
     try {
       this.store.batch(() => {
-        for (const move of moves) this.store.update(move.id, { anchors: move.anchors });
+        for (const move of moves) this.store.update(move.id, move.patch);
       });
     } finally {
       // When the batch threw, it rolled back and nothing was recorded: committing closes the transaction.

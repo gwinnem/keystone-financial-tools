@@ -74,6 +74,7 @@ export type {
   Modifiers,
   NearestBar,
   Ohlc,
+  PanePosition,
   Point,
   PointerPhase,
   PointerType,

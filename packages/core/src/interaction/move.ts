@@ -1,6 +1,7 @@
 import type { DrawingHost, Point } from '../host';
+import { barWidthPx, isPaneKind, paneShift } from '../pane-space';
 import { anchorToPoint, pointToAnchor } from '../projection';
-import type { Anchor, Drawing, DrawingKind } from '../types';
+import type { Anchor, Drawing, DrawingKind, DrawingPatch, KindOptions } from '../types';
 import { snapAnchor, type MagnetMode } from './snap';
 
 /** What Shift multiplies an arrow key step by (FR-INT-034). */
@@ -9,10 +10,11 @@ export const SHIFT_STEP_FACTOR = 10;
 /** How far inside a pane edge (CSS px) the keyboard cursor stays, so it is always over the pane. */
 export const KEYBOARD_CURSOR_INSET_PX = 1;
 
-/** A drawing's new anchors after a move. */
+/** A drawing's new anchors after a move. A pane-anchored drawing (D-10) keeps its anchors and has its new `options` too. */
 export interface MovedDrawing {
   readonly id: string;
   readonly anchors: readonly Anchor[];
+  readonly options?: KindOptions;
 }
 
 /** Which of an anchor's coordinates a handle changes. */
@@ -141,6 +143,8 @@ function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point:
 }
 
 function dragHandleResult(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, magnet: MagnetMode, host: DrawingHost): HandleDrag | null {
+  // A pane-anchored drawing has no anchor to drag: see `dragPatch`.
+  if (isPaneKind(drawing.kind)) return null;
   if (shift && ANGLE_KINDS.has(drawing.kind)) return dragAngleHandle(drawing, handle, origin, point, host);
   const edits = editsOf(drawing, handle);
   if (edits === undefined) return null;
@@ -184,6 +188,23 @@ export function dragHandle(drawing: Drawing, handle: number, origin: Point, poin
 }
 
 /**
+ * What dragging handle `handle` changes in a drawing, as a patch for `DrawingStore.update`, or null when nothing can change. The
+ * anchors of a drawing in data space (see `dragHandle`); the `options.position` of a pane-anchored drawing (D-10), whose one handle
+ * moves it, clamped to the pane.
+ *
+ * @example
+ * ```ts
+ * const patch = dragPatch(original, 0, origin, event.point, event.shiftKey, host);
+ * if (patch !== null) store.update(original.id, patch);
+ * ```
+ */
+export function dragPatch(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, host: DrawingHost, magnet: MagnetMode = 'off'): DrawingPatch | null {
+  if (isPaneKind(drawing.kind)) return handle === 0 ? paneShift(drawing, point.x - origin.x, point.y - origin.y, host) : null;
+  const anchors = dragHandle(drawing, handle, origin, point, shift, host, magnet);
+  return anchors === null ? null : { anchors };
+}
+
+/**
  * Where the dragged handle snapped to (the `snap` option of the scene, FR-INT-043): the plot point,
  * or null when the drag does not snap or cannot happen. Takes the same arguments as `dragHandle`.
  *
@@ -214,6 +235,10 @@ export function handleSnap(drawing: Drawing, handle: number, origin: Point, poin
 export function moveDrawings(drawings: readonly Drawing[], origin: Point, point: Point, shift: boolean, host: DrawingHost): MovedDrawing[] {
   const target = shift ? constrainMove(origin, point) : point;
   return drawings.flatMap((drawing): MovedDrawing[] => {
+    if (isPaneKind(drawing.kind)) {
+      const patch = paneShift(drawing, target.x - origin.x, target.y - origin.y, host);
+      return patch === null ? [] : [{ id: drawing.id, anchors: drawing.anchors, options: patch.options }];
+    }
     const anchors: Anchor[] = [];
     for (const anchor of drawing.anchors) {
       const next = dragged(anchor, origin, target, host, drawing.kind === 'horizontal-line' ? PRICE_ONLY : BOTH);
@@ -244,6 +269,21 @@ export function nudgeAnchors(drawing: Drawing, bars: number, pixels: number, hos
     anchors.push({ time: anchor.time + bars * interval, price: pixels === 0 ? anchor.price : moved.price, yAxisId: anchor.yAxisId });
   }
   return anchors;
+}
+
+/**
+ * What an arrow key changes in a drawing: `nudgeAnchors` as a patch, or for a pane-anchored drawing its `options.position`
+ * moved by `bars` bars and `pixels` px and clamped to the pane. Null when the pane is gone.
+ *
+ * @example
+ * ```ts
+ * const patch = nudgeDrawing(drawing, 1, 0, host);
+ * ```
+ */
+export function nudgeDrawing(drawing: Drawing, bars: number, pixels: number, host: DrawingHost): DrawingPatch | null {
+  if (isPaneKind(drawing.kind)) return paneShift(drawing, bars * barWidthPx(host), pixels, host);
+  const anchors = nudgeAnchors(drawing, bars, pixels, host);
+  return anchors === null ? null : { anchors };
 }
 
 /**

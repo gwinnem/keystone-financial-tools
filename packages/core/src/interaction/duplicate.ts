@@ -1,4 +1,5 @@
 import type { DrawingHost } from '../host';
+import { barWidthPx, isPaneKind, paneShift } from '../pane-space';
 import type { Drawing } from '../types';
 import { nudgeAnchors } from './move';
 
@@ -20,6 +21,10 @@ export const DUPLICATE_OFFSET_PX = 10;
  * ```
  */
 export function duplicateDrawing(drawing: Drawing, id: string, host: DrawingHost): Drawing | null {
+  if (isPaneKind(drawing.kind)) {
+    const patch = paneShift(drawing, barWidthPx(host), DUPLICATE_OFFSET_PX, host);
+    return patch === null ? null : { ...drawing, ...patch, id, locked: false };
+  }
   const anchors = nudgeAnchors(drawing, 1, DUPLICATE_OFFSET_PX, host);
   return anchors === null ? null : { ...drawing, id, anchors, locked: false };
 }

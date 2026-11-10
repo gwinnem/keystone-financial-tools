@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- Pane-anchored kinds (E12-F01-S02, FR-TOOL-031, D-10): a kind registered with `space: 'pane'` has one anchor that only names the pane
+  (its time and price play no part in the geometry) and `options.position`, the place in the pane as `PanePosition` fractions
+  0..1 of its width and height (`KFT-E-OPTIONS` outside; the default is the middle of the pane). `geometryOf` places such a drawing from
+  `paneRect`, so zoom, scroll and resize keep it where it is in the pane, and it has no geometry (and so no scene item) when its pane is gone,
+  while the drawing stays in the store. Placing it stores the position of the click; dragging its body or its one handle, the arrow keys and
+  duplicate change the position, clamped to the pane, so the drawing stays partly inside. Moves go through the new `dragPatch`
+  and `nudgeDrawing` (a patch for `DrawingStore.update`); `MovedDrawing` gets an optional `options`. Undo, redo, export and import keep
+  the position. A pane kind must take exactly one anchor (`registerKind` throws `RangeError` otherwise).
 - Kind registry (E12-F01-S01, FR-TOOL-030, D-8, D-15): the drawing kinds live in one registry. An entry (`KindDefinition`) holds the
   id, the anchor rule (`AnchorRule`, `{ min, max }`), the option defaults, the catalog group, the geometry function and
   optionally the handles; the eight kinds of 1.0 are registered this way and keep their ids, anchors and documents. New:

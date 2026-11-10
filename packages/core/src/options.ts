@@ -49,6 +49,13 @@ function optionsIssue(message: string): DrawingIssue {
   return { code: 'KFT-E-OPTIONS', message };
 }
 
+const inUnit = (value: unknown): boolean => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+
+function validatePosition(value: unknown): DrawingIssue[] {
+  if (isPlainObject(value) && Object.keys(value).length === 2 && inUnit(value.x) && inUnit(value.y)) return [];
+  return [optionsIssue('The position must be an object with x and y, both between 0 and 1.')];
+}
+
 const LEVEL_KEYS: readonly string[] = ['ratio', 'visible', 'color'];
 
 function isValidLevel(value: unknown): value is FibonacciLevel {
@@ -113,6 +120,8 @@ export function validateOptions(kind: DrawingKind, value: unknown): DrawingIssue
     if (option === undefined) continue;
     if (!hasOwn(allowed, key)) {
       issues.push(optionsIssue(`The option ${key} is not allowed on a ${kind}.`));
+    } else if (key === 'position') {
+      issues.push(...validatePosition(option));
     } else if (key === 'levels') {
       issues.push(...validateLevels(option));
     } else if (key === 'sequence') {

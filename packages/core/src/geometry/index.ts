@@ -1,6 +1,7 @@
 import type { DrawingHost } from '../host';
 import { kindDefinition } from '../kinds';
 import { resolveOptions } from '../options';
+import { panePoint, positionOf } from '../pane-space';
 import { anchorToPoint } from '../projection';
 import type { Drawing } from '../types';
 import { anchorHandles } from './handles';
@@ -37,7 +38,8 @@ export function geometryOf(drawing: Drawing, host: DrawingHost, options: Geometr
   if (definition === undefined) return null;
   const rect = host.paneRect(drawing.anchors[0].yAxisId);
   if (rect === null) return null;
-  const points = drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
+  // A pane-anchored kind (D-10) is placed from the pane: its anchor only names the pane, so time and price play no part.
+  const points = definition.space === 'pane' ? [panePoint(rect, positionOf(drawing))] : drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
   const kindOptions = resolveOptions(drawing.kind, drawing.options);
   return {
     drawingId: drawing.id,

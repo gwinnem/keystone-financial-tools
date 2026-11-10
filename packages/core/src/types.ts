@@ -46,6 +46,12 @@ export interface FibonacciLevel {
   readonly color?: string;
 }
 
+/** A place in a pane as fractions of its width and height, from its top left corner (D-10). */
+export interface PanePosition {
+  readonly x: number;
+  readonly y: number;
+}
+
 /**
  * Kind-specific options. Each kind accepts only its own keys (`KIND_OPTION_KEYS`); missing values
  * come from `defaultOptions(kind)`.
@@ -57,6 +63,7 @@ export interface FibonacciLevel {
  * | `fibonacci-arcs` | `levels`, `fullCircles`, `showLabels` |
  * | `fibonacci-fans` | `levels`, `showLabels` |
  * | `fibonacci-time-zones` | `sequence`, `showLabels` |
+ * | a pane-anchored kind | `position` |
  *
  * @example
  * ```ts
@@ -64,6 +71,8 @@ export interface FibonacciLevel {
  * ```
  */
 export interface KindOptions {
+  /** Pane-anchored kinds: where the drawing sits, as fractions of the pane from its top left corner. Both between 0 and 1. */
+  readonly position?: PanePosition;
   /** Fibonacci levels, at most 24, unique ratios. */
   readonly levels?: readonly FibonacciLevel[];
   /** Time-zone bar multiples: non-negative integers, strictly ascending, at most 32. */
