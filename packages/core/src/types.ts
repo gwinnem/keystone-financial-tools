@@ -10,8 +10,26 @@ export interface Anchor {
   readonly yAxisId: string;
 }
 
-/** The drawing tools. The anchor count of each kind is in `ANCHOR_COUNT`. */
-export type DrawingKind = 'trend-line' | 'horizontal-line' | 'rectangle' | 'fibonacci-retracement' | 'fibonacci-arcs' | 'fibonacci-fans' | 'fibonacci-time-zones' | 'text-note';
+/**
+ * The drawing tools. The anchor count of each kind is in `ANCHOR_COUNT`. The first eight are the tools of 1.0; the trend-based extension
+ * (E11) and the channel, time extension, circles, spiral and wedge (E15) are Fibonacci kinds that a host draws with its Fibonacci renderer
+ * (FR-SC-004): they are registered and valid in a document, but not in the default `tools` or the catalog until their tool stories.
+ */
+export type DrawingKind =
+  | 'trend-line'
+  | 'horizontal-line'
+  | 'rectangle'
+  | 'fibonacci-retracement'
+  | 'fibonacci-arcs'
+  | 'fibonacci-fans'
+  | 'fibonacci-time-zones'
+  | 'text-note'
+  | 'fibonacci-trend-based'
+  | 'fibonacci-channel'
+  | 'fibonacci-time-extension'
+  | 'fibonacci-circles'
+  | 'fibonacci-spiral'
+  | 'fibonacci-wedge';
 
 export type LineStyle = 'solid' | 'dashed' | 'dotted';
 
@@ -63,6 +81,10 @@ export interface PanePosition {
  * | `fibonacci-arcs` | `levels`, `fullCircles`, `showLabels` |
  * | `fibonacci-fans` | `levels`, `showLabels` |
  * | `fibonacci-time-zones` | `sequence`, `showLabels` |
+ * | `fibonacci-trend-based` | `levels`, `extendLeft`, `extendRight`, `showLabels`, `showPrices` |
+ * | `fibonacci-channel` | `levels`, `extendLeft`, `extendRight`, `showLabels` |
+ * | `fibonacci-time-extension`, `fibonacci-circles`, `fibonacci-wedge` | `levels`, `showLabels` |
+ * | `fibonacci-spiral` | `turns`, `clockwise` |
  * | a pane-anchored kind | `position` |
  *
  * @example
@@ -85,6 +107,10 @@ export interface KindOptions {
   readonly showPrices?: boolean;
   /** Arcs: full circles instead of half circles. */
   readonly fullCircles?: boolean;
+  /** Spiral: the number of turns, a whole number from 1 to 8. */
+  readonly turns?: number;
+  /** Spiral: turn clockwise on screen (the default) or counter-clockwise. */
+  readonly clockwise?: boolean;
 }
 
 /** A value that survives `JSON.stringify` / `JSON.parse` unchanged. */

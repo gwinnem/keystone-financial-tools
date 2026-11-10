@@ -408,7 +408,7 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
   and pen (the default), 12 for touch (`HIT_TOLERANCE`). A distance of exactly the tolerance hits.
   Distances are measured to segments (not to their extensions), rays as clipped by the geometry,
   rectangle borders, arcs (to the nearer end where the arc does not cover the direction of the
-  point) and text boxes (solid). Hidden drawings are never hit (FR-DM-006); locked drawings are,
+  point), text boxes (solid) and the new shapes of FR-TOOL-036 as FR-TOOL-037 says. Hidden drawings are never hit (FR-DM-006); locked drawings are,
   with `locked: true`, so they can be selected, and the caller decides what a locked drawing allows
   (FR-DM-005).
 - FR-HIT-002: Handles of the selected drawings win over every body, including bodies with a higher
@@ -418,7 +418,7 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
   hit too and reported with `locked: true`. Within one drawing the nearest shape wins, the first one
   on a tie (so the point where all rays of a fan start reports the first level).
 - FR-HIT-003: Parts: `body`, `handle:<n>`, `level:<ratio>` (Fibonacci levels and time-zone values)
-  and `label`. Fills (rectangle) hit only when the resolved `fillOpacity` (the drawing's style over
+  and `label`. Fills (rectangle, polygon, ellipse) hit only when the resolved `fillOpacity` (the drawing's style over
   the theme) is above 0, otherwise only the border hits; text notes are always solid. The core cannot
   know the extent of the text a renderer draws, so a `label` is the tolerance disc around the label
   anchor (the left end of its level line), and it wins over the lines of its drawing.
@@ -473,7 +473,10 @@ new SceneCache(host).get(options): readonly SceneItem[]; // same array until an 
 - FR-SC-004: Fibonacci items are in data space for the host's Fibonacci overlay (D-3): `kind`,
   `anchors` and `options` fully resolved (every key of the kind, every level including hidden ones
   with `visible: false`; no defaults left for the host to guess), plus `style`, `opacity` and
-  `state`. Their handles still come as `handles` items.
+  `state`. Their handles still come as `handles` items. The kinds are the four of 1.0 and `fibonacci-trend-based`
+  (FR-TOOL-018), `fibonacci-channel`, `fibonacci-time-extension`, `fibonacci-circles`, `fibonacci-spiral` and
+  `fibonacci-wedge` (FR-TOOL-140..144); the six are registry entries outside the default tools and the catalog
+  (D-8) until their tool stories (E12-F02-S03). Their geometry is in `geometryOf` and in `FIBONACCI_PARITY` version 2.
 
 Decisions made while implementing (E03-F03): `opacity` is an item field because `ResolvedStyle`
 has no stroke opacity; `handles` items carry `style` and `locked` so the host needs no theme lookup;
@@ -505,7 +508,7 @@ type Shape =
 stroked; `polyline` and `curve` are only stroked; the dash comes from `lineStyle`. A `glyph` of
 `source` `icon` names a built-in icon the host draws in the stroke colour, filling its box:
 `arrow-up`, `arrow-down`, `arrow-left`, `arrow-right` and `pin`; a host leaves an unknown name undrawn.
-The host guide lists how to draw each shape. Hit-testing of the new shapes is FR-TOOL-037 (E12-F02-S02).
+The host guide lists how to draw each shape. Hit-testing of the new shapes is FR-TOOL-037.
 
 ## 9. Interaction engine
 
@@ -1398,7 +1401,7 @@ Added 2026-11-10 for OD-4, after a comparison of the drawing tools of TradingVie
 - FR-TOOL-034: Freehand kinds: pointer down starts, moves add points at least 3 px apart, pointer up completes; the points are simplified (Ramer-Douglas-Peucker, 1 px) and limited to 512; fewer than 2 points create nothing; touch and pen work.
 - FR-TOOL-035: Handles for many anchors: one per anchor (`handle:<n>`) plus kind-specific handles; keyboard cursor and nudge as FR-INT-034; freehand drawings have four bounding-box handles that scale the points.
 - FR-TOOL-036: New shapes in geometry and scene: `polyline`, `polygon` (closed, fillable), `ellipse`, `curve` (quadratic or cubic Bezier), `arrowhead` and `glyph` (text, emoji or built-in icon); all take stroke, dash, fill and opacity from the resolved style (§8.3).
-- FR-TOOL-037: Hit-testing of the new shapes: polyline by distance to its segments; polygon and ellipse by outline and, when filled, by inside; curve by its flattened path (0.25 px); glyph by its box; tolerance and parts as FR-HIT-002.
+- FR-TOOL-037: Hit-testing of the new shapes: polyline by distance to its segments; polygon and ellipse by outline and, when filled, by inside; curve by its flattened path (0.25 px); glyph by its box; tolerance and parts as FR-HIT-002. An ellipse is measured as a polygon of at least 8 and at most 1024 corners that lies within 0.25 px of it, a curve as a polyline of uniform parameter steps that lies within 0.25 px of it, an arrowhead as a solid triangle. A polyline and a curve have no inside. The fill test is the same as for a rectangle: the resolved `fillOpacity` above 0.
 - FR-TOOL-038: Host capabilities: optional `capabilities { shapes?, series?, fibonacci? }` on a v3 host; without `shapes` the host is taken to render the shapes of 1.0 only; a tool whose shapes, Fibonacci kind or series the host lacks is disabled and activating it emits `blocked` with `KFT-E-CAPABILITY`.
 - FR-TOOL-039: Series access: optional `seriesBetween(from, to): readonly Bar[]` with `Bar = { time, open, high, low, close, volume? }`, ascending, at most 10 000 bars; cached until the viewport or data change.
 - FR-TOOL-040: Drawings of a tool whose capability is missing are kept in the store and the document, listed in the diagnostics, and have no scene item and no hit; they render again when the capability appears.

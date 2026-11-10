@@ -78,6 +78,12 @@ describe('defaultOptions and KIND_OPTION_KEYS', () => {
       'fibonacci-fans': ['levels', 'showLabels'],
       'fibonacci-time-zones': ['sequence', 'showLabels'],
       'text-note': [],
+      'fibonacci-trend-based': ['levels', 'extendLeft', 'extendRight', 'showLabels', 'showPrices'],
+      'fibonacci-channel': ['levels', 'extendLeft', 'extendRight', 'showLabels'],
+      'fibonacci-time-extension': ['levels', 'showLabels'],
+      'fibonacci-circles': ['levels', 'showLabels'],
+      'fibonacci-spiral': ['turns', 'clockwise'],
+      'fibonacci-wedge': ['levels', 'showLabels'],
     });
   });
 
@@ -132,12 +138,23 @@ describe('validateOptions: shape and kind (FR-DM-023)', () => {
 
 describe('validateOptions: flags (E01-F02-S04)', () => {
   const FLAGS: Record<string, readonly DrawingKind[]> = {
-    extendLeft: ['trend-line', 'fibonacci-retracement'],
-    extendRight: ['trend-line', 'fibonacci-retracement'],
+    extendLeft: ['trend-line', 'fibonacci-retracement', 'fibonacci-trend-based', 'fibonacci-channel'],
+    extendRight: ['trend-line', 'fibonacci-retracement', 'fibonacci-trend-based', 'fibonacci-channel'],
     reverse: ['fibonacci-retracement'],
-    showLabels: ['fibonacci-retracement', 'fibonacci-arcs', 'fibonacci-fans', 'fibonacci-time-zones'],
-    showPrices: ['fibonacci-retracement'],
+    showLabels: [
+      'fibonacci-retracement',
+      'fibonacci-arcs',
+      'fibonacci-fans',
+      'fibonacci-time-zones',
+      'fibonacci-trend-based',
+      'fibonacci-channel',
+      'fibonacci-time-extension',
+      'fibonacci-circles',
+      'fibonacci-wedge',
+    ],
+    showPrices: ['fibonacci-retracement', 'fibonacci-trend-based'],
     fullCircles: ['fibonacci-arcs'],
+    clockwise: ['fibonacci-spiral'],
   };
 
   it.each(Object.entries(FLAGS))('allows %s as a boolean on its kinds only', (flag, kinds) => {

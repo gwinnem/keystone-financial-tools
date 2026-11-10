@@ -4,6 +4,7 @@ import { DrawingStore } from '../src/store';
 import { createMockHost } from '../src/testing/mock-host';
 import type { Drawing } from '../src/types';
 import { benchDrawings } from './bench-drawings';
+import { benchShapeDrawings } from './bench-shapes';
 import { A } from './controller-rig';
 
 // The time budgets of NFR-PERF-001..003, measured through the controller with 500 drawings on the mock host. The test names start with the
@@ -41,6 +42,13 @@ test('NFR-PERF-002 hitTest() with 500 drawings', async ({ bench }) => {
     tools.hitTest(799, 399);
   }).run();
   tools.destroy();
+  // FR-TOOL-037: 500 drawings of polylines, polygons, ellipses, curves, arrowheads and glyphs, which are measured on flattened copies.
+  const shapes = setup(benchShapeDrawings(500, 13)).tools;
+  shapes.hitTest(400, 200);
+  await bench('a point in the middle of the plot, 500 drawings of the new shapes', () => {
+    shapes.hitTest(400, 200);
+  }).run();
+  shapes.destroy();
 });
 
 test('NFR-PERF-003 pointer move during a drag with 500 drawings', async ({ bench }) => {

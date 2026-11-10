@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAWING_KINDS, ANCHOR_COUNT } from '../src/kinds';
+import { ANCHOR_COUNT, DEFAULT_TOOLS } from '../src/kinds';
 import { DEFAULT_MESSAGES } from '../src/messages';
 import { DrawingStore } from '../src/store';
 import type { Drawing } from '../src/types';
@@ -32,7 +32,7 @@ describe('placing', () => {
     expect(said).toHaveLength(1);
   });
 
-  it.each(DRAWING_KINDS.filter((kind) => kind !== 'text-note'))('names the %s tool', (kind) => {
+  it.each(DEFAULT_TOOLS.filter((kind) => kind !== 'text-note'))('names the %s tool', (kind) => {
     const { tools, click } = rig();
     const said = record(tools, 'announce');
     tools.activate(kind);

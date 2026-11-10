@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { IDLE_TOOLBAR, missingToolFeatures, TOOL_CATALOG, toolbarEntries, type ToolCatalogEntry } from '../src/catalog';
 import type { HostFeature } from '../src/host';
-import { DRAWING_KINDS } from '../src/kinds';
+import { DEFAULT_TOOLS, DRAWING_KINDS } from '../src/kinds';
 import { resolveShortcuts } from '../src/shortcuts';
 import type { DrawingKind } from '../src/types';
 
@@ -23,8 +23,8 @@ describe('TOOL_CATALOG', () => {
     expect(TOOL_CATALOG).toStrictEqual(expected);
   });
 
-  it('has one entry for each drawing kind, in the order of DRAWING_KINDS', () => {
-    expect(TOOL_CATALOG.map((entry) => entry.id)).toStrictEqual([...DRAWING_KINDS]);
+  it('has one entry for each tool of 1.0, in the order of DEFAULT_TOOLS (the Fibonacci kinds of E11 and E15 get one with their tools)', () => {
+    expect(TOOL_CATALOG.map((entry) => entry.id)).toStrictEqual([...DEFAULT_TOOLS]);
   });
 
   it('uses the four groups, each at least once, and keeps the entries of a group together', () => {
@@ -64,7 +64,7 @@ describe('toolbarEntries', () => {
 
   it('adds active and enabled to every entry of the catalog, in the order of the catalog', () => {
     const entries = toolbarEntries('rectangle', ALL, defaults);
-    expect(entries.map((entry) => entry.id)).toStrictEqual([...DRAWING_KINDS]);
+    expect(entries.map((entry) => entry.id)).toStrictEqual([...DEFAULT_TOOLS]);
     expect(entries).toStrictEqual(TOOL_CATALOG.map((entry) => ({ ...entry, active: entry.id === 'rectangle', enabled: true })));
   });
 

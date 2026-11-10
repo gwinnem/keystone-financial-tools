@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAWING_KINDS, KIND_OPTION_KEYS, type DrawingKind } from 'keystone-financial-tools-core';
+import { DEFAULT_TOOLS, KIND_OPTION_KEYS, type DrawingKind } from 'keystone-financial-tools-core';
 import { GETTING_STARTED, GUIDES, TOOLS } from '../src/site/pages';
 import { frontmatter, pageSlugs, readPage } from './support';
 
@@ -26,8 +26,8 @@ describe('the pages of the site', () => {
     ]);
   });
 
-  it('has one tool page for each drawing kind of the core, in the order of the core', () => {
-    expect(TOOLS.map(({ slug }) => kindOf(slug))).toStrictEqual([...DRAWING_KINDS]);
+  it('has one tool page for each tool of 1.0, in the order of the core (the Fibonacci kinds of E11 and E15 get a page with their tools)', () => {
+    expect(TOOLS.map(({ slug }) => kindOf(slug))).toStrictEqual([...DEFAULT_TOOLS]);
     expect(TOOLS.map(({ label }) => label)).toStrictEqual([
       'Trend line',
       'Horizontal line',

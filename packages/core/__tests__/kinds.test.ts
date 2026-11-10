@@ -12,13 +12,34 @@ describe('ANCHOR_COUNT', () => {
       'fibonacci-fans': 2,
       'fibonacci-time-zones': 2,
       'text-note': 1,
+      'fibonacci-trend-based': 3,
+      'fibonacci-channel': 3,
+      'fibonacci-time-extension': 3,
+      'fibonacci-circles': 2,
+      'fibonacci-spiral': 2,
+      'fibonacci-wedge': 3,
     });
   });
 });
 
 describe('DRAWING_KINDS', () => {
-  it('lists every kind in catalog order', () => {
-    expect(DRAWING_KINDS).toEqual(['trend-line', 'horizontal-line', 'rectangle', 'fibonacci-retracement', 'fibonacci-arcs', 'fibonacci-fans', 'fibonacci-time-zones', 'text-note']);
+  it('lists the eight tools of 1.0 in catalog order, then the Fibonacci kinds of E11 and E15', () => {
+    expect(DRAWING_KINDS).toEqual([
+      'trend-line',
+      'horizontal-line',
+      'rectangle',
+      'fibonacci-retracement',
+      'fibonacci-arcs',
+      'fibonacci-fans',
+      'fibonacci-time-zones',
+      'text-note',
+      'fibonacci-trend-based',
+      'fibonacci-channel',
+      'fibonacci-time-extension',
+      'fibonacci-circles',
+      'fibonacci-spiral',
+      'fibonacci-wedge',
+    ]);
   });
 });
 

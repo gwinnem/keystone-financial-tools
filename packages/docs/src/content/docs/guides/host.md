@@ -126,7 +126,7 @@ A shape has no style of its own: you paint every shape of an item with the `styl
 
 ## Fibonacci items
 
-The four Fibonacci tools reach your chart as `fibonacci` items, in data space, so that your own Fibonacci renderer draws them with the line styles and labels of your chart (decision D-3). An item has the `kind`, the `anchors` (time and price, with the `yAxisId`) and the `options` with every key resolved:
+The Fibonacci tools reach your chart as `fibonacci` items, in data space, so that your own Fibonacci renderer draws them with the line styles and labels of your chart (decision D-3). An item has the `kind`, the `anchors` (time and price, with the `yAxisId`) and the `options` with every key resolved:
 
 | Kind | What the renderer draws |
 | --- | --- |
@@ -134,12 +134,20 @@ The four Fibonacci tools reach your chart as `fibonacci` items, in data space, s
 | `fibonacci-arcs` | For each level a circle around the second anchor with a radius of the ratio times the pixel distance of the two anchors; a half circle that faces the first anchor, or a full circle when `fullCircles` is set. |
 | `fibonacci-fans` | For each level a ray from the first anchor through the second anchor's x at the level price, clipped to the pane. |
 | `fibonacci-time-zones` | A vertical line at `t1 + n × (t2 − t1)` for each number `n` in `sequence`, across the pane. |
+| `fibonacci-trend-based` | Three anchors. For each level a horizontal line at `p3 + (p2 − p1) × ratio`, between the leftmost and the rightmost anchor in time, extended with `extendLeft` and `extendRight`. Labels as for the retracement. |
+| `fibonacci-channel` | Three anchors. For each level a line parallel to the base line through anchors 1 and 2, moved by the ratio times the perpendicular vector from the base line to anchor 3 (in pixels): level 0 is the base line and level 1 runs through anchor 3. Extended with `extendLeft` and `extendRight`. |
+| `fibonacci-time-extension` | Three anchors. A vertical line at `t3 + ratio × (t2 − t1)` for each level, across the pane; lines outside the pane are left out, prices play no part. |
+| `fibonacci-circles` | Two anchors. For each level a full circle around the midpoint of the anchors with a radius of the ratio times half their pixel distance. |
+| `fibonacci-spiral` | Two anchors. A golden spiral around anchor 1 that starts at anchor 2 and grows by the golden ratio every quarter turn, for `turns` turns, clockwise on screen unless `clockwise` is false; draw it as a polyline of 32 segments per quarter turn. It has no levels. |
+| `fibonacci-wedge` | Three anchors. Rays from anchor 1 through anchors 2 and 3, clipped to the pane, and for each level an arc around anchor 1 between the rays (the shorter way) with a radius of the ratio times the pixel distance from anchor 1 to anchor 2. The definition is the SDS text until it is confirmed (D-13). |
+
+These six kinds are registered and valid in a document, but they are not in the default `tools` or the toolbar catalog until their tools arrive (decision D-8). Once the capabilities of a host are reported (E12-F03), a host that does not draw a Fibonacci kind lists it there, and the tools for that kind stay disabled.
 
 If you would rather not write this yourself, `geometryOf(drawing, host)` from the core returns the same pixel shapes the tools use for hit testing, and your renderer can paint those.
 
 ### Check your renderer against the shared fixture
 
-`keystone-financial-tools-core/testing` exports `FIBONACCI_PARITY` (version `FIBONACCI_PARITY_VERSION`). It holds the scales of a mock chart and cases for all four kinds, each with the drawing, the expected level prices (or radii or times) and the expected pixel lines, arcs and times. Build a host from `scales`, give your renderer each `drawing`, and compare what it draws with `shapes` and `levels`. Labels are not part of the fixture, because every chart draws its own. The core tests use the same fixture, so your renderer and the tools agree to within 1e-9.
+`keystone-financial-tools-core/testing` exports `FIBONACCI_PARITY` (version `FIBONACCI_PARITY_VERSION`). It holds the scales of a mock chart and cases for all ten kinds, each with the drawing, the expected level prices (or radii, times or channel distances) and the expected pixel lines, arcs, times and spiral points. The version is 2 since the six kinds of E11 and E15 were added; a renderer that pinned version 1 must add them or keep drawing only the first four. Build a host from `scales`, give your renderer each `drawing`, and compare what it draws with `shapes` and `levels`. Labels are not part of the fixture, because every chart draws its own. The core tests use the same fixture, so your renderer and the tools agree to within 1e-9.
 
 ```ts
 import { FIBONACCI_PARITY } from 'keystone-financial-tools-core/testing';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAWING_KINDS } from 'keystone-financial-tools-core';
+import { DEFAULT_TOOLS, DRAWING_KINDS } from 'keystone-financial-tools-core';
 import { toolFromSearch, unknownToolMessage } from '../src/embed-params';
 
 describe('toolFromSearch', () => {
@@ -36,10 +36,11 @@ describe('toolFromSearch', () => {
 });
 
 describe('unknownToolMessage', () => {
-  it('lists every drawing kind', () => {
+  it('lists the tools of 1.0, not the Fibonacci kinds that have no tool yet', () => {
     const message = unknownToolMessage();
     expect(message.startsWith('Add ?tool= with one of: ')).toBe(true);
-    for (const kind of DRAWING_KINDS) expect(message).toContain(kind);
+    for (const kind of DEFAULT_TOOLS) expect(message).toContain(kind);
+    expect(message).not.toContain('fibonacci-channel');
     expect(message.endsWith('.')).toBe(true);
   });
 });

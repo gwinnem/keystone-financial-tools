@@ -2,12 +2,23 @@
 
 ## 0.1.0 (unreleased)
 
+- Fibonacci scene item for the new kinds (E12-F02-S03, FR-SC-004): `DrawingKind`, `FibonacciKind` and `ResolvedFibonacciOptions` get
+  `fibonacci-trend-based` (3 anchors), `fibonacci-channel` (3), `fibonacci-time-extension` (3), `fibonacci-circles` (2), `fibonacci-spiral` (2)
+  and `fibonacci-wedge` (3), each with fully resolved options in the `fibonacci` item (new option keys `turns` 1..8 and `clockwise`, new
+  defaults and `MAX_TURNS` in `options`). They are registered with their geometry (`geometryOf`), have a theme style and a `tool.<kind>` message,
+  but are not in the default `tools` or `TOOL_CATALOG` until their tool stories (D-8). `FIBONACCI_PARITY` is version 2 with cases for all ten
+  kinds (level `distance` for the channel; labels still left out). The host guide describes the new kinds. The wedge follows the SDS text
+  until D-13 is confirmed.
+- Hit-testing of the new shapes (E12-F02-S02, FR-TOOL-037): `hitTest` hits a polyline by its segments, a polygon and an ellipse by their outline
+  and, when the resolved `fillOpacity` is above 0, by their inside, a curve by its flattened path (within 0.25 px of the curve), an arrowhead
+  anywhere in its triangle and a glyph anywhere in its box. Tolerance (6 px, 12 for touch), parts and tie-breaking are unchanged. New exports
+  of `distanceToPath`, `distanceToPolygon` and `insidePolygon` live beside `distanceToShape`; the new benchmark task in NFR-PERF-002 measures 500
+  drawings of the new shapes.
 - New shapes (E12-F02-S01, FR-TOOL-036): the `Shape` union gets `polyline` (open), `polygon` (closed, fillable), `ellipse` (radii and rotation),
   `curve` (quadratic with one control point, cubic with two), `arrowhead` (a solid triangle from its tip) and `glyph` (text, emoji or a built-in
   icon in a box), with the types `PolylineShape`, `PolygonShape`, `EllipseShape`, `CurveShape`, `ArrowheadShape` and `GlyphShape` exported by every
   package. They take stroke, dash, fill and opacity from the resolved style of their item; `buildScene` and `SceneCache` need no change and keep
-  their guarantees. The playground draws them; the host guide says how to draw each, and SDS §8.3 defines them. They are not hit yet: their
-  hit-testing is E12-F02-S02.
+  their guarantees. The playground draws them; the host guide says how to draw each, and SDS §8.3 defines them.
 - Handles of drawings with many anchors (E12-F01-S06, FR-TOOL-035): a selected drawing of any anchor count (3, 5, 64) shows one handle per
   anchor, and dragging one moves only that anchor, as one history entry; body drag and arrow keys move them all. A freehand kind shows four
   bounding-box handles instead (`handle:0` top left, `1` top right, `2` bottom right, `3` bottom left): dragging one scales every point about the opposite corner, mirrors past it, leaves an axis alone where the box has no

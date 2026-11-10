@@ -3,19 +3,30 @@ import { deepFreeze, definedOnly, hasOwn, isPlainObject } from './object';
 import { BUILT_IN_DEFAULTS } from './option-defaults';
 import type { DrawingIssue, DrawingKind, FibonacciLevel, KindOptions } from './types';
 
-export { DEFAULT_ARC_FAN_LEVELS, DEFAULT_RETRACEMENT_LEVELS, DEFAULT_TIME_ZONE_SEQUENCE } from './option-defaults';
+export {
+  DEFAULT_ARC_FAN_LEVELS,
+  DEFAULT_CHANNEL_LEVELS,
+  DEFAULT_CIRCLE_LEVELS,
+  DEFAULT_RETRACEMENT_LEVELS,
+  DEFAULT_TIME_EXTENSION_LEVELS,
+  DEFAULT_TIME_ZONE_SEQUENCE,
+  DEFAULT_TREND_BASED_LEVELS,
+  DEFAULT_WEDGE_LEVELS,
+} from './option-defaults';
 
 /** The most Fibonacci levels one drawing can have. */
 export const MAX_LEVELS = 24;
 /** The most values a time-zone sequence can have. */
 export const MAX_SEQUENCE = 32;
+/** The most turns of a Fibonacci spiral. */
+export const MAX_TURNS = 8;
 
 /** The defaults of a registered kind; empty for a kind that is not registered. */
 function defaultsOf(kind: DrawingKind): KindOptions {
   return kindDefinition(kind)?.defaults ?? {};
 }
 
-/** The option keys each of the eight kinds of 1.0 accepts. */
+/** The option keys each built-in kind accepts. */
 export const KIND_OPTION_KEYS: Readonly<Record<DrawingKind, readonly (keyof KindOptions)[]>> = deepFreeze(
   Object.fromEntries(Object.entries(BUILT_IN_DEFAULTS).map(([kind, defaults]) => [kind, Object.keys(defaults)])) as Record<DrawingKind, (keyof KindOptions)[]>
 );
@@ -126,6 +137,10 @@ export function validateOptions(kind: DrawingKind, value: unknown): DrawingIssue
       issues.push(...validateLevels(option));
     } else if (key === 'sequence') {
       issues.push(...validateSequence(option));
+    } else if (key === 'turns') {
+      if (!Number.isInteger(option) || (option as number) < 1 || (option as number) > MAX_TURNS) {
+        issues.push(optionsIssue(`The option turns must be a whole number from 1 to ${MAX_TURNS}.`));
+      }
     } else if (typeof option !== 'boolean') {
       issues.push(optionsIssue(`The option ${key} must be a boolean.`));
     }

@@ -28,7 +28,7 @@ export interface HitTestOptions {
   readonly selected?: ReadonlySet<string>;
   /** Sets the tolerance (`HIT_TOLERANCE`). Default `mouse`. */
   readonly pointerType?: PointerType;
-  /** Decides whether a rectangle has a fill (`fillOpacity` above 0). Default `LIGHT_THEME`. */
+  /** Decides whether a rectangle, polygon or ellipse has a fill (`fillOpacity` above 0). Default `LIGHT_THEME`. */
   readonly theme?: DrawingTheme;
 }
 
@@ -93,7 +93,8 @@ function topmost(drawings: readonly Drawing[], probe: (drawing: Drawing) => HitP
  * 12 of a touch pointer. The handles of selected drawings win over every body; among drawings the
  * highest `zIndex` wins, then the one added last. Within a drawing the nearest line, arc, rectangle
  * border or text box wins and reports its part (`body`, `level:<ratio>`); a label wins when the
- * point is on its anchor. A rectangle also hits inside when its resolved `fillOpacity` is above 0.
+ * point is on its anchor. A rectangle, polygon or ellipse also hits inside when its resolved `fillOpacity` is above 0; a polyline and a
+ * curve hit within the tolerance of the line, an arrowhead anywhere in the triangle and a glyph anywhere in its box.
  * Hidden drawings are never hit; locked ones are, with `locked: true` (and so are their handles, so
  * the caller decides what a locked drawing allows).
  *

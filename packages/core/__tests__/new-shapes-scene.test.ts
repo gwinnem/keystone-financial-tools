@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { geometryOf } from '../src/geometry/index';
 import type { Shape } from '../src/geometry/types';
 import { GeometryCache } from '../src/hit/geometry-cache';
-import { distanceToShape } from '../src/hit/distance';
 import { registerKind, type KindDefinition } from '../src/kinds';
 import { buildScene } from '../src/scene/build';
 import { SceneCache } from '../src/scene/scene-cache';
@@ -179,11 +178,5 @@ describe('the new shapes in the scene (FR-SC-001, FR-SC-003)', () => {
       ],
     };
     expect(scene([lost])).toEqual([]);
-  });
-});
-
-describe('the new shapes in hit-testing, until FR-TOOL-037 (E12-F02-S02)', () => {
-  it('are infinitely far from every point', () => {
-    for (const shape of GOLDEN) expect(distanceToShape(P(150, 130), shape, () => true)).toBe(Number.POSITIVE_INFINITY);
   });
 });

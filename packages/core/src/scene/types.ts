@@ -23,6 +23,18 @@ export interface ResolvedFibonacciOptions {
   readonly 'fibonacci-arcs': { readonly levels: readonly FibonacciLevel[]; readonly fullCircles: boolean; readonly showLabels: boolean };
   readonly 'fibonacci-fans': { readonly levels: readonly FibonacciLevel[]; readonly showLabels: boolean };
   readonly 'fibonacci-time-zones': { readonly sequence: readonly number[]; readonly showLabels: boolean };
+  readonly 'fibonacci-trend-based': {
+    readonly levels: readonly FibonacciLevel[];
+    readonly extendLeft: boolean;
+    readonly extendRight: boolean;
+    readonly showLabels: boolean;
+    readonly showPrices: boolean;
+  };
+  readonly 'fibonacci-channel': { readonly levels: readonly FibonacciLevel[]; readonly extendLeft: boolean; readonly extendRight: boolean; readonly showLabels: boolean };
+  readonly 'fibonacci-time-extension': { readonly levels: readonly FibonacciLevel[]; readonly showLabels: boolean };
+  readonly 'fibonacci-circles': { readonly levels: readonly FibonacciLevel[]; readonly showLabels: boolean };
+  readonly 'fibonacci-spiral': { readonly turns: number; readonly clockwise: boolean };
+  readonly 'fibonacci-wedge': { readonly levels: readonly FibonacciLevel[]; readonly showLabels: boolean };
 }
 
 /** Fields every drawing item carries. */

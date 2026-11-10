@@ -12,6 +12,7 @@ import { rig } from './controller-rig';
 import { anchor } from './fixtures';
 
 // E12-F01-S01 (FR-TOOL-030, D-8, D-15): one registry of kinds; a new kind is one entry.
+const EXTENSION = ['fibonacci-trend-based', 'fibonacci-channel', 'fibonacci-time-extension', 'fibonacci-circles', 'fibonacci-spiral', 'fibonacci-wedge'];
 const BUILT_IN = ['trend-line', 'horizontal-line', 'rectangle', 'fibonacci-retracement', 'fibonacci-arcs', 'fibonacci-fans', 'fibonacci-time-zones', 'text-note'];
 
 const FAKE = 'triangle' as DrawingKind;
@@ -37,7 +38,7 @@ afterEach(() => {
 
 describe('the eight kinds of 1.0', () => {
   it('are registered in catalog order with fixed anchor rules', () => {
-    expect(DRAWING_KINDS).toEqual(BUILT_IN);
+    expect(DRAWING_KINDS).toEqual([...BUILT_IN, ...EXTENSION]);
     expect(DEFAULT_TOOLS).toEqual(BUILT_IN);
     expect(ANCHOR_RULES['trend-line']).toEqual({ min: 2, max: 2 });
     expect(ANCHOR_RULES['text-note']).toEqual({ min: 1, max: 1 });
@@ -95,7 +96,7 @@ describe('registerKind', () => {
     const dispose = register();
     dispose();
     expect(isDrawingKind(FAKE)).toBe(false);
-    expect(DRAWING_KINDS).toEqual(BUILT_IN);
+    expect(DRAWING_KINDS).toEqual([...BUILT_IN, ...EXTENSION]);
     expect(FAKE in ANCHOR_RULES).toBe(false);
     expect(geometryOf(triangle(), createMockHost())).toBeNull();
     const again = register();

@@ -1,4 +1,4 @@
-import { DRAWING_KINDS, isDrawingKind, type DrawingKind } from 'keystone-financial-tools-core';
+import { DEFAULT_TOOLS, isDrawingKind, type DrawingKind } from 'keystone-financial-tools-core';
 
 /**
  * The drawing kind an embed page enables: the `tool` parameter of its address, or null when it is missing or not a drawing kind.
@@ -24,5 +24,5 @@ export function toolFromSearch(search: string): DrawingKind | null {
  * ```
  */
 export function unknownToolMessage(): string {
-  return `Add ?tool= with one of: ${DRAWING_KINDS.join(', ')}.`;
+  return `Add ?tool= with one of: ${DEFAULT_TOOLS.join(', ')}.`;
 }

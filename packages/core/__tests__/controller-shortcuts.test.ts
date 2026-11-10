@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { toolbarEntries } from '../src/catalog';
 import { createDrawingTools } from '../src/controller';
 import { DrawingError } from '../src/errors';
-import { DRAWING_KINDS } from '../src/kinds';
+import { DEFAULT_TOOLS, DRAWING_KINDS } from '../src/kinds';
 import { resolveShortcuts } from '../src/shortcuts';
 import { DrawingStore } from '../src/store';
 import { createMockHost } from '../src/testing/mock-host';
@@ -273,7 +273,7 @@ describe('the toolbar in the state (FR-FW-040)', () => {
     const { tools } = rig();
     const { toolbar } = tools.getState();
     expect(toolbar).toStrictEqual(toolbarEntries(null, ALL, resolveShortcuts().shortcuts));
-    expect(toolbar.map((entry) => entry.id)).toStrictEqual([...DRAWING_KINDS]);
+    expect(toolbar.map((entry) => entry.id)).toStrictEqual([...DEFAULT_TOOLS]);
     expect(toolbar.every((entry) => entry.enabled && !entry.active)).toBe(true);
     expect(toolbar.map((entry) => entry.shortcut)).toStrictEqual(['Alt+T', 'Alt+H', 'Alt+R', 'Alt+F', null, null, null, 'Alt+N']);
   });
