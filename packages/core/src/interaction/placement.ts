@@ -1,4 +1,4 @@
-import { ANCHOR_COUNT } from '../kinds';
+import { ANCHOR_RULES } from '../kinds';
 import type { DrawingHost, Point } from '../host';
 import { anchorToPoint, pointToAnchor } from '../projection';
 import type { Anchor, Drawing, DrawingKind } from '../types';
@@ -64,7 +64,7 @@ function anchorAt(point: Point, magnet: MagnetMode, host: DrawingHost): Anchor |
 }
 
 function reduceWaiting(tool: DrawingKind, progress: PlacementProgress, input: PlacementInput, magnet: MagnetMode, host: DrawingHost): PlacementResult {
-  const oneAnchor = ANCHOR_COUNT[tool] === 1;
+  const oneAnchor = ANCHOR_RULES[tool].max === 1;
   switch (input.type) {
     case 'click': {
       const anchor = input.button === 0 ? anchorAt(input.point, magnet, host) : null;

@@ -1,4 +1,4 @@
-import { ANCHOR_COUNT, isDrawingKind } from './kinds';
+import { ANCHOR_RULES, anchorRuleText, isDrawingKind } from './kinds';
 import { isPlainObject } from './object';
 import { validateOptions } from './options';
 import { validateStyle } from './style';
@@ -82,8 +82,8 @@ export function validateDrawing(value: unknown): DrawingIssue[] {
   }
   if (!isDrawingKind(d.kind)) {
     issues.push(issue('KFT-E-KIND', `Unknown drawing kind: ${String(d.kind)}.`));
-  } else if (!Array.isArray(d.anchors) || d.anchors.length !== ANCHOR_COUNT[d.kind]) {
-    issues.push(issue('KFT-E-ANCHORS', `A ${d.kind} needs ${ANCHOR_COUNT[d.kind]} anchor(s).`));
+  } else if (!Array.isArray(d.anchors) || d.anchors.length < ANCHOR_RULES[d.kind].min || d.anchors.length > ANCHOR_RULES[d.kind].max) {
+    issues.push(issue('KFT-E-ANCHORS', `A ${d.kind} needs ${anchorRuleText(ANCHOR_RULES[d.kind])}.`));
   } else {
     d.anchors.forEach((anchor: unknown, index: number) => {
       if (!isValidAnchor(anchor)) {

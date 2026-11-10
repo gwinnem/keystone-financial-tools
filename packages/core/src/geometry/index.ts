@@ -1,47 +1,17 @@
-import type { DrawingHost, Point, Rect } from '../host';
+import type { DrawingHost } from '../host';
+import { kindDefinition } from '../kinds';
 import { resolveOptions } from '../options';
 import { anchorToPoint } from '../projection';
-import { resolveStyle } from '../theme';
-import type { Drawing, FibonacciLevel } from '../types';
-import { rectangleShapes, textNoteShapes } from './boxes';
-import { arcShapes, fanShapes, retracementShapes, timeZoneShapes, type RetracementOptions } from './fibonacci';
-import { handlesOf } from './handles';
-import { formatPrice, horizontalLineShapes, priceLabelShapes, trendLineShapes } from './lines';
-import type { DrawingGeometry, GeometryOptions, Shape } from './types';
-
-function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: DrawingHost, options: GeometryOptions): Shape[] {
-  const [a1, a2] = drawing.anchors;
-  const [p1, p2] = points;
-  const kindOptions = resolveOptions(drawing.kind, drawing.options);
-  const levels = kindOptions.levels as readonly FibonacciLevel[];
-  switch (drawing.kind) {
-    case 'trend-line':
-      return trendLineShapes(p1, p2, rect, kindOptions.extendLeft as boolean, kindOptions.extendRight as boolean);
-    case 'horizontal-line':
-      return [
-        ...horizontalLineShapes(p1, rect),
-        ...priceLabelShapes(p1, rect, (options.priceFormatter ?? formatPrice)(a1.price, a1.yAxisId), resolveStyle(drawing, options.theme).fontSize, options.measureText),
-      ];
-    case 'rectangle':
-      return rectangleShapes(p1, p2);
-    case 'text-note':
-      return textNoteShapes(p1, drawing.text ?? '', resolveStyle(drawing, options.theme).fontSize, options.measureText);
-    case 'fibonacci-retracement':
-      return retracementShapes(a1, a2, rect, host, kindOptions as RetracementOptions, (price) => (options.priceFormatter ?? formatPrice)(price, a1.yAxisId));
-    case 'fibonacci-fans':
-      return fanShapes(a1, a2, rect, host, levels);
-    case 'fibonacci-arcs':
-      return arcShapes(p1, p2, levels, kindOptions.fullCircles as boolean);
-    case 'fibonacci-time-zones':
-      return timeZoneShapes(a1, a2, rect, host, kindOptions.sequence as readonly number[]);
-  }
-}
+import type { Drawing } from '../types';
+import { anchorHandles } from './handles';
+import type { DrawingGeometry, GeometryOptions } from './types';
 
 /**
  * The pixel geometry of a drawing for the current frame (FR-GEO-001): its shapes (segments, rays,
  * rectangles, arcs, text boxes, level labels) and handle points, from the host transforms and the
- * pane of its y-axis. Pure and deterministic; returns null when the y-axis has no pane. Assumes a
- * valid drawing (see `validateDrawing`); `hidden` is not considered here.
+ * pane of its y-axis. Pure and deterministic; returns null when the y-axis has no pane or the kind is not
+ * registered. Assumes a valid drawing (see `validateDrawing`); `hidden` is not considered here. The shapes
+ * and handles of a kind come from its registry entry (`KindDefinition`).
  *
  * | Kind | Shapes |
  * |---|---|
@@ -63,8 +33,16 @@ function shapesOf(drawing: Drawing, points: readonly Point[], rect: Rect, host: 
  * ```
  */
 export function geometryOf(drawing: Drawing, host: DrawingHost, options: GeometryOptions = {}): DrawingGeometry | null {
+  const definition = kindDefinition(drawing.kind);
+  if (definition === undefined) return null;
   const rect = host.paneRect(drawing.anchors[0].yAxisId);
   if (rect === null) return null;
   const points = drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
-  return { drawingId: drawing.id, kind: drawing.kind, shapes: shapesOf(drawing, points, rect, host, options), handles: handlesOf(drawing.kind, points, rect) };
+  const kindOptions = resolveOptions(drawing.kind, drawing.options);
+  return {
+    drawingId: drawing.id,
+    kind: drawing.kind,
+    shapes: definition.geometry({ drawing, points, rect, host, options, kindOptions }),
+    handles: (definition.handles ?? anchorHandles)(points, rect),
+  };
 }

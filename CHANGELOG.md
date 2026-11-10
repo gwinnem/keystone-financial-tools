@@ -2,6 +2,15 @@
 
 ## 0.1.0 (unreleased)
 
+- Kind registry (E12-F01-S01, FR-TOOL-030, D-8, D-15): the drawing kinds live in one registry. An entry (`KindDefinition`) holds the
+  id, the anchor rule (`AnchorRule`, `{ min, max }`), the option defaults, the catalog group, the geometry function and
+  optionally the handles; the eight kinds of 1.0 are registered this way and keep their ids, anchors and documents. New:
+  `registerKind` (returns a function that removes the kind), `kindDefinition`, `ANCHOR_RULES` and `DEFAULT_TOOLS` (the
+  eight tools, still the default of the `tools` option; a registered kind is opt-in by id). `ANCHOR_COUNT` stays and holds the
+  kinds with a fixed count. `KFT-E-ANCHORS` names the range (`A triangle needs 3 to 5 anchors.`; a fixed kind keeps
+  `A trend-line needs 2 anchor(s).`). `geometryOf` returns null for a kind that is not registered. A document with an unknown kind
+  fails that drawing with `KFT-E-KIND`; `importDocument` leaves it out and lists it in `skipped`.
+
 - Host contract version 3 (E11-F04-S01, FR-TOOL-019, FR-HOST-008, D-11): `HOST_API_VERSION` is 3 and the host adds `paneIds()`
   (the y-axes of the panes, top to bottom), `barsBetween(from, to)` (bars on the bar axis, signed) and the optional
   `volumeBetween(from, to)`. Migration: a host written for version 2 keeps working (`MIN_HOST_API_VERSION` is 2) and

@@ -18,7 +18,7 @@ import { lockAngle, PLACEMENT_START, placementPreview, placementSnap, reducePlac
 import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
-import { DRAWING_KINDS, isDrawingKind } from './kinds';
+import { DEFAULT_TOOLS, isDrawingKind } from './kinds';
 import { formatMessage, resolveMessages, type MessageKey, type MessageOverrides, type Messages } from './messages';
 import { anchorToPoint } from './projection';
 import { SceneCache } from './scene/scene-cache';
@@ -335,7 +335,7 @@ class DrawingToolsController implements DrawingTools {
     const magnet = options.magnet ?? 'off';
     assertMagnet(magnet);
     this.magnet = magnet;
-    this.allowed = options.tools === undefined ? new Set(DRAWING_KINDS) : toolSet(options.tools);
+    this.allowed = options.tools === undefined ? new Set(DEFAULT_TOOLS) : toolSet(options.tools);
     const resolved = resolveShortcuts(options.shortcuts);
     this.shortcuts = resolved.shortcuts;
     this.bindings = resolved.bindings;

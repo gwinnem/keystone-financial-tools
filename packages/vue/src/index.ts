@@ -8,6 +8,7 @@ export { KeystoneTextEditor } from './keystone-text-editor';
 // What is left out, and why, is listed in packages/typescript/__tests__/parity-exceptions.ts; the parity test fails for anything else.
 export type {
   Anchor,
+  AnchorRule,
   ArcShape,
   ChangeOptions,
   DocumentScope,
@@ -58,6 +59,8 @@ export type {
   InteractionState,
   ItemState,
   JsonValue,
+  KindDefinition,
+  KindGeometryContext,
   KindOptions,
   LabelShape,
   LineShape,
@@ -104,6 +107,7 @@ export type {
 export {
   anchorToPoint,
   ANCHOR_COUNT,
+  ANCHOR_RULES,
   assertHost,
   createDrawingTools,
   createId,
@@ -113,6 +117,7 @@ export {
   DEFAULT_MESSAGES,
   DEFAULT_RETRACEMENT_LEVELS,
   DEFAULT_TIME_ZONE_SEQUENCE,
+  DEFAULT_TOOLS,
   defaultOptions,
   DOCUMENT_VERSION,
   DRAWING_KINDS,
@@ -127,6 +132,7 @@ export {
   importDocument,
   isDrawingKind,
   isValidAnchor,
+  kindDefinition,
   KIND_OPTION_KEYS,
   LIGHT_THEME,
   LINE_STYLES,
@@ -145,6 +151,7 @@ export {
   REQUIRED_HOST_MEMBERS,
   REQUIRED_HOST_MEMBERS_V3,
   resolveMessages,
+  registerKind,
   resolveOptions,
   resolveShortcuts,
   resolveStyle,

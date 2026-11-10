@@ -1,20 +1,5 @@
-import type { DrawingKind } from './types';
+// Importing the built-in kinds first registers the eight kinds of 1.0 before anything reads the registry.
+import './builtin-kinds';
 
-/** The number of anchors each drawing kind takes. */
-export const ANCHOR_COUNT: Readonly<Record<DrawingKind, number>> = {
-  'trend-line': 2,
-  'horizontal-line': 1,
-  rectangle: 2,
-  'fibonacci-retracement': 2,
-  'fibonacci-arcs': 2,
-  'fibonacci-fans': 2,
-  'fibonacci-time-zones': 2,
-  'text-note': 1,
-};
-
-/** Every drawing kind, in catalog order. */
-export const DRAWING_KINDS = Object.keys(ANCHOR_COUNT) as readonly DrawingKind[];
-
-export function isDrawingKind(value: unknown): value is DrawingKind {
-  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(ANCHOR_COUNT, value);
-}
+export { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, anchorRuleText, isDrawingKind, kindDefinition, registerKind, requireKind } from './kind-registry';
+export type { AnchorRule, KindDefinition, KindGeometryContext } from './kind-registry';

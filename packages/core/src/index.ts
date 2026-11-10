@@ -76,7 +76,8 @@ export type {
   DrawingToolsUnsupported,
 } from './controller';
 export { createDrawingTools } from './controller';
-export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
+export type { AnchorRule, KindDefinition, KindGeometryContext } from './kinds';
+export { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, isDrawingKind, kindDefinition, registerKind } from './kinds';
 export type { ToolbarEntry, ToolCatalogEntry, ToolGroup, ToolTier } from './catalog';
 export { IDLE_TOOLBAR, missingToolFeatures, TOOL_CATALOG, toolbarEntries } from './catalog';
 export type { MessageKey, MessageOverrides, Messages } from './messages';

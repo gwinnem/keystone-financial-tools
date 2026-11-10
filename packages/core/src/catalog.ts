@@ -1,4 +1,5 @@
 import { missingHostFeatures, type HostFeature } from './host';
+import { requireKind } from './kinds';
 import type { MessageKey } from './messages';
 import { deepFreeze } from './object';
 import type { ToolShortcuts } from './shortcuts';
@@ -48,14 +49,14 @@ export interface ToolCatalogEntry {
  * ```
  */
 export const TOOL_CATALOG: readonly ToolCatalogEntry[] = deepFreeze<readonly ToolCatalogEntry[]>([
-  { id: 'trend-line', labelKey: 'tool.trend-line', group: 'lines', icon: 'trend-line', shortcut: 'Alt+T', tier: 'community' },
-  { id: 'horizontal-line', labelKey: 'tool.horizontal-line', group: 'lines', icon: 'horizontal-line', shortcut: 'Alt+H', tier: 'community' },
-  { id: 'rectangle', labelKey: 'tool.rectangle', group: 'shapes', icon: 'rectangle', shortcut: 'Alt+R', tier: 'professional' },
-  { id: 'fibonacci-retracement', labelKey: 'tool.fibonacci-retracement', group: 'fibonacci', icon: 'fibonacci-retracement', shortcut: 'Alt+F', tier: 'professional' },
-  { id: 'fibonacci-arcs', labelKey: 'tool.fibonacci-arcs', group: 'fibonacci', icon: 'fibonacci-arcs', shortcut: null, tier: 'professional' },
-  { id: 'fibonacci-fans', labelKey: 'tool.fibonacci-fans', group: 'fibonacci', icon: 'fibonacci-fans', shortcut: null, tier: 'professional' },
-  { id: 'fibonacci-time-zones', labelKey: 'tool.fibonacci-time-zones', group: 'fibonacci', icon: 'fibonacci-time-zones', shortcut: null, tier: 'professional' },
-  { id: 'text-note', labelKey: 'tool.text-note', group: 'annotations', icon: 'text-note', shortcut: 'Alt+N', tier: 'professional' },
+  { id: 'trend-line', labelKey: 'tool.trend-line', group: requireKind('trend-line').group, icon: 'trend-line', shortcut: 'Alt+T', tier: 'community' },
+  { id: 'horizontal-line', labelKey: 'tool.horizontal-line', group: requireKind('horizontal-line').group, icon: 'horizontal-line', shortcut: 'Alt+H', tier: 'community' },
+  { id: 'rectangle', labelKey: 'tool.rectangle', group: requireKind('rectangle').group, icon: 'rectangle', shortcut: 'Alt+R', tier: 'professional' },
+  { id: 'fibonacci-retracement', labelKey: 'tool.fibonacci-retracement', group: requireKind('fibonacci-retracement').group, icon: 'fibonacci-retracement', shortcut: 'Alt+F', tier: 'professional' },
+  { id: 'fibonacci-arcs', labelKey: 'tool.fibonacci-arcs', group: requireKind('fibonacci-arcs').group, icon: 'fibonacci-arcs', shortcut: null, tier: 'professional' },
+  { id: 'fibonacci-fans', labelKey: 'tool.fibonacci-fans', group: requireKind('fibonacci-fans').group, icon: 'fibonacci-fans', shortcut: null, tier: 'professional' },
+  { id: 'fibonacci-time-zones', labelKey: 'tool.fibonacci-time-zones', group: requireKind('fibonacci-time-zones').group, icon: 'fibonacci-time-zones', shortcut: null, tier: 'professional' },
+  { id: 'text-note', labelKey: 'tool.text-note', group: requireKind('text-note').group, icon: 'text-note', shortcut: 'Alt+N', tier: 'professional' },
 ]);
 
 /**

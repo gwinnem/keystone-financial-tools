@@ -1,37 +1,23 @@
+import { kindDefinition } from './kinds';
 import { deepFreeze, definedOnly, hasOwn, isPlainObject } from './object';
+import { BUILT_IN_DEFAULTS } from './option-defaults';
 import type { DrawingIssue, DrawingKind, FibonacciLevel, KindOptions } from './types';
+
+export { DEFAULT_ARC_FAN_LEVELS, DEFAULT_RETRACEMENT_LEVELS, DEFAULT_TIME_ZONE_SEQUENCE } from './option-defaults';
 
 /** The most Fibonacci levels one drawing can have. */
 export const MAX_LEVELS = 24;
 /** The most values a time-zone sequence can have. */
 export const MAX_SEQUENCE = 32;
 
-function levels(visible: readonly number[], hidden: readonly number[] = []): readonly FibonacciLevel[] {
-  return [...visible.map((ratio) => ({ ratio, visible: true })), ...hidden.map((ratio) => ({ ratio, visible: false }))];
+/** The defaults of a registered kind; empty for a kind that is not registered. */
+function defaultsOf(kind: DrawingKind): KindOptions {
+  return kindDefinition(kind)?.defaults ?? {};
 }
 
-/** Retracement levels: 0 to 1 visible, the extension levels 1.272 to 4.236 present but hidden. */
-export const DEFAULT_RETRACEMENT_LEVELS: readonly FibonacciLevel[] = deepFreeze(levels([0, 0.236, 0.382, 0.5, 0.618, 0.786, 1], [1.272, 1.618, 2.618, 4.236]));
-/** Arcs and fans levels. */
-export const DEFAULT_ARC_FAN_LEVELS: readonly FibonacciLevel[] = deepFreeze(levels([0.382, 0.5, 0.618]));
-/** Time-zone bar multiples (Fibonacci numbers). */
-export const DEFAULT_TIME_ZONE_SEQUENCE: readonly number[] = deepFreeze([0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]);
-
-/** Every option a kind accepts, with its default. A kind without options has an empty object. */
-const KIND_DEFAULTS: Readonly<Record<DrawingKind, KindOptions>> = deepFreeze<Record<DrawingKind, KindOptions>>({
-  'trend-line': { extendLeft: false, extendRight: false },
-  'horizontal-line': {},
-  rectangle: {},
-  'fibonacci-retracement': { levels: DEFAULT_RETRACEMENT_LEVELS, reverse: false, extendLeft: false, extendRight: false, showLabels: true, showPrices: true },
-  'fibonacci-arcs': { levels: DEFAULT_ARC_FAN_LEVELS, fullCircles: false, showLabels: true },
-  'fibonacci-fans': { levels: DEFAULT_ARC_FAN_LEVELS, showLabels: true },
-  'fibonacci-time-zones': { sequence: DEFAULT_TIME_ZONE_SEQUENCE, showLabels: true },
-  'text-note': {},
-});
-
-/** The option keys each kind accepts. */
+/** The option keys each of the eight kinds of 1.0 accepts. */
 export const KIND_OPTION_KEYS: Readonly<Record<DrawingKind, readonly (keyof KindOptions)[]>> = deepFreeze(
-  Object.fromEntries(Object.entries(KIND_DEFAULTS).map(([kind, defaults]) => [kind, Object.keys(defaults)])) as Record<DrawingKind, (keyof KindOptions)[]>
+  Object.fromEntries(Object.entries(BUILT_IN_DEFAULTS).map(([kind, defaults]) => [kind, Object.keys(defaults)])) as Record<DrawingKind, (keyof KindOptions)[]>
 );
 
 /**
@@ -43,7 +29,7 @@ export const KIND_OPTION_KEYS: Readonly<Record<DrawingKind, readonly (keyof Kind
  * ```
  */
 export function defaultOptions(kind: DrawingKind): KindOptions {
-  return KIND_DEFAULTS[kind];
+  return defaultsOf(kind);
 }
 
 /**
@@ -56,7 +42,7 @@ export function defaultOptions(kind: DrawingKind): KindOptions {
  * ```
  */
 export function resolveOptions(kind: DrawingKind, options?: KindOptions): KindOptions {
-  return { ...KIND_DEFAULTS[kind], ...definedOnly(options) };
+  return { ...defaultsOf(kind), ...definedOnly(options) };
 }
 
 function optionsIssue(message: string): DrawingIssue {
@@ -121,7 +107,7 @@ function validateSequence(value: unknown): DrawingIssue[] {
  */
 export function validateOptions(kind: DrawingKind, value: unknown): DrawingIssue[] {
   if (!isPlainObject(value)) return [optionsIssue('The options must be a plain object.')];
-  const allowed = KIND_DEFAULTS[kind];
+  const allowed = defaultsOf(kind);
   const issues: DrawingIssue[] = [];
   for (const [key, option] of Object.entries(value)) {
     if (option === undefined) continue;
