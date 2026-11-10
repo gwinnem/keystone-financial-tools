@@ -15,7 +15,7 @@ const V = (x: number, y: number): Anchor => ({ time: x * 6000, price: 1000 - (y 
 const ONE: DrawingKind[] = DRAWING_KINDS.filter((kind) => ANCHOR_COUNT[kind] === 1);
 const TWO: DrawingKind[] = DRAWING_KINDS.filter((kind) => ANCHOR_COUNT[kind] === 2);
 
-const anchored = (first: Anchor, pointer: Anchor = first, dragging = false): PlacementProgress => ({ type: 'anchored', first, pointer, dragging });
+const anchored = (first: Anchor, pointer: Anchor = first, dragging = false): PlacementProgress => ({ type: 'anchored', first, more: [], pointer, dragging });
 const click = (x: number, y: number, button = 0): PlacementInput => ({ type: 'click', point: P(x, y), button });
 const dragStart = (x: number, y: number, button = 0): PlacementInput => ({ type: 'drag-start', origin: P(x, y), button });
 const move = (x: number, y: number): PlacementInput => ({ type: 'move', point: P(x, y) });

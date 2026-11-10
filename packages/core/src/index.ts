@@ -43,6 +43,7 @@ export type { InteractionContext, InteractionEffect, InteractionInput, Interacti
 export { IDLE_STATE } from './interaction/types';
 export { reduceInteraction } from './interaction/machine';
 export type { PlacementInput, PlacementProgress, PlacementResult } from './interaction/placement';
+export { FREEHAND_MAX_ANCHORS, FREEHAND_SAMPLE_PX, FREEHAND_TOLERANCE_PX, simplifyPath } from './interaction/freehand';
 export { lockAngle, PLACEMENT_START, placementPreview, placementSnap, reducePlacement, ZERO_LENGTH_PX } from './interaction/placement';
 export type { MagnetMode, SnapResult } from './interaction/snap';
 export { effectiveMagnet, snapAnchor, WEAK_MAGNET_PX } from './interaction/snap';

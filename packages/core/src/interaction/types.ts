@@ -64,7 +64,8 @@ export type InteractionInput =
  * - `duplicate`: copy these drawings (`duplicateDrawing`), add the copies in one change and answer with a `select` of them (Ctrl/Cmd+D).
  * - `nudge`: move these unlocked drawings by `bars` bars and `pixels` px down (negative: up), `nudgeAnchors`; nudges within 500 ms are one history entry (arrow keys).
  * - `keyboard-move`: move the keyboard cursor of the tool being placed by `bars` bars and `pixels` px (`moveKeyboardCursor`); the caller sends the result as a placement `move`.
- * - `keyboard-place`: place an anchor at the keyboard cursor (Enter); the caller sends the cursor point as a placement `click`.
+ * - `keyboard-place`: place an anchor at the keyboard cursor (Enter); the caller sends the cursor point as a placement `click`, or a `finish` for a tool with a variable number of anchors that has its fewest (`enterInput`).
+ * - `remove-anchor`: take the last placed anchor back (Backspace); the caller sends a placement `remove-anchor`.
  */
 export type InteractionEffect =
   | { readonly type: 'remove'; readonly ids: readonly string[] }
@@ -81,7 +82,8 @@ export type InteractionEffect =
   | { readonly type: 'duplicate'; readonly ids: readonly string[] }
   | { readonly type: 'nudge'; readonly ids: readonly string[]; readonly bars: number; readonly pixels: number }
   | { readonly type: 'keyboard-move'; readonly bars: number; readonly pixels: number }
-  | { readonly type: 'keyboard-place' };
+  | { readonly type: 'keyboard-place' }
+  | { readonly type: 'remove-anchor' };
 
 /** What the machine needs to know about the drawings; supplied by the caller from the store. */
 export interface InteractionContext {

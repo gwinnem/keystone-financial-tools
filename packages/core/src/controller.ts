@@ -14,11 +14,12 @@ import type { Gesture, GestureOptions } from './interaction/gesture';
 import { GestureRecogniser } from './interaction/gesture';
 import { reduceInteraction } from './interaction/machine';
 import { dragPatch, handleSnap, keyboardCursorStart, moveDrawings, moveKeyboardCursor, nudgeDrawing } from './interaction/move';
-import { lockAngle, PLACEMENT_START, placementPreview, placementSnap, reducePlacement, type PlacementInput, type PlacementProgress } from './interaction/placement';
+import { enterInput, lockAngle, PLACEMENT_START, placedCount, placementPreview, placementSnap, reducePlacement, type PlacementInput, type PlacementProgress } from './interaction/placement';
 import { effectiveMagnet, type MagnetMode } from './interaction/snap';
 import { IDLE_STATE, type InteractionContext, type InteractionEffect, type InteractionInput, type InteractionResult, type InteractionState } from './interaction/types';
 import { createId as defaultCreateId } from './ids';
-import { DEFAULT_TOOLS, isDrawingKind } from './kinds';
+import { ANCHOR_RULES, DEFAULT_TOOLS, isDrawingKind, isFreehandKind } from './kinds';
+import { hasOwn } from './object';
 import { formatMessage, resolveMessages, type MessageKey, type MessageOverrides, type Messages } from './messages';
 import { isPaneKind, positionAt } from './pane-space';
 import { anchorToPoint } from './projection';
@@ -580,9 +581,10 @@ class DrawingToolsController implements DrawingTools {
     if (message !== null) this.emit('announce', message);
   }
 
-  /** The name of the tool that places drawings of `kind`. */
+  /** The name of the tool that places drawings of `kind`; a kind registered at run time has no message and is named by its id. */
   private toolName(kind: DrawingKind): string {
-    return this.messages[`tool.${kind}`];
+    const key = `tool.${kind}` as const;
+    return hasOwn(this.messages, key) ? this.messages[key] : kind;
   }
 
   /** One drawing is named by its tool, several are counted. */
@@ -781,6 +783,9 @@ class DrawingToolsController implements DrawingTools {
       case 'keyboard-place':
         this.keyboardPlace();
         return;
+      case 'remove-anchor':
+        this.place((this.interaction as Placing).tool, { type: 'remove-anchor' }, null, false);
+        return;
     }
   }
 
@@ -846,8 +851,12 @@ class DrawingToolsController implements DrawingTools {
       case 'cancel':
         this.place(state.tool, { type: 'cancel' }, null, this.modifiers.shift);
         return;
+      case 'double-click':
+        // A tool with a variable number of anchors is finished by a double click or a double tap; any other has no use for it.
+        this.place(state.tool, { type: 'finish' }, null, false);
+        return;
       default:
-        // `leave`, and a double-click, which a placement has no use for: the snap point is out of date.
+        // `leave`: the snap point is out of date.
         this.snap = null;
         return;
     }
@@ -902,12 +911,22 @@ class DrawingToolsController implements DrawingTools {
    */
   private place(tool: DrawingKind, input: PlacementInput, point: Point | null, shift: boolean): void {
     const aimed = lockAngle(tool, this.progress, input, shift, this.host);
-    const magnet = aimed === input ? effectiveMagnet(this.magnet, this.modifiers.invert) : 'off';
+    // An angle-locked anchor and a freehand stroke never snap.
+    const magnet = aimed === input && !isFreehandKind(tool) ? effectiveMagnet(this.magnet, this.modifiers.invert) : 'off';
     const result = reducePlacement(tool, this.progress, aimed, this.host, magnet);
     if (result.ignored) this.debug?.(`Ignored placement ${input.type}.`);
+    this.announceNextAnchor(tool, placedCount(this.progress), placedCount(result.progress));
     this.progress = result.progress;
     this.snap = point === null ? null : placementSnap(result.progress, point, magnet, this.host);
     if (result.anchors !== null) this.create(tool, result.anchors);
+  }
+
+  /** A tool with three or more anchors says which anchor comes next each time one is placed (FR-TOOL-032); the last one is announced as the drawing placed. */
+  private announceNextAnchor(tool: DrawingKind, before: number, after: number): void {
+    const rule = ANCHOR_RULES[tool];
+    // A freehand stroke gains a point at nearly every move: it is announced when it is placed.
+    if (isFreehandKind(tool)) return;
+    if (rule.max > 2 && after > 0 && after !== before) this.announce(rule.min < rule.max ? 'announce.placeAnchorUpTo' : 'announce.placeAnchor', { index: after + 1, count: rule.max });
   }
 
   /** The placement is complete: the drawing goes into the store (one change, one history entry; a text note's entry is closed when its editor is). */
@@ -950,10 +969,16 @@ class DrawingToolsController implements DrawingTools {
   }
 
   private keyboardPlace(): void {
+    const tool = (this.interaction as Placing).tool;
+    const finish = enterInput(tool, this.progress, this.keyboardCursor, effectiveMagnet(this.magnet, this.modifiers.invert), this.host);
+    if (finish !== null) {
+      this.place(tool, finish, null, false);
+      return;
+    }
     const cursor = this.keyboardCursor ?? keyboardCursorStart(this.keyboardAxis(), this.host);
     if (cursor === null) return;
     this.keyboardCursor = cursor;
-    this.place((this.interaction as Placing).tool, { type: 'click', point: cursor, button: 0 }, cursor, false);
+    this.place(tool, { type: 'click', point: cursor, button: 0 }, cursor, false);
   }
 
   // ---- dragging, nudging, duplicating, editing --------------------------------------------------------

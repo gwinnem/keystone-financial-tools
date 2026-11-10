@@ -7,6 +7,7 @@ const CANCEL_PLACEMENT: InteractionEffect = Object.freeze({ type: 'cancel-placem
 const DRAG_REVERT: InteractionEffect = Object.freeze({ type: 'drag-revert' });
 const SELECT_ALL: InteractionEffect = Object.freeze({ type: 'select-all' });
 const KEYBOARD_PLACE: InteractionEffect = Object.freeze({ type: 'keyboard-place' });
+const REMOVE_ANCHOR: InteractionEffect = Object.freeze({ type: 'remove-anchor' });
 const HANDLE_PREFIX = 'handle:';
 
 /** What each arrow key moves: bars right and pixels down. */
@@ -201,10 +202,11 @@ function reduceSelectedKey(state: Selected, input: Extract<InteractionInput, { t
   }
 }
 
-/** While placing: Escape cancels; Enter and the arrow keys place with the keyboard cursor. */
+/** While placing: Escape cancels; Enter and the arrow keys place with the keyboard cursor; Backspace takes the last placed anchor back. */
 function reducePlacingKey(state: Placing, input: Extract<InteractionInput, { type: 'key' }>): InteractionResult {
   if (input.key === 'Escape') return go({ type: 'idle', hover: null }, [CANCEL_PLACEMENT]);
   if (input.key === 'Enter') return go(state, [KEYBOARD_PLACE]);
+  if (input.key === 'Backspace') return go(state, [REMOVE_ANCHOR]);
   const step = arrowStep(input);
   return step === null ? ignore(state) : go(state, [{ type: 'keyboard-move', bars: step.bars, pixels: step.pixels }]);
 }
@@ -277,6 +279,7 @@ function reduceEditing(state: EditingText, input: InteractionInput, ctx: Interac
  * | placing | `activate` | placing (`cancel-placement`) |
  * | placing | `deactivate`, Escape, right click | idle (`cancel-placement`) |
  * | placing | arrow keys, Enter | same (`keyboard-move`, `keyboard-place`) |
+ * | placing | Backspace | same (`remove-anchor`) |
  * | placing | `placement-complete` | placing when `stay`, else selected; with `edit`: editing-text (`edit-text`), which returns to placing when `stay` |
  * | idle | left click on a drawing | selected |
  * | idle, selected | `select` | selected with those that exist (idle when none); the same state when unchanged |

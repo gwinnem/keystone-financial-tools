@@ -9,6 +9,8 @@ Everything the tools do can be done with the keyboard. Keys reach the tools whil
 | --- | --- | --- |
 | Escape | Placing a drawing | Cancel the drawing and leave the tool |
 | Enter | Placing a drawing | Place an anchor at the keyboard cursor |
+| Enter | Placing a tool with a variable number of anchors, with its fewest placed | Finish the drawing, when the keyboard cursor is on the last anchor or the pointer is in use |
+| Backspace | Placing a drawing | Take the last placed anchor back, and the first one back returns to the start |
 | Arrow keys | Placing a drawing | Move the keyboard cursor one bar sideways or one pixel up or down |
 | Shift + Arrow keys | Placing a drawing | Move the keyboard cursor ten bars or ten pixels |
 | Alt + T | Not dragging a drawing or editing a note | Choose the trend line tool |

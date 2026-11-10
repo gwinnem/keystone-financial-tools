@@ -139,7 +139,7 @@ describe('snapAnchor (FR-INT-040, FR-INT-041)', () => {
 
 describe('placement with the magnet (FR-INT-040, keyboard placement included)', () => {
   const click = (x: number, y: number) => ({ type: 'click', point: P(x, y), button: 0 }) as const;
-  const anchored = (first: Anchor, pointer: Anchor = first, dragging = false): PlacementProgress => ({ type: 'anchored', first, pointer, dragging });
+  const anchored = (first: Anchor, pointer: Anchor = first, dragging = false): PlacementProgress => ({ type: 'anchored', first, more: [], pointer, dragging });
 
   it('places a one-anchor tool on the snapped anchor', () => {
     // At y 250 the nearest value is the close (y 280).
@@ -208,19 +208,19 @@ describe('placementSnap (FR-INT-043)', () => {
   });
 
   it('uses the y-axis of the first anchor once it is set', () => {
-    const progress: PlacementProgress = { type: 'anchored', first: A(100, 100), pointer: A(100, 100), dragging: false };
+    const progress: PlacementProgress = { type: 'anchored', first: A(100, 100), more: [], pointer: A(100, 100), dragging: false };
     // Over the volume pane, but on the price axis: the nearest value is the low (y 320).
     const snap = placementSnap(progress, P(102, 450), 'strong', host);
     expect(snap?.x).toBe(100);
     expect(snap?.y).toBeCloseTo(320, 9);
     // The first anchor on the volume axis: the nearest value is the high, at the top of the volume scale.
-    const onVolume: PlacementProgress = { type: 'anchored', first: { time: 0, price: 500, yAxisId: 'volume' }, pointer: { time: 0, price: 500, yAxisId: 'volume' }, dragging: false };
+    const onVolume: PlacementProgress = { type: 'anchored', first: { time: 0, price: 500, yAxisId: 'volume' }, more: [], pointer: { time: 0, price: 500, yAxisId: 'volume' }, dragging: false };
     expect(placementSnap(onVolume, P(102, 205), 'strong', host)?.y).toBeCloseTo(486, 9);
   });
 
   it('is nothing when the pane of the first anchor is gone', () => {
     const lost: Anchor = { time: 0, price: 1, yAxisId: 'gone' };
-    expect(placementSnap({ type: 'anchored', first: lost, pointer: lost, dragging: false }, P(100, 200), 'strong', host)).toBeNull();
+    expect(placementSnap({ type: 'anchored', first: lost, more: [], pointer: lost, dragging: false }, P(100, 200), 'strong', host)).toBeNull();
   });
 });
 

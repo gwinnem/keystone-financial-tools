@@ -5,7 +5,7 @@ import type { DrawingKind } from './types';
  * The key of a user-visible text (NFR-I18N-001): `tool.<kind>` is the name of a tool (the `labelKey` of
  * its `TOOL_CATALOG` entry), `group.<group>` the name of a toolbar group, `toolbar.label` the accessible
  * name of the toolbar, `editor.*` the texts of a note editor and `announce.*` the screen-reader announcements
- * (NFR-A11Y-001): templates with `{tool}` (the name of a tool) or `{count}` (a number) in them, see `formatMessage`.
+ * (NFR-A11Y-001): templates with `{tool}` (the name of a tool), `{count}` (a number) or `{index}` (the number of the anchor to place next) in them, see `formatMessage`.
  */
 export type MessageKey =
   | `tool.${DrawingKind}`
@@ -18,6 +18,8 @@ export type MessageKey =
   | 'editor.confirm'
   | 'editor.cancel'
   | 'announce.placed'
+  | 'announce.placeAnchor'
+  | 'announce.placeAnchorUpTo'
   | 'announce.selected'
   | 'announce.selectedMany'
   | 'announce.deleted'
@@ -63,6 +65,8 @@ export const DEFAULT_MESSAGES: Messages = deepFreeze<Messages>({
   'editor.confirm': 'Confirm',
   'editor.cancel': 'Cancel',
   'announce.placed': '{tool} placed',
+  'announce.placeAnchor': 'Place anchor {index} of {count}',
+  'announce.placeAnchorUpTo': 'Place anchor {index} of up to {count}',
   'announce.selected': '{tool} selected',
   'announce.selectedMany': '{count} drawings selected',
   'announce.deleted': '{tool} deleted',
@@ -82,6 +86,7 @@ export const DEFAULT_MESSAGES: Messages = deepFreeze<Messages>({
  * @example
  * ```ts
  * formatMessage(DEFAULT_MESSAGES['announce.deletedMany'], { count: 3 }); // '3 drawings deleted'
+ * formatMessage(DEFAULT_MESSAGES['announce.placeAnchor'], { index: 3, count: 5 }); // 'Place anchor 3 of 5'
  * formatMessage('{tool} platziert', { tool: 'Trendlinie' }); // 'Trendlinie platziert'
  * ```
  */

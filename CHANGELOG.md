@@ -2,6 +2,27 @@
 
 ## 0.1.0 (unreleased)
 
+- Freehand placement (E12-F01-S05, FR-TOOL-034): a kind registered with `placement: 'freehand'` (new optional `KindDefinition` field,
+  `isFreehandKind`; `registerKind` throws `RangeError` when its rule has `min` below two) is drawn by one pressed stroke. The pointer path is
+  sampled every `FREEHAND_SAMPLE_PX` (3 px), simplified with Ramer–Douglas–Peucker at `FREEHAND_TOLERANCE_PX` (1 px) and kept to
+  `FREEHAND_MAX_ANCHORS` (512) or the rule's `max` by widening the tolerance; `simplifyPath` is exported. The stroke is clipped at the edge of the
+  pane, is never snapped and keeps the price axis of its first point. A click alone creates nothing, a stroke with fewer than the rule's `min`
+  points starts over, Escape cancels, and the keyboard cannot draw a stroke (it needs a pointer).
+- Placement of variable-anchor tools (E12-F01-S04, FR-TOOL-033): a kind whose rule has `min` below `max` takes one click per anchor and
+  `max` completes it; `finish` (new `PlacementInput`) completes it with the anchors placed when there are at least `min`, and is ignored
+  with fewer (nothing is created). The controller sends `finish` for Enter (when the pointer is in use or the keyboard cursor is on the
+  last anchor, `enterInput`) and for a double click or a double tap. `remove-anchor` (new `PlacementInput`, Backspace through the new
+  `remove-anchor` effect of the interaction machine) takes the last placed anchor back; the first one back returns to waiting. Escape
+  still cancels the whole drawing. New message `announce.placeAnchorUpTo` (`Place anchor {index} of up to {count}`) for these tools, also
+  said after an anchor is taken back.
+- Placement of tools with three or more anchors (E12-F01-S03, FR-TOOL-032): `reducePlacement` takes one click (or tap) per anchor up to
+  the number the kind's rule allows; the first two anchors also work by drag, the last one completes the drawing in one history entry.
+  `PlacementProgress` `anchored` gets `more`, the anchors placed after the first (empty for a two-anchor tool), and `placementPreview` shows
+  `first`, `more` and the pointer as the next anchor. A point within `ZERO_LENGTH_PX` of the previous anchor is ignored and waits for another
+  (a first drag that ends where it began still starts over). Escape and the right button cancel without a store change, the keyboard cursor
+  places each anchor with Enter and `stayInTool` repeats the tool. New message `announce.placeAnchor` (`Place anchor {index} of {count}`),
+  said after each anchor of a tool with more than two; the last anchor is announced as the drawing placed. A kind registered at run time
+  without a `tool.<id>` message is named by its id in the announcements.
 - Pane-anchored kinds (E12-F01-S02, FR-TOOL-031, D-10): a kind registered with `space: 'pane'` has one anchor that only names the pane
   (its time and price play no part in the geometry) and `options.position`, the place in the pane as `PanePosition` fractions
   0..1 of its width and height (`KFT-E-OPTIONS` outside; the default is the middle of the pane). `geometryOf` places such a drawing from

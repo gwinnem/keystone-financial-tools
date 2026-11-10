@@ -94,6 +94,8 @@ A key that is not in the table, and a text that is empty, throw a `RangeError` w
 | `editor.confirm` | Confirm |
 | `editor.cancel` | Cancel |
 | `announce.placed` | {tool} placed |
+| `announce.placeAnchor` | Place anchor {index} of {count} |
+| `announce.placeAnchorUpTo` | Place anchor {index} of up to {count} |
 | `announce.selected` | {tool} selected |
 | `announce.selectedMany` | {count} drawings selected |
 | `announce.deleted` | {tool} deleted |
@@ -106,7 +108,7 @@ A key that is not in the table, and a text that is empty, throw a `RangeError` w
 
 The default note editor has no buttons, only its accessible name (`editor.note`). `editor.confirm` and `editor.cancel` are for an editor of your own.
 
-The `announce.*` texts are what the tools say to a screen reader after an action, after a locked drawing refuses a change and after a shortcut chooses a tool, see [the keyboard reference](/guides/keyboard/). `{tool}` is replaced by the text of the tool (`tool.<kind>`) and `{count}` by the number of drawings; keep the placeholders in your translation.
+The `announce.*` texts are what the tools say to a screen reader after an action, after a locked drawing refuses a change and after a shortcut chooses a tool, see [the keyboard reference](/guides/keyboard/). `{tool}` is replaced by the text of the tool (`tool.<kind>`) and `{count}` by the number of drawings (in `announce.placeAnchor` and `announce.placeAnchorUpTo`, the second for a tool with a variable number of anchors, by the most anchors of the tool, with `{index}` the one to place next); keep the placeholders in your translation.
 
 ## Keyboard shortcuts
 

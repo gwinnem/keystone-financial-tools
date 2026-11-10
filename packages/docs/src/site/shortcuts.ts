@@ -9,6 +9,12 @@ export interface Shortcut {
 export const SHORTCUTS: readonly Shortcut[] = [
   { keys: 'Escape', when: 'Placing a drawing', action: 'Cancel the drawing and leave the tool' },
   { keys: 'Enter', when: 'Placing a drawing', action: 'Place an anchor at the keyboard cursor' },
+  {
+    keys: 'Enter',
+    when: 'Placing a tool with a variable number of anchors, with its fewest placed',
+    action: 'Finish the drawing, when the keyboard cursor is on the last anchor or the pointer is in use',
+  },
+  { keys: 'Backspace', when: 'Placing a drawing', action: 'Take the last placed anchor back, and the first one back returns to the start' },
   { keys: 'Arrow keys', when: 'Placing a drawing', action: 'Move the keyboard cursor one bar sideways or one pixel up or down' },
   { keys: 'Shift + Arrow keys', when: 'Placing a drawing', action: 'Move the keyboard cursor ten bars or ten pixels' },
   { keys: 'Alt + T', when: 'Not dragging a drawing or editing a note', action: 'Choose the trend line tool' },

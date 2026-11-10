@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DrawingError } from '../src/errors';
 import { geometryOf } from '../src/geometry/index';
 import { importDocument } from '../src/import';
-import { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, isDrawingKind, kindDefinition, registerKind, type KindDefinition } from '../src/kinds';
+import { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, isDrawingKind, isFreehandKind, kindDefinition, registerKind, type KindDefinition } from '../src/kinds';
 import { defaultOptions, resolveOptions, validateOptions } from '../src/options';
 import { DrawingStore } from '../src/store';
 import { createMockHost } from '../src/testing/mock-host';
@@ -136,6 +136,26 @@ describe('KFT-E-ANCHORS with an anchor range', () => {
     expect(validateDrawing(triangle(5))).toEqual([]);
     expect(validateDrawing({ id: 'x', kind: 'trend-line', anchors: [anchor(1)] })).toEqual([{ code: 'KFT-E-ANCHORS', message: 'A trend-line needs 2 anchor(s).' }]);
     expect(validateDrawing({ id: 'x', kind: FAKE })).toEqual([{ code: 'KFT-E-ANCHORS', message: 'A triangle needs 3 to 5 anchors.' }]);
+  });
+});
+
+describe('freehand kinds (FR-TOOL-034)', () => {
+  it('are told from point kinds, also when not registered', () => {
+    register(fake({ anchors: { min: 2, max: 512 }, placement: 'freehand' }));
+    expect(isFreehandKind(FAKE)).toBe(true);
+    expect(isFreehandKind('trend-line')).toBe(false);
+    expect(isFreehandKind('nope' as DrawingKind)).toBe(false);
+  });
+
+  it('treats an explicit points placement as a point kind', () => {
+    register(fake({ placement: 'points' }));
+    expect(isFreehandKind(FAKE)).toBe(false);
+  });
+
+  it('need at least two anchors', () => {
+    expect(() => register(fake({ anchors: { min: 1, max: 512 }, placement: 'freehand' }))).toThrow(RangeError);
+    expect(() => register(fake({ anchors: { min: 1, max: 512 }, placement: 'freehand' }))).toThrow('The freehand kind triangle needs at least two anchors.');
+    expect(isFreehandKind(FAKE)).toBe(false);
   });
 });
 

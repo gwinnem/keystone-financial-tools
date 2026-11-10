@@ -57,6 +57,12 @@ export interface KindDefinition {
    * context is that one plot point. A pane kind needs the anchor rule 1 to 1.
    */
   readonly space?: 'data' | 'pane';
+  /**
+   * `points` (default): one click per anchor (FR-TOOL-032, FR-TOOL-033). `freehand` (FR-TOOL-034): the pointer is pressed, dragged and released
+   * and the path it took becomes the anchors: sampled every 3 px, simplified to 1 px and limited to 512 anchors when released. A freehand kind
+   * needs the anchor rule `min` of at least 2; a click alone creates nothing, and a stroke is drawn with a pointer, not with the keyboard.
+   */
+  readonly placement?: 'points' | 'freehand';
   /** The shapes of a drawing of the kind for the current frame. */
   readonly geometry: (context: KindGeometryContext) => Shape[];
   /** The grab points of a drawing. Default: one `handle:<n>` at each anchor. */
@@ -89,6 +95,7 @@ function checkDefinition(definition: KindDefinition): void {
     throw new RangeError(`The anchor rule of ${definition.id} needs whole numbers with 1 <= min <= max.`);
   }
   if (definition.space === 'pane' && (min !== 1 || max !== 1)) throw new RangeError(`The pane kind ${definition.id} takes exactly one anchor.`);
+  if (definition.placement === 'freehand' && min < 2) throw new RangeError(`The freehand kind ${definition.id} needs at least two anchors.`);
 }
 
 function add(definition: KindDefinition, isDefault: boolean): () => void {
@@ -140,6 +147,11 @@ export function requireKind(kind: string): KindDefinition {
   const definition = definitions.get(kind);
   if (definition === undefined) throw new RangeError(`The kind ${kind} is not registered.`);
   return definition;
+}
+
+/** True for a kind placed by a freehand stroke (`placement: 'freehand'`, FR-TOOL-034). */
+export function isFreehandKind(kind: string): boolean {
+  return definitions.get(kind)?.placement === 'freehand';
 }
 
 /** True for the id of a registered kind. */

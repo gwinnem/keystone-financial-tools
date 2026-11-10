@@ -27,6 +27,8 @@ describe('DEFAULT_MESSAGES', () => {
       'editor.confirm': 'Confirm',
       'editor.cancel': 'Cancel',
       'announce.placed': '{tool} placed',
+      'announce.placeAnchor': 'Place anchor {index} of {count}',
+      'announce.placeAnchorUpTo': 'Place anchor {index} of up to {count}',
       'announce.selected': '{tool} selected',
       'announce.selectedMany': '{count} drawings selected',
       'announce.deleted': '{tool} deleted',
@@ -43,6 +45,10 @@ describe('DEFAULT_MESSAGES', () => {
     for (const key of ['announce.placed', 'announce.selected', 'announce.deleted', 'announce.blocked', 'announce.toolActive'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{tool}');
     for (const key of ['announce.selectedMany', 'announce.deletedMany', 'announce.blockedMany'] as const) expect(DEFAULT_MESSAGES[key], key).toContain('{count}');
     for (const key of ['announce.undone', 'announce.redone'] as const) expect(DEFAULT_MESSAGES[key], key).not.toContain('{');
+    for (const key of ['announce.placeAnchor', 'announce.placeAnchorUpTo'] as const) {
+      expect(DEFAULT_MESSAGES[key], key).toContain('{index}');
+      expect(DEFAULT_MESSAGES[key], key).toContain('{count}');
+    }
   });
 
   it('has a tool label for every drawing kind', () => {
