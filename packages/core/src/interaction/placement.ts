@@ -103,7 +103,7 @@ function follow(progress: Anchored, point: Point, magnet: MagnetMode, host: Draw
 /** True when the placement has at least the fewest anchors of a tool that takes a variable number of them, so that it can be finished. */
 function canFinish(tool: DrawingKind, progress: PlacementProgress): boolean {
   const rule = ANCHOR_RULES[tool];
-  return progress.type === 'anchored' && rule.min < rule.max && placedCount(progress) >= rule.min && !isFreehandKind(tool);
+  return rule.min < rule.max && placedCount(progress) >= rule.min && !isFreehandKind(tool);
 }
 
 /** The anchors a placement has fixed, in order (the anchor under the pointer is not one). */

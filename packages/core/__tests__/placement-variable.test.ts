@@ -44,6 +44,18 @@ function run(tool: DrawingKind, inputs: readonly PlacementInput[], from: Placeme
 const clicks = (n: number): PlacementInput[] => Array.from({ length: n }, (_, i) => click(...spot(i)));
 
 describe('finishing a tool with a variable number of anchors', () => {
+  it('is ignored before the first anchor, and the keyboard does not finish either', () => {
+    const result = reducePlacement(PATTERN, PLACEMENT_START, FINISH, host);
+    expect(result).toEqual({ progress: PLACEMENT_START, anchors: null, ignored: true });
+    expect(enterInput(PATTERN, PLACEMENT_START, null, 'off', host)).toBeNull();
+  });
+
+  it('is ignored for a tool with a fixed number of anchors, whatever it was handed', () => {
+    const full: PlacementProgress = { type: 'anchored', first: A(100, 100), more: [A(200, 150)], pointer: A(200, 150), dragging: false };
+    expect(reducePlacement('trend-line', full, FINISH, host)).toEqual({ progress: full, anchors: null, ignored: true });
+    expect(enterInput('trend-line', full, null, 'off', host)).toBeNull();
+  });
+
   it('needs the fewest anchors: fewer creates nothing and changes nothing', () => {
     for (let n = 1; n < 3; n++) {
       const before = run(PATTERN, clicks(n)).progress;

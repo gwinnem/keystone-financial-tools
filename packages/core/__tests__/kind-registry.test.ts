@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DrawingError } from '../src/errors';
 import { geometryOf } from '../src/geometry/index';
 import { importDocument } from '../src/import';
-import { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, isDrawingKind, isFreehandKind, kindDefinition, registerKind, type KindDefinition } from '../src/kinds';
+import { ANCHOR_COUNT, ANCHOR_RULES, DEFAULT_TOOLS, DRAWING_KINDS, isDrawingKind, isFreehandKind, kindDefinition, registerKind, requireKind, type KindDefinition } from '../src/kinds';
 import { defaultOptions, resolveOptions, validateOptions } from '../src/options';
 import { DrawingStore } from '../src/store';
 import { createMockHost } from '../src/testing/mock-host';
@@ -106,6 +106,8 @@ describe('registerKind', () => {
 
   it('rejects an empty id, a taken id and a bad anchor rule', () => {
     expect(() => registerKind(fake({ id: '' }))).toThrow(RangeError);
+    expect(() => registerKind(fake({ id: '' }))).toThrow('A kind needs a non-empty id.');
+    expect(() => registerKind(fake({ id: 5 as unknown as DrawingKind }))).toThrow('A kind needs a non-empty id.');
     expect(() => registerKind(fake({ id: 'rectangle' }))).toThrow('The kind rectangle is already registered.');
     for (const anchors of [
       { min: 0, max: 2 },
@@ -177,5 +179,21 @@ describe('a document with an unknown kind (D-15)', () => {
     const store = new DrawingStore();
     expect(importDocument(store, document).skipped).toEqual([]);
     expect(store.list().map((drawing) => drawing.id)).toEqual(['tri', 'ok']);
+  });
+});
+
+describe('requireKind and the pane rule of a kind', () => {
+  it('gives the definition of a registered kind and throws for one that is not', () => {
+    expect(requireKind('rectangle').id).toBe('rectangle');
+    expect(() => requireKind(FAKE)).toThrow(RangeError);
+    expect(() => requireKind(FAKE)).toThrow('The kind triangle is not registered.');
+  });
+
+  it('takes exactly one anchor for a pane kind', () => {
+    expect(() => registerKind(fake({ space: 'pane', anchors: { min: 1, max: 2 } }))).toThrow('The pane kind triangle takes exactly one anchor.');
+    expect(() => registerKind(fake({ space: 'pane', anchors: { min: 2, max: 2 } }))).toThrow('The pane kind triangle takes exactly one anchor.');
+    expect(isDrawingKind(FAKE)).toBe(false);
+    register(fake({ space: 'pane', anchors: { min: 1, max: 1 } }));
+    expect(isDrawingKind(FAKE)).toBe(true);
   });
 });

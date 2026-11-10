@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DrawingHost, NearestBar, Point } from '../src/host';
-import { dragHandle, handleSnap } from '../src/interaction/move';
+import { dragHandle, dragPatch, handleSnap } from '../src/interaction/move';
 import { PLACEMENT_START, placementSnap, reducePlacement, type PlacementProgress } from '../src/interaction/placement';
 import { effectiveMagnet, snapAnchor, WEAK_MAGNET_PX, type MagnetMode } from '../src/interaction/snap';
 import { createMockHost, DEFAULT_MOCK_PANE } from '../src/testing/mock-host';
@@ -249,6 +249,8 @@ describe('handle drags with the magnet (FR-INT-040)', () => {
     expect(dragHandle(line('trend-line'), 1, FROM, TO, false, host, 'off')).toEqual(free);
     expect(handleSnap(line('trend-line'), 1, FROM, TO, false, host)).toBeNull();
     expect(handleSnap(line('trend-line'), 1, FROM, TO, false, host, 'off')).toBeNull();
+    expect(dragPatch(line('trend-line'), 1, FROM, TO, false, host)).toEqual({ anchors: free });
+    expect(dragPatch(line('trend-line'), 1, FROM, TO, false, host, 'strong')).not.toEqual({ anchors: free });
     expect(dragHandle(line('trend-line'), 1, FROM, P(303, 160), false, host, 'weak')?.[1]?.price).toBeCloseTo(120, 9);
     expect(handleSnap(line('trend-line'), 1, FROM, P(303, 160), false, host, 'weak')).toBeNull();
     expect(dragHandle(line('trend-line'), 1, FROM, TO, false, host, 'weak')?.[1]).toEqual(SNAPPED(300, 140));

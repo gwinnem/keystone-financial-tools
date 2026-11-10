@@ -30,27 +30,27 @@ function distanceToSegment(point: Point, from: Point, to: Point): number {
  * ```
  */
 export function simplifyIndices(points: readonly Point[], tolerance: number): number[] {
-  if (points.length <= 2) return points.map((_, index) => index);
-  const keep = new Array<boolean>(points.length).fill(false);
-  keep[0] = true;
-  keep[points.length - 1] = true;
+  // A typed array ignores a write past its end, so an empty path keeps nothing and a one-point path keeps its point.
+  const keep = new Uint8Array(points.length);
+  keep[0] = 1;
+  keep[points.length - 1] = 1;
   const stack: [number, number][] = [[0, points.length - 1]];
   for (let range = stack.pop(); range !== undefined; range = stack.pop()) {
     const [start, end] = range;
-    let farthest = -1;
+    let farthest: number | undefined;
     let distance = tolerance;
-    for (let index = start + 1; index < end; index++) {
-      const d = distanceToSegment(points[index] as Point, points[start] as Point, points[end] as Point);
+    for (const [offset, point] of points.slice(start + 1, end).entries()) {
+      const d = distanceToSegment(point, points[start] as Point, points[end] as Point);
       if (d > distance) {
         distance = d;
-        farthest = index;
+        farthest = start + 1 + offset;
       }
     }
-    if (farthest < 0) continue;
-    keep[farthest] = true;
+    if (farthest === undefined) continue;
+    keep[farthest] = 1;
     stack.push([start, farthest], [farthest, end]);
   }
-  return keep.flatMap((kept, index) => (kept ? [index] : []));
+  return Array.from(keep.keys()).filter((index) => keep[index] === 1);
 }
 
 /**
@@ -102,17 +102,15 @@ export function clipSegment(rect: Rect, from: Point, to: Point): { readonly ente
     [dy, rect.y + rect.height - from.y],
   ];
   for (const [p, q] of edges) {
-    if (p === 0) {
-      if (q < 0) return null;
-      continue;
-    }
     const t = q / p;
     if (p < 0) {
       if (t > t1) return null;
       t0 = Math.max(t0, t);
-    } else {
+    } else if (p > 0) {
       if (t < t0) return null;
       t1 = Math.min(t1, t);
+    } else if (q < 0) {
+      return null;
     }
   }
   return { enter: { x: from.x + t0 * dx, y: from.y + t0 * dy }, leave: { x: from.x + t1 * dx, y: from.y + t1 * dy } };

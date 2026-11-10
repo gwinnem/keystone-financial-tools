@@ -97,7 +97,7 @@ function checkDefinition(definition: KindDefinition): void {
   if (!Number.isInteger(min) || !Number.isInteger(max) || min < 1 || max < min) {
     throw new RangeError(`The anchor rule of ${definition.id} needs whole numbers with 1 <= min <= max.`);
   }
-  if (definition.space === 'pane' && (min !== 1 || max !== 1)) throw new RangeError(`The pane kind ${definition.id} takes exactly one anchor.`);
+  if (definition.space === 'pane' && max !== 1) throw new RangeError(`The pane kind ${definition.id} takes exactly one anchor.`);
   if (definition.placement === 'freehand' && min < 2) throw new RangeError(`The freehand kind ${definition.id} needs at least two anchors.`);
 }
 
@@ -114,8 +114,6 @@ function add(definition: KindDefinition, isDefault: boolean): () => void {
     if (definitions.get(entry.id) !== entry) return;
     definitions.delete(entry.id);
     kinds.splice(kinds.indexOf(entry.id), 1);
-    const at = defaultTools.indexOf(entry.id);
-    if (at >= 0) defaultTools.splice(at, 1);
     delete rules[entry.id];
     delete counts[entry.id];
   };
@@ -159,7 +157,7 @@ export function isFreehandKind(kind: string): boolean {
 
 /** True for the id of a registered kind. */
 export function isDrawingKind(value: unknown): value is DrawingKind {
-  return typeof value === 'string' && definitions.has(value);
+  return definitions.has(value as string);
 }
 
 /** The text of an anchor rule for a message: `2 anchor(s)` for a fixed kind, `3 to 6 anchors` for a ranged one. */

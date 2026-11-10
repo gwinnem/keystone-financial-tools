@@ -149,7 +149,7 @@ function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point:
  * corner, multiplied by how far the dragged corner moved relative to that corner, on each axis. A box with no width (or no height) cannot be
  * scaled along that axis. Null when the handle is not one of the four corners or an anchor's y-axis has no pane.
  */
-function scaleAnchors(drawing: Drawing, handle: number, origin: Point, point: Point, host: DrawingHost): readonly Anchor[] | null {
+function scaleAnchors(drawing: Drawing, handle: number, origin: Point, point: Point, host: DrawingHost): HandleDrag | null {
   const corner = BOX_CORNERS[handle];
   if (corner === undefined || drawing.anchors.some((anchor) => host.paneRect(anchor.yAxisId) === null)) return null;
   const pixels = drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
@@ -159,16 +159,14 @@ function scaleAnchors(drawing: Drawing, handle: number, origin: Point, point: Po
   const scaleX = box.width === 0 ? 1 : (grabbed.x + point.x - origin.x - pivot.x) / (grabbed.x - pivot.x);
   const scaleY = box.height === 0 ? 1 : (grabbed.y + point.y - origin.y - pivot.y) / (grabbed.y - pivot.y);
   // Every pane exists (checked above), so no projection can be null.
-  return pixels.map((p, index) => pointToAnchor({ x: pivot.x + (p.x - pivot.x) * scaleX, y: pivot.y + (p.y - pivot.y) * scaleY }, (drawing.anchors[index] as Anchor).yAxisId, host) as Anchor);
+  const anchors = pixels.map((p, index) => pointToAnchor({ x: pivot.x + (p.x - pivot.x) * scaleX, y: pivot.y + (p.y - pivot.y) * scaleY }, (drawing.anchors[index] as Anchor).yAxisId, host) as Anchor);
+  return { anchors, snap: null };
 }
 
 function dragHandleResult(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, magnet: MagnetMode, host: DrawingHost): HandleDrag | null {
   // A pane-anchored drawing has no anchor to drag: see `dragPatch`.
   if (isPaneKind(drawing.kind)) return null;
-  if (isFreehandKind(drawing.kind)) {
-    const anchors = scaleAnchors(drawing, handle, origin, point, host);
-    return anchors === null ? null : { anchors, snap: null };
-  }
+  if (isFreehandKind(drawing.kind)) return scaleAnchors(drawing, handle, origin, point, host);
   if (shift && ANGLE_KINDS.has(drawing.kind)) return dragAngleHandle(drawing, handle, origin, point, host);
   const edits = editsOf(drawing, handle);
   if (edits === undefined) return null;
