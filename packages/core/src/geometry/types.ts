@@ -71,7 +71,113 @@ export interface LabelShape {
   readonly text: string;
 }
 
-export type Shape = LineShape | RectShape | ArcShape | TextShape | LabelShape;
+/**
+ * An open path through `points` (CSS px), at least two. It is stroked with the resolved style and never filled.
+ *
+ * @example
+ * ```ts
+ * const zigzag: PolylineShape = { type: 'polyline', part: 'body', points: [{ x: 0, y: 0 }, { x: 40, y: 30 }, { x: 80, y: 0 }] };
+ * ```
+ */
+export interface PolylineShape {
+  readonly type: 'polyline';
+  readonly part: GeometryPart;
+  readonly points: readonly Point[];
+}
+
+/**
+ * A closed path through `points` (CSS px), at least three; the last point joins the first. It is stroked with the resolved style
+ * and filled with its `fillColor` at `fillOpacity` (nothing when that is 0).
+ *
+ * @example
+ * ```ts
+ * const triangle: PolygonShape = { type: 'polygon', part: 'body', points: [{ x: 0, y: 0 }, { x: 80, y: 0 }, { x: 40, y: 60 }] };
+ * ```
+ */
+export interface PolygonShape {
+  readonly type: 'polygon';
+  readonly part: GeometryPart;
+  readonly points: readonly Point[];
+}
+
+/**
+ * A whole ellipse (CSS px) as `CanvasRenderingContext2D.ellipse` takes it: the radii along its own axes, turned by `rotation`
+ * radians (0 puts `radiusX` along x; with y growing downwards a positive rotation is clockwise on screen). It is stroked and
+ * filled like a polygon. A circle has equal radii.
+ *
+ * @example
+ * ```ts
+ * const ellipse: EllipseShape = { type: 'ellipse', part: 'body', center: { x: 100, y: 80 }, radiusX: 60, radiusY: 30, rotation: 0 };
+ * ```
+ */
+export interface EllipseShape {
+  readonly type: 'ellipse';
+  readonly part: GeometryPart;
+  readonly center: Point;
+  readonly radiusX: number;
+  readonly radiusY: number;
+  readonly rotation: number;
+}
+
+/**
+ * A Bezier curve from `from` to `to` (CSS px): quadratic with one control point, cubic with two. It is stroked and never filled.
+ *
+ * @example
+ * ```ts
+ * const bow: CurveShape = { type: 'curve', part: 'body', from: { x: 0, y: 0 }, controls: [{ x: 50, y: -40 }], to: { x: 100, y: 0 } };
+ * ```
+ */
+export interface CurveShape {
+  readonly type: 'curve';
+  readonly part: GeometryPart;
+  readonly from: Point;
+  readonly controls: readonly [Point] | readonly [Point, Point];
+  readonly to: Point;
+}
+
+/**
+ * A filled triangle with its tip at `tip` (CSS px), pointing in the direction `angle` (radians, canvas convention: 0 points right,
+ * positive turns clockwise on screen). Its base is `width` wide and `length` behind the tip. It is filled with the stroke
+ * colour of the resolved style, so it is a solid head whatever the fill of the drawing.
+ *
+ * @example
+ * ```ts
+ * const head: ArrowheadShape = { type: 'arrowhead', part: 'body', tip: { x: 100, y: 50 }, angle: 0, length: 10, width: 8 };
+ * ```
+ */
+export interface ArrowheadShape {
+  readonly type: 'arrowhead';
+  readonly part: GeometryPart;
+  readonly tip: Point;
+  readonly angle: number;
+  readonly length: number;
+  readonly width: number;
+}
+
+/**
+ * A glyph in the box with its top left corner at `x`, `y` (CSS px). `source` says what `glyph` is: `text`, drawn with the text colour
+ * of the resolved style; `emoji`, drawn as it is; or `icon`, the name of a built-in icon the host draws (`arrow-up`, `arrow-down`,
+ * `arrow-left`, `arrow-right` and `pin`) in the stroke colour, filling the box. A host leaves an icon it does not know undrawn.
+ * `fontSize` is the size of text and emoji; an icon fills `width` by `height`.
+ *
+ * @example
+ * ```ts
+ * const flag: GlyphShape = { type: 'glyph', part: 'body', x: 10, y: 20, width: 24, height: 24, glyph: 'pin', source: 'icon', fontSize: 24 };
+ * ```
+ */
+export interface GlyphShape {
+  readonly type: 'glyph';
+  readonly part: GeometryPart;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly glyph: string;
+  readonly source: 'text' | 'emoji' | 'icon';
+  readonly fontSize: number;
+}
+
+export type Shape = LineShape | RectShape | ArcShape | TextShape | LabelShape | PolylineShape | PolygonShape | EllipseShape | CurveShape | ArrowheadShape | GlyphShape;
 
 /** A grab point of a drawing. The id stays the same across frames: `handle:<n>`. */
 export interface HandlePoint {

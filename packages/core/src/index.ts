@@ -26,7 +26,25 @@ export { Disposables } from './disposables';
 export type { HostHandlers } from './host-connection';
 export { connectHost } from './host-connection';
 export { anchorToPoint, pointToAnchor } from './projection';
-export type { ArcShape, DrawingGeometry, GeometryOptions, GeometryPart, HandlePoint, LabelShape, LineShape, PriceFormatter, RectShape, Shape, TextShape } from './geometry/types';
+export type {
+  ArcShape,
+  ArrowheadShape,
+  CurveShape,
+  DrawingGeometry,
+  EllipseShape,
+  GeometryOptions,
+  GeometryPart,
+  GlyphShape,
+  HandlePoint,
+  LabelShape,
+  LineShape,
+  PolygonShape,
+  PolylineShape,
+  PriceFormatter,
+  RectShape,
+  Shape,
+  TextShape,
+} from './geometry/types';
 export { geometryOf } from './geometry/index';
 export { TEXT_CHAR_WIDTH, TEXT_LINE_HEIGHT } from './geometry/boxes';
 export { formatPrice } from './geometry/lines';

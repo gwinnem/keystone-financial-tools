@@ -46,7 +46,8 @@ export function distanceToArc(p: Point, arc: Pick<ArcShape, 'center' | 'radius' 
 /**
  * Distance from `p` to a geometry shape (CSS px). A rectangle counts as a solid area when
  * `filled()` is true (asked only for rectangles). A text box is always solid. A label is the point
- * where it is anchored.
+ * where it is anchored. The polyline, polygon, ellipse, curve, arrowhead and glyph shapes (FR-TOOL-036) are not hit yet: their
+ * distances come with FR-TOOL-037, and until then they are infinitely far from every point.
  */
 export function distanceToShape(p: Point, shape: Shape, filled: () => boolean): number {
   switch (shape.type) {
@@ -60,5 +61,12 @@ export function distanceToShape(p: Point, shape: Shape, filled: () => boolean): 
       return distanceToRect(p, shape, true);
     case 'label':
       return Math.hypot(p.x - shape.x, p.y - shape.y);
+    case 'polyline':
+    case 'polygon':
+    case 'ellipse':
+    case 'curve':
+    case 'arrowhead':
+    case 'glyph':
+      return Number.POSITIVE_INFINITY;
   }
 }

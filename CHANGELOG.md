@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- New shapes (E12-F02-S01, FR-TOOL-036): the `Shape` union gets `polyline` (open), `polygon` (closed, fillable), `ellipse` (radii and rotation),
+  `curve` (quadratic with one control point, cubic with two), `arrowhead` (a solid triangle from its tip) and `glyph` (text, emoji or a built-in
+  icon in a box), with the types `PolylineShape`, `PolygonShape`, `EllipseShape`, `CurveShape`, `ArrowheadShape` and `GlyphShape` exported by every
+  package. They take stroke, dash, fill and opacity from the resolved style of their item; `buildScene` and `SceneCache` need no change and keep
+  their guarantees. The playground draws them; the host guide says how to draw each, and SDS §8.3 defines them. They are not hit yet: their
+  hit-testing is E12-F02-S02.
 - Handles of drawings with many anchors (E12-F01-S06, FR-TOOL-035): a selected drawing of any anchor count (3, 5, 64) shows one handle per
   anchor, and dragging one moves only that anchor, as one history entry; body drag and arrow keys move them all. A freehand kind shows four
   bounding-box handles instead (`handle:0` top left, `1` top right, `2` bottom right, `3` bottom left): dragging one scales every point about the opposite corner, mirrors past it, leaves an axis alone where the box has no

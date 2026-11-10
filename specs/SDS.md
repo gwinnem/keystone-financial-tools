@@ -478,9 +478,34 @@ new SceneCache(host).get(options): readonly SceneItem[]; // same array until an 
 Decisions made while implementing (E03-F03): `opacity` is an item field because `ResolvedStyle`
 has no stroke opacity; `handles` items carry `style` and `locked` so the host needs no theme lookup;
 the snap indicator is a `preview` item with an arc, not a new item type; locked wins over selected
-and hover; there is no polyline shape (geometry has none); the scene theme must be the theme of the
+and hover; the scene theme must be the theme of the
 `GeometryCache`, which has fixed styles per cache; preview geometry uses the default text estimate
 (no `measureText`).
+
+Shapes (CSS px in plot coordinates; angles in radians, canvas convention). A shape has no style of
+its own: the host paints all shapes of an item with its `style` and multiplies every alpha by `opacity`.
+
+```ts
+type Shape =
+  | { type: 'line'; part; from: Point; to: Point }
+  | { type: 'rect'; part; x; y; width; height }
+  | { type: 'arc'; part; center: Point; radius; startAngle; endAngle }
+  | { type: 'text'; part; x; y; width; height; lines: string[]; fontSize; lineHeight }
+  | { type: 'label'; part: 'label'; x; y; ratio; price; showRatio; showPrice; text }
+  // FR-TOOL-036 (E12-F02-S01):
+  | { type: 'polyline'; part; points: Point[] }                  // open, stroked, >= 2 points
+  | { type: 'polygon'; part; points: Point[] }                   // closed, stroked and filled, >= 3 points
+  | { type: 'ellipse'; part; center: Point; radiusX; radiusY; rotation }  // whole ellipse, stroked and filled
+  | { type: 'curve'; part; from: Point; controls: [Point] | [Point, Point]; to: Point }  // quadratic or cubic, stroked
+  | { type: 'arrowhead'; part; tip: Point; angle; length; width }  // solid triangle in the stroke colour
+  | { type: 'glyph'; part; x; y; width; height; glyph: string; source: 'text' | 'emoji' | 'icon'; fontSize };
+```
+
+`polygon`, `ellipse` and `rect` are filled with `fillColor` at `fillOpacity` (nothing at 0) and then
+stroked; `polyline` and `curve` are only stroked; the dash comes from `lineStyle`. A `glyph` of
+`source` `icon` names a built-in icon the host draws in the stroke colour, filling its box:
+`arrow-up`, `arrow-down`, `arrow-left`, `arrow-right` and `pin`; a host leaves an unknown name undrawn.
+The host guide lists how to draw each shape. Hit-testing of the new shapes is FR-TOOL-037 (E12-F02-S02).
 
 ## 9. Interaction engine
 

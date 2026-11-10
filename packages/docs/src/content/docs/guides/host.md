@@ -78,7 +78,7 @@ Paint `tools.getScene()` in the overlay of your chart each time the host's rende
 
 The scene is a list of items in paint order:
 
-- `shape` items have pixel shapes (lines, rectangles, arcs, labels and text) for trend lines, horizontal lines, rectangles and text notes.
+- `shape` items have pixel shapes (lines, rectangles, arcs, labels, text and, for the tools that need them, polylines, polygons, ellipses, curves, arrowheads and glyphs) for every tool that is not a Fibonacci tool.
 - `fibonacci` items have the anchors and the resolved options of a Fibonacci tool in chart coordinates. Paint them with your own Fibonacci renderer; the tools do not draw them for you.
 - `preview` items show the drawing being placed and the snap indicator, and `handles` items the handles of the selected drawings.
 
@@ -106,6 +106,23 @@ The tools never draw. Your chart runs one overlay pass after it has painted its 
 1. Call `tools.getScene()`.
 2. Paint the items in the order they come, clipped to the plot area. A `shape` item is a list of pixel shapes with its resolved `style`, `opacity` and `state`; a `handles` item is a list of points to draw as grab handles, or as lock markers when `locked` is set.
 3. When `requestRender()` is called, schedule that pass. Do not paint from inside `requestRender()`: it can be called many times in one frame, so coalesce the calls into one animation frame.
+
+### Drawing each shape
+
+A shape has no style of its own: you paint every shape of an item with the `style` of the item (colour, line width, line style, fill colour and fill opacity) and multiply every alpha by its `opacity`. All coordinates are CSS pixels in the plot area, and angles are radians as `CanvasRenderingContext2D` takes them.
+
+| Shape | How to draw it |
+|---|---|
+| `line` | Stroke a segment from `from` to `to`. |
+| `rect` | Fill with `fillColor` at `fillOpacity` when that is above 0, then stroke. |
+| `arc` | Stroke `arc(center, radius, startAngle, endAngle)`. |
+| `text`, `label` | Fill the text in the text colour (the label in the stroke colour). |
+| `polyline` | Stroke a path through `points`; never fill it. |
+| `polygon` | Close the path through `points`, fill it like a rectangle, then stroke it. |
+| `ellipse` | `ellipse(center, radiusX, radiusY, rotation, 0, 2π)`, filled and stroked like a polygon. |
+| `curve` | Stroke `from`, then a quadratic curve when `controls` has one point or a cubic curve when it has two, ending at `to`; never fill it. |
+| `arrowhead` | Fill a triangle with its tip at `tip`, pointing at `angle`, with its base `width` wide and `length` behind the tip. Fill it with the stroke colour. |
+| `glyph` | In the box `x`, `y`, `width`, `height`: for `source` `text`, fill the string in the text colour at `fontSize`; for `emoji`, fill it as it is; for `icon`, draw the built-in icon named by `glyph` in the stroke colour (`arrow-up`, `arrow-down`, `arrow-left`, `arrow-right` or `pin`) and leave a name you do not know undrawn. |
 
 ## Fibonacci items
 
