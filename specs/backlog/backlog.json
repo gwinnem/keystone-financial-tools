@@ -100,6 +100,10 @@
     {
       "title": "M5 Release",
       "description": "Docs site, performance, accessibility, release pipeline, licensing (E09, E10)"
+    },
+    {
+      "title": "M6 Tool library",
+      "description": "Tool library after 1.0: E11 to E19, SDS 19"
     }
   ],
   "standards": {
@@ -2126,15 +2130,15 @@
     {
       "id": "E11",
       "title": "Drawing catalog growth and chart integration",
-      "milestone": "M4 Adapters and integration",
+      "milestone": "M6 Tool library",
       "labels": ["area:core"],
-      "sds": ["FR-INT-010..019 (to be added)"],
+      "sds": ["FR-TOOL-010..025"],
       "description": "Close the gap to the drawing sets of competing chart products and prepare the tools for the keystone-financial-workspace chart panel: new line, channel, arrow and annotation kinds, three-point Fibonacci, host contract v3 with the measuring tools, an inspector and object-list model, and verification against keystone-charts-financial. Record the requirements in the SDS before any code (SDS change flow).",
       "features": [
         {
           "id": "E11-F01",
           "title": "Lines, channels and arrows",
-          "sds": ["FR-INT-010"],
+          "sds": ["FR-TOOL-010..014"],
           "description": "Vertical line, ray and extended-line presets, parallel and disjoint channels and the arrow kinds.",
           "why": "the line family covers what traders place most, and the catalog matches the competing products",
           "stories": [
@@ -2142,7 +2146,7 @@
               "id": "E11-F01-S01",
               "title": "Vertical line",
               "userStory": "As a trader, I want a vertical line at a time so that I can mark events such as earnings or a session open.",
-              "sds": ["FR-INT-010"],
+              "sds": ["FR-TOOL-010"],
               "acceptance": [
                 "`vertical-line` is a drawing kind with one anchor; only the time is used and the line spans every pane.",
                 "The line is drawn through the host's pane list (E11-F04-S01) and hit-tested by its x distance.",
@@ -2154,7 +2158,7 @@
               "id": "E11-F01-S02",
               "title": "Ray and extended-line presets",
               "userStory": "As a trader, I want a ray and an infinite line so that I can project a trend without drawing to the edge.",
-              "sds": ["FR-INT-011"],
+              "sds": ["FR-TOOL-011"],
               "acceptance": [
                 "The toolbar catalog has `ray` and `extended-line` entries that place a trend line with `extendRight` or both extension options set; no new drawing kind and no document version change.",
                 "Labels, shortcuts and announcements are translatable through the messages table.",
@@ -2166,7 +2170,7 @@
               "id": "E11-F01-S03",
               "title": "Parallel channel",
               "userStory": "As a trader, I want a parallel channel so that I can frame a trend between two lines.",
-              "sds": ["FR-INT-012"],
+              "sds": ["FR-TOOL-012"],
               "acceptance": [
                 "`parallel-channel` takes three anchors: two define the base line and the third sets the offset of the parallel line.",
                 "Options: fill between the lines, optional centre line, `extendLeft` and `extendRight`.",
@@ -2178,7 +2182,7 @@
               "id": "E11-F01-S04",
               "title": "Disjoint channel",
               "userStory": "As a trader, I want a channel whose lines are not parallel so that I can mark converging or diverging ranges.",
-              "sds": ["FR-INT-013"],
+              "sds": ["FR-TOOL-013"],
               "acceptance": [
                 "`disjoint-channel` takes four anchors, two for each line, with a fill between them.",
                 "Crossing lines are handled: the fill is drawn as two triangles and hit-tests correctly.",
@@ -2190,7 +2194,7 @@
               "id": "E11-F01-S05",
               "title": "Arrow, arrow up and arrow down",
               "userStory": "As a trader, I want arrows so that I can point at a move or mark a buy or sell.",
-              "sds": ["FR-INT-014"],
+              "sds": ["FR-TOOL-014"],
               "acceptance": [
                 "`arrow` takes two anchors and draws a line with a head at the second; `arrow-up` and `arrow-down` take one anchor and draw a fixed-size glyph.",
                 "Glyph size is in CSS pixels, independent of zoom, and scales with the style `lineWidth`.",
@@ -2203,7 +2207,7 @@
         {
           "id": "E11-F02",
           "title": "Text annotations",
-          "sds": ["FR-INT-015"],
+          "sds": ["FR-TOOL-015..017"],
           "description": "Comment, callout and note kinds next to the existing text note.",
           "why": "traders annotate with more than plain text, and notes must not cover the chart",
           "stories": [
@@ -2211,7 +2215,7 @@
               "id": "E11-F02-S01",
               "title": "Comment",
               "userStory": "As a trader, I want a text box on the chart so that my comments are easy to read.",
-              "sds": ["FR-INT-015"],
+              "sds": ["FR-TOOL-015"],
               "acceptance": [
                 "`comment` takes one anchor and draws its text inside a box with fill, border and padding from the style.",
                 "Editing uses the host's `editText`; multi-line text (Shift+Enter) is kept.",
@@ -2223,7 +2227,7 @@
               "id": "E11-F02-S02",
               "title": "Callout",
               "userStory": "As a trader, I want a text box with an arrow to a point so that I can explain a specific bar or price.",
-              "sds": ["FR-INT-016"],
+              "sds": ["FR-TOOL-016"],
               "acceptance": [
                 "`callout` takes two anchors: the box position and the target; a pointer joins them.",
                 "Moving either anchor keeps the other fixed; handles for both are available.",
@@ -2235,7 +2239,7 @@
               "id": "E11-F02-S03",
               "title": "Note with hover text",
               "userStory": "As a trader, I want a small icon with text on hover so that long notes do not cover the chart.",
-              "sds": ["FR-INT-017"],
+              "sds": ["FR-TOOL-017"],
               "acceptance": [
                 "`note` takes one anchor and draws an icon; its scene item carries a `tooltip` text that the host shows on hover or focus.",
                 "The mock host and the conformance kit check the tooltip field.",
@@ -2248,7 +2252,7 @@
         {
           "id": "E11-F03",
           "title": "Trend-based Fibonacci",
-          "sds": ["FR-INT-018"],
+          "sds": ["FR-TOOL-018"],
           "description": "The three-point Fibonacci extension next to the four existing Fibonacci kinds.",
           "why": "traders project targets from the first leg and a retracement point",
           "stories": [
@@ -2256,7 +2260,7 @@
               "id": "E11-F03-S01",
               "title": "Fibonacci trend-based extension",
               "userStory": "As a trader, I want Fibonacci levels projected from three points so that I can estimate targets after a pullback.",
-              "sds": ["FR-INT-018"],
+              "sds": ["FR-TOOL-018"],
               "acceptance": [
                 "`fibonacci-trend-based` takes three anchors: the first leg and the point it is projected from; levels, labels, prices and `reverse` options work like retracement.",
                 "The Fibonacci parity fixture is extended with the new kind and its version is increased; the core tests check it to 1e-9.",
@@ -2270,7 +2274,7 @@
         {
           "id": "E11-F04",
           "title": "Host contract v3 and measuring tools",
-          "sds": ["FR-INT-019"],
+          "sds": ["FR-TOOL-019..022"],
           "description": "A small extension of the host contract for panes, bar counts and volume, and the measuring tools that need it.",
           "why": "measuring is one of the most used tools, and it needs data the host owns",
           "stories": [
@@ -2278,7 +2282,7 @@
               "id": "E11-F04-S01",
               "title": "Host contract v3",
               "userStory": "As a chart developer, I want a versioned contract extension so that tools can span panes and measure bars and volume without reading chart internals.",
-              "sds": ["FR-INT-019"],
+              "sds": ["FR-TOOL-019"],
               "acceptance": [
                 "`HOST_API_VERSION` is 3; the contract adds `paneIds()`, `barsBetween(from, to)` and optional `volumeBetween(from, to)`.",
                 "Hosts of version 2 keep working: tools that need a v3 member are disabled with a clear reason and a `blocked` event.",
@@ -2290,7 +2294,7 @@
               "id": "E11-F04-S02",
               "title": "Transient measure tool",
               "userStory": "As a trader, I want a quick measure between two points so that I can read the move without keeping a drawing.",
-              "sds": ["FR-INT-019"],
+              "sds": ["FR-TOOL-020"],
               "acceptance": [
                 "The `measure` tool shows the time span, bar count, price difference and percent between two points and is removed when the user clicks away or presses Escape.",
                 "It is not stored, not in the undo history and not part of the saved document.",
@@ -2302,7 +2306,7 @@
               "id": "E11-F04-S03",
               "title": "Date range and price range",
               "userStory": "As a trader, I want persistent date and price range measures so that I can keep key distances on the chart.",
-              "sds": ["FR-INT-019"],
+              "sds": ["FR-TOOL-021"],
               "acceptance": [
                 "`date-range` shows time difference and bar count, plus summed volume when the host provides `volumeBetween`.",
                 "`price-range` shows the price difference as a value and as a percent.",
@@ -2314,7 +2318,7 @@
               "id": "E11-F04-S04",
               "title": "Date and price range",
               "userStory": "As a trader, I want one measure that shows both the time and the price range so that I can read a swing in one box.",
-              "sds": ["FR-INT-019"],
+              "sds": ["FR-TOOL-022"],
               "acceptance": [
                 "`date-and-price-range` combines the two measures in one box with one set of handles.",
                 "Labels follow the translation table and the instrument's tick size for rounding."
@@ -2326,7 +2330,7 @@
         {
           "id": "E11-F05",
           "title": "Catalog, toolbar and docs for the new kinds",
-          "sds": ["FR-INT-010..019"],
+          "sds": ["FR-TOOL-010..022"],
           "description": "Everything around the new kinds: catalog entries, shortcuts, messages, documentation, e2e tests and tier mapping.",
           "why": "a kind is only finished when users can find it, reach it by keyboard and read about it",
           "stories": [
@@ -2334,7 +2338,7 @@
               "id": "E11-F05-S01",
               "title": "Catalog, shortcuts and messages",
               "userStory": "As a trader, I want every new tool in the toolbar with a shortcut and a translated label so that I can reach it quickly.",
-              "sds": ["FR-INT-010..019"],
+              "sds": ["FR-TOOL-010..022"],
               "acceptance": [
                 "`TOOL_CATALOG` lists each new tool with group, icon, shortcut and tier; the toolbar model and the message table have the new keys.",
                 "Announcements exist for placement, selection and blocked states of each new kind.",
@@ -2371,7 +2375,7 @@
         {
           "id": "E11-F06",
           "title": "Inspector and object list",
-          "sds": ["FR-INT-020"],
+          "sds": ["FR-TOOL-023..024"],
           "description": "Headless models for editing a selected drawing and for managing all drawings, so that applications build their own panels over one tested engine.",
           "why": "the settings popup and the object tree of competing products are UI over state that the engine should own",
           "stories": [
@@ -2379,7 +2383,7 @@
               "id": "E11-F06-S01",
               "title": "Inspector model",
               "userStory": "As an application developer, I want the editable fields of a selected drawing as a model so that I can build a settings panel without duplicating rules.",
-              "sds": ["FR-INT-020"],
+              "sds": ["FR-TOOL-023"],
               "acceptance": [
                 "The controller exposes an inspector state for the selection: style fields, kind options, text, lock, hide and z-order, with limits and current values.",
                 "Every change goes through the controller and history as one undo step and is validated with the existing issue codes.",
@@ -2391,7 +2395,7 @@
               "id": "E11-F06-S02",
               "title": "Object list model",
               "userStory": "As an application developer, I want an ordered list of drawings as a model so that I can build an object tree.",
-              "sds": ["FR-INT-021"],
+              "sds": ["FR-TOOL-024"],
               "acceptance": [
                 "The list has id, kind, label, locked, hidden and z-order for each drawing in paint order.",
                 "Select, hide, lock, delete and reorder actions are single undo steps; selecting in the list selects on the chart.",
@@ -2415,7 +2419,7 @@
         {
           "id": "E11-F07",
           "title": "Chart integration verification",
-          "sds": ["FR-INT-022"],
+          "sds": ["FR-TOOL-025"],
           "description": "Checks that the tools run on keystone-charts-financial, not only on the playground host.",
           "why": "a contract that only one reference host passes is not yet proven",
           "stories": [
@@ -2423,7 +2427,7 @@
               "id": "E11-F07-S01",
               "title": "Conformance against the chart package",
               "userStory": "As the maintainer, I want the host conformance kit to run against the real chart host so that contract drift is caught early.",
-              "sds": ["FR-INT-022"],
+              "sds": ["FR-TOOL-025"],
               "acceptance": [
                 "A consumer test (in the chart repo or a shared integration job) runs `runHostConformance` against keystone-charts-financial's DrawingHost for one and for several panes.",
                 "The Fibonacci parity fixture is checked against the chart's renderer output.",

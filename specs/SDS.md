@@ -1302,6 +1302,7 @@ scripts of `packages/budgets`):
 | M3 Fibonacci and persistence | Fibonacci tools, repositories, import/export | E05 (F05-F08), E06 |
 | M4 Adapters and integration | Framework adapters, toolbar model, playground, e2e, chart integration | E07, E08 |
 | M5 Release | Licensing, docs site, performance, accessibility, release pipeline | E09, E10 |
+| M6 Tool library | Tool library after 1.0: new kinds, foundation, host contract v3, inspector and object list (§19) | E11 to E19 |
 
 Releases are published to npm manually (D-7); the release workflow checks, builds and tests, and creates a GitHub release with the notes and the tarballs, and never publishes.
 
@@ -1324,6 +1325,9 @@ tests > docs > backlog.
 | FR-INTG-001..004, QA-006, QA-007 | E08 |
 | QA-001..008, DOC-001..004, NFR-* | E09 |
 | FR-LIC-001..003 | E10 |
+| FR-TOOL-010..025 | E11 |
+| FR-TOOL-030..045 | E12 |
+| FR-TOOL-100..233 (per tool, §19.3) | E13 to E19 |
 
 ## 18. Open decisions
 
@@ -1332,4 +1336,171 @@ tests > docs > backlog.
 | OD-1 | Time-only anchors for time zones | Closed by D-5 | - |
 | OD-2 | Tier split of the drawing tools over the five tiers | **Closed (2026-11-08):** the split of FR-LIC-002 (Community, Professional, Professional Plus, Enterprise, Developer), from §7.8 of the tier SDS of keystone-license | gwinnem |
 | OD-3 | Drawings per timeframe visibility (show a drawing only on some timeframes) | Defer to after 1.0; document field reserved in `meta` | gwinnem |
-| OD-4 | Additional tools after 1.0 (ray, parallel channel, arrow, price range, date range, pitchfork) | Separate epic after M5 | gwinnem |
+| OD-4 | Additional tools after 1.0 | **Decided (2026-11-10):** every tool that the compared products have and 1.0 lacks is built after M5 in M6 Tool library, as the epics E11 to E19 of §19 (about 80 new drawing kinds, two presets and the transient measure); definitions in §19.3, order in §19.4, tiers with the licensing (D-14) | gwinnem |
+
+## 19. Tool library after 1.0
+
+Added 2026-11-10 for OD-4, after a comparison of the drawing tools of TradingView, Highcharts Stock, amCharts 5, LightningChart Trader, ChartIQ, KLineChart, lightweight-charts-drawing and chartjs-plugin-annotation with the eight tools of 1.0. The library grows from 8 to about 90 tools, delivered by E11 to E19 after M5. Nothing in this section changes the eight tools, their kinds, their documents or their defaults.
+
+### 19.1 Decisions
+
+- **D-8 Kinds are additive.** A new tool is a registry entry (FR-TOOL-030) with its geometry; the eight kinds of 1.0 keep their ids, anchors and documents. The default of the `tools` option stays the eight tools; others are opt-in by id or `all` (FR-TOOL-043).
+- **D-9 Presets over kinds.** A tool whose drawing is an existing kind with options is a catalog preset, not a kind: `ray` and `extended-line` place a `trend-line` with `extendRight` or both extensions (E11-F01-S02).
+- **D-10 Pane-anchored kinds.** Anchored text, anchored note and table keep one anchor that only names the pane (as D-5) and store their position as fractions `{ x, y }` of the pane in `options.position`, so they stay put when the chart is zoomed or scrolled.
+- **D-11 Host contract v3 is additive.** E11-F04-S01 adds `paneIds()`, `barsBetween` and `volumeBetween`; E12 adds the optional `capabilities` and `seriesBetween`. Hosts of version 2 keep the eight tools. A tool whose capability the host lacks is disabled with `KFT-E-CAPABILITY`, and its stored drawings are kept.
+- **D-12 Data tools compute in core.** The regression trend, the anchored VWAP, the volume profile, the bars pattern and the ghost feed read bars through `seriesBetween` and use pure helpers in core. They are drawings anchored to a data range, so NG-3 holds: there is no dependency on keystone-financial-indicators.
+- **D-13 Definitions are ours.** Where products define a tool differently (the Schiff, modified Schiff and inside pitchforks, the pitchfan, the Gann squares, forecast, projection, ghost feed, the wedge, the cypher and three drives labels, time cycles, the sine line), the first task of its story confirms the definition against the TradingView documentation and records it and any deviation in §19.3 before code; golden tests use the confirmed definition.
+- **D-14 Tiers come with the licensing.** `tier` on the catalog entries of new tools is information only until E10 is built; every tool works. The tier of each new tool is decided with the licensing (E11-F05-S03).
+- **D-15 Unknown kinds.** A document with a kind that the package does not know fails with `KFT-E-KIND` for that drawing; `merge` skips and reports it, `replace` rejects the document. The document version does not change.
+
+### 19.2 Foundation (E12)
+
+- FR-TOOL-030: `ANCHOR_RULES[kind] = { min, max }` replaces the fixed anchor count (`ANCHOR_COUNT` stays, derived, for fixed kinds); `KFT-E-ANCHORS` names the allowed range. Kinds are registered in one registry (anchor rule, option schema and defaults, geometry, hit parts, catalog group), so a new kind is one entry.
+- FR-TOOL-031: Pane-anchored kinds (D-10): `options.position = { x, y }` in 0..1 (`KFT-E-OPTIONS` outside); the geometry comes from `paneRect`; a drag changes the position, clamped so the drawing stays partly inside the pane.
+- FR-TOOL-032: Placement with three or more anchors: one click or tap per anchor (the first two also by drag); the preview shows the anchors placed so far and the pointer as the next; the last anchor completes; Escape or the right button cancels; a point within `ZERO_LENGTH_PX` of the previous anchor is ignored; one history entry; each step is announced.
+- FR-TOOL-033: Variable-anchor kinds (`min < max`): Enter or a double click completes with at least `min` anchors, Backspace removes the last anchor, reaching `max` completes, Escape cancels.
+- FR-TOOL-034: Freehand kinds: pointer down starts, moves add points at least 3 px apart, pointer up completes; the points are simplified (Ramer-Douglas-Peucker, 1 px) and limited to 512; fewer than 2 points create nothing; touch and pen work.
+- FR-TOOL-035: Handles for many anchors: one per anchor (`handle:<n>`) plus kind-specific handles; keyboard cursor and nudge as FR-INT-034; freehand drawings have four bounding-box handles that scale the points.
+- FR-TOOL-036: New shapes in geometry and scene: `polyline`, `polygon` (closed, fillable), `ellipse`, `curve` (quadratic or cubic Bezier), `arrowhead` and `glyph` (text, emoji or built-in icon); all take stroke, dash, fill and opacity from the resolved style (§8.3).
+- FR-TOOL-037: Hit-testing of the new shapes: polyline by distance to its segments; polygon and ellipse by outline and, when filled, by inside; curve by its flattened path (0.25 px); glyph by its box; tolerance and parts as FR-HIT-002.
+- FR-TOOL-038: Host capabilities: optional `capabilities { shapes?, series?, fibonacci? }` on a v3 host; without `shapes` the host is taken to render the shapes of 1.0 only; a tool whose shapes, Fibonacci kind or series the host lacks is disabled and activating it emits `blocked` with `KFT-E-CAPABILITY`.
+- FR-TOOL-039: Series access: optional `seriesBetween(from, to): readonly Bar[]` with `Bar = { time, open, high, low, close, volume? }`, ascending, at most 10 000 bars; cached until the viewport or data change.
+- FR-TOOL-040: Drawings of a tool whose capability is missing are kept in the store and the document, listed in the diagnostics, and have no scene item and no hit; they render again when the capability appears.
+- FR-TOOL-041: Pure helpers in core for the data tools (D-12): linear regression with standard deviation, VWAP with optional bands, volume profile with point of control and value area, bar copy; checked against golden numbers (1e-9).
+- FR-TOOL-042: Catalog: groups `lines`, `channels`, `pitchforks`, `fibonacci`, `gann`, `shapes`, `annotations`, `measure`, `patterns`; entries gain `requires`; the state gains `toolbarGroups` (entries per group and the remembered tool of each group); the flat `toolbar` of 1.0 is unchanged.
+- FR-TOOL-043: `tools` option: default the eight tools of 1.0; a list of ids or `all`; unknown ids are ignored and reported; `enabled` also needs the host capabilities.
+- FR-TOOL-044: Messages: a `tool.<kind>` label for every registered kind, `group.<name>` for every group, step announcements and `KFT-E-CAPABILITY`; a test fails for a kind without a label.
+- FR-TOOL-045: Parity and delivery: every new export is in the three adapters (FR-FW-050); every tool has a docs entry, a playground button and an e2e scenario placing, moving, undoing and deleting it.
+
+### 19.3 Tools
+
+Every tool follows the same checklist as its story: registry entry, pure geometry with golden tests, hit parts, handles, scene output, generic placement and move, catalog entry, messages, docs, playground and e2e. The tables give the definition of each tool (D-13). Anchors: a number, `freehand` or `pane`.
+
+#### 19.3.1 First tranche (E11)
+
+| Requirement | Tool | Anchors | Definition |
+|---|---|---|---|
+| FR-TOOL-010 | `vertical-line` | 1 | Line across every pane at the anchor time, optional time label. |
+| FR-TOOL-011 | `ray`, `extended-line` (presets of `trend-line`, D-9) | 2 | Trend line with `extendRight`, or with both extensions. |
+| FR-TOOL-012 | `parallel-channel` | 3 | Base line through anchors 1 and 2 and a parallel line through anchor 3; optional centre line and fill. |
+| FR-TOOL-013 | `disjoint-channel` | 4 | Two independent segments with the area between them filled. |
+| FR-TOOL-014 | `arrow`, `arrow-up`, `arrow-down` | 2, 1, 1 | Line with a head at anchor 2; fixed-size glyphs. |
+| FR-TOOL-015 | `comment` | 1 | Text in a box with fill, border and padding. |
+| FR-TOOL-016 | `callout` | 2 | Text box at anchor 1 with a pointer to anchor 2. |
+| FR-TOOL-017 | `note` | 1 | Icon whose text is shown as a tooltip. |
+| FR-TOOL-018 | `fibonacci-trend-based` | 3 | Levels projected from anchor 3 by the move from anchor 1 to anchor 2. |
+| FR-TOOL-019 | host contract v3 | - | `paneIds()`, `barsBetween(from, to)`, optional `volumeBetween(from, to)`; hosts of version 2 keep working. |
+| FR-TOOL-020 | `measure` (transient) | 2 | Time span, bars, price difference and percent; not stored, not in history. |
+| FR-TOOL-021 | `date-range`, `price-range` | 2 | Persistent measures of time and bars (and volume when offered) and of price and percent. |
+| FR-TOOL-022 | `date-and-price-range` | 2 | One box with both measures. |
+| FR-TOOL-023 | inspector model | - | Editable fields of the selection as a model; changes are single undo steps. |
+| FR-TOOL-024 | object list model | - | Ordered list with select, hide, lock, delete and reorder actions. |
+| FR-TOOL-025 | chart verification | - | The conformance kit and the Fibonacci parity fixture run against the real chart host. |
+
+#### 19.3.2 Lines and markers (E13)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-100 | `horizontal-ray` | 1 | A horizontal segment at the anchor price from the anchor time to the right edge of the pane, with the price label of the horizontal line (FR-SC-001). |
+| FR-TOOL-101 | `cross-line` | 1 | A horizontal line across the pane at the anchor price and a vertical line across the pane at the anchor time, with the price label at the right edge and a time label at the bottom edge. Options: `showLabels` (boolean, default true). |
+| FR-TOOL-102 | `info-line` | 2 | A segment from anchor 1 to anchor 2 with an info box near anchor 2 showing the price change, the percent change, the number of bars (time span divided by `barInterval`) and the angle in degrees. Options: `showPrice`, `showPercent`, `showBars`, `showAngle` (booleans, default true). |
+| FR-TOOL-103 | `trend-angle` | 2 | A segment from anchor 1 to anchor 2, a horizontal reference line from anchor 1 and an arc between them with the angle in degrees as its label. Options: `showReference` (boolean, default true). |
+| FR-TOOL-104 | `arrow-left` and `arrow-right` | 1 | A filled arrow glyph with its tip on the anchor, pointing left or right; its size is in CSS pixels and independent of the zoom. Options: `size` (8..64 CSS px, default 24). |
+| FR-TOOL-105 | `flag-mark` | 1 | A pole from the anchor upward with a flag polygon on top and an optional caption; the pole height and the flag are in CSS pixels. Options: `text` (string, optional caption); `size` (8..64 CSS px, default 24). |
+
+#### 19.3.3 Channels, pitchforks and regression (E14)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-120 | `flat-top-bottom` | 3 | A trend line through anchors 1 and 2 and a horizontal line at the price of anchor 3 over the same time span; the area between them is filled; the flat side is the top when anchor 3 is above the trend line and the bottom otherwise. Options: `extendLeft`, `extendRight` (booleans, default false). |
+| FR-TOOL-121 | `andrews-pitchfork` | 3 | M is the midpoint of anchors 2 and 3; the median is the ray from anchor 1 through M and the two tines are rays from anchors 2 and 3 parallel to the median, all clipped to the pane; parallels at the level ratios lie between the median (0) and the tines (1); the areas between the lines are filled. Options: `levels` (list of `{ ratio, visible, color? }`, default 0.25, 0.5, 0.75 hidden and 1 visible, at most 24); `extendRight` (boolean, default true). |
+| FR-TOOL-122 | `schiff-pitchfork` | 3 | Like the Andrews pitchfork with the origin of the median moved to the midpoint of anchors 1 and 2 in time and price. Options: `levels` and `extendRight` as for the Andrews pitchfork. Definition to be confirmed (D-13). |
+| FR-TOOL-123 | `modified-schiff-pitchfork` | 3 | Like the Andrews pitchfork with the origin of the median moved to the midpoint of anchors 1 and 2 in time only (the price stays that of anchor 1). Options: `levels` and `extendRight` as for the Andrews pitchfork. Definition to be confirmed (D-13). |
+| FR-TOOL-124 | `inside-pitchfork` | 3 | Median and tines as for the Andrews pitchfork, with the tines starting where the lines from anchor 1 to anchors 2 and 3 meet the parallels at ratio 0.5, so that the fork lies inside the triangle of the three anchors. Options: `levels` and `extendRight` as for the Andrews pitchfork. Definition to be confirmed (D-13). |
+| FR-TOOL-125 | `pitchfan` | 3 | Rays from anchor 1 through points on the segment from anchor 2 to anchor 3 at the level ratios (0 is anchor 2 and 1 is anchor 3), clipped to the pane, with the areas between the rays filled. Options: `levels` (list of `{ ratio, visible, color? }`, default 0, 0.25, 0.382, 0.5, 0.618, 0.75 and 1 visible). Definition to be confirmed (D-13). |
+| FR-TOOL-126 | `regression-trend` | 2 | The least-squares line of the chosen price series between the two anchor times, drawn from the first to the second time, with bands at the chosen numbers of standard deviations above and below; the extension options project all lines. Options: `source` (`close`, `hl2` or `ohlc4`, default `close`); `deviations` (list of positive numbers, default [2]); `extendLeft`, `extendRight` (booleans, default false). Needs the host capability `series`. |
+
+#### 19.3.4 Fibonacci and Gann extension (E15)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-140 | `fibonacci-channel` | 3 | A base line through anchors 1 and 2 and lines parallel to it, one per level, offset by the level ratio times the distance from the base line to anchor 3. Options: `levels` (as FR-DM-020, default 0, 0.236, 0.382, 0.5, 0.618, 0.786, 1); `showLabels` (boolean); `extendLeft`, `extendRight` (booleans). |
+| FR-TOOL-141 | `fibonacci-time-extension` | 3 | Vertical lines at `t3 + ratio * (t2 - t1)` for each level, over the full pane height; prices are ignored for the geometry, like the time zones (D-5). Options: `levels` (default 0, 0.618, 1, 1.618, 2.618, 4.236); `showLabels` (boolean). |
+| FR-TOOL-142 | `fibonacci-circles` | 2 | Full circles around the midpoint of the anchors with radius `ratio` times half the pixel distance between the anchors, recomputed every frame like the arcs (FR-GEO-005). Options: `levels` (default 0.382, 0.5, 0.618, 1, 1.618); `showLabels` (boolean). |
+| FR-TOOL-143 | `fibonacci-spiral` | 2 | A golden spiral centred on anchor 1 that starts at anchor 2; the radius grows by the golden ratio every quarter turn for `turns` turns, drawn as a polyline of at least 32 points per quarter turn. Options: `turns` (integer 1..8, default 4); `clockwise` (boolean, default true). |
+| FR-TOOL-144 | `fibonacci-wedge` | 3 | Two rays from anchor 1 through anchors 2 and 3 and arcs centred on anchor 1 between the rays, with radius `ratio` times the pixel distance from anchor 1 to anchor 2. Options: `levels` (default 0.382, 0.5, 0.618, 1); `showLabels` (boolean). Definition to be confirmed (D-13). |
+| FR-TOOL-145 | `gann-box` | 2 | The rectangle spanned by the anchors, divided by horizontal lines at the price ratios and vertical lines at the time ratios, with optional diagonals. Options: `priceLevels`, `timeLevels` (lists of ratios, default 0, 0.25, 0.382, 0.5, 0.618, 0.75, 1); `showDiagonals` (boolean, default true). |
+| FR-TOOL-146 | `gann-fan` | 2 | Rays from anchor 1 at the Gann angles 1x8, 1x4, 1x3, 1x2, 1x1, 2x1, 3x1, 4x1 and 8x1, where the 1x1 ray passes through anchor 2 (the scale is the pixel distance per bar and per price unit from anchor 1 to anchor 2), clipped to the pane. Options: `angles` (list of `{ x, y }` positive integers, default the nine above); `showLabels` (boolean). |
+| FR-TOOL-147 | `gann-square` | 2 | A square grid from anchor 1 whose side is the larger of the pixel distances to anchor 2, divided into `divisions` rows and columns with optional diagonals. Options: `divisions` (integer 2..32, default 9); `showDiagonals` (boolean, default true). Definition to be confirmed (D-13). |
+| FR-TOOL-148 | `gann-square-fixed` | 2 | A grid whose cell is `barsPerCell` bars wide and `priceUnitPerCell` price units high, from anchor 1 to the cell nearest to anchor 2, so that the cells keep their data size when the chart is zoomed. Options: `barsPerCell` (integer >= 1, default 1); `priceUnitPerCell` (number > 0, default 1). Definition to be confirmed (D-13). |
+
+#### 19.3.5 Shapes and freehand (E16)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-160 | `ellipse` | 2 | An ellipse inscribed in the rectangle spanned by the anchors (the axes follow the rectangle, so it is never rotated), with the fill of the style. |
+| FR-TOOL-161 | `circle` | 2 | A circle with its centre at anchor 1 and a radius equal to the pixel distance to anchor 2, recomputed every frame (like the arcs, FR-GEO-005). |
+| FR-TOOL-162 | `triangle` | 3 | A closed polygon through the three anchors with the fill of the style. |
+| FR-TOOL-163 | `rotated-rectangle` | 3 | Anchors 1 and 2 are one edge and anchor 3 sets the perpendicular distance to the opposite edge in pixel space, giving a rectangle rotated with the edge. |
+| FR-TOOL-164 | `arc` | 3 | The circular arc from anchor 1 to anchor 3 that passes through anchor 2; a straight line when the three points lie on one line. |
+| FR-TOOL-165 | `curve` | 3 | A quadratic Bezier from anchor 1 to anchor 3 with anchor 2 as the control point (the curve does not pass through the control point). |
+| FR-TOOL-166 | `double-curve` | 4 | A cubic Bezier from anchor 1 to anchor 4 with anchors 2 and 3 as control points. |
+| FR-TOOL-167 | `polyline` | 2 to 64 | Straight segments through the anchors in order; `closed` joins the last anchor to the first and allows a fill. Options: `closed` (boolean, default false). |
+| FR-TOOL-168 | `path` | 2 to 64 | A polyline through the anchors with an arrow head at the last anchor. Options: `headSize` (4..40 CSS px, default 12); `arrowStart` (boolean, default false) adds a head at the first anchor. |
+| FR-TOOL-169 | `brush` | freehand | A smooth stroke through the stored points with round caps and joins; the points are simplified when the stroke ends (FR-TOOL-034). |
+| FR-TOOL-170 | `highlighter` | freehand | Like the brush, with a wide translucent default style (width 12 CSS px, opacity 0.35) and flat caps. |
+
+#### 19.3.6 Annotations and markers (E17)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-180 | `signpost` | 1 | A vertical pole through the pane at the anchor time with a text box on top that carries the text; the box is clipped to the pane. Options: `text` (string). |
+| FR-TOOL-181 | `price-label` | 1 | An arrow-shaped label whose tip is on the anchor and that shows the price (`priceFormatter`) and an optional text. Options: `text` (string, optional). |
+| FR-TOOL-182 | `price-note` | 2 | A label with the price at anchor 1 and a leader line to a text box at anchor 2. Options: `text` (string). |
+| FR-TOOL-183 | `pin` | 1 | A map-pin glyph whose tip is on the anchor; the text is a `tooltip` field of the scene item that the host shows on hover or focus, like the note of E11-F02-S03. Options: `text` (string). |
+| FR-TOOL-184 | `anchored-text` | pane | Text with its top left corner at the fractions `x` and `y` of the pane (`options.position`). Options: `text` (string); `position` (`{ x, y }` in 0..1). |
+| FR-TOOL-185 | `anchored-note` | pane | A note box with background and border at the fractions `x` and `y` of the pane. Options: `text` (string); `position` (`{ x, y }` in 0..1). |
+| FR-TOOL-186 | `table` | pane | A grid of `rows` by `columns` cells (each 1..8) at the pane position, one text per cell, with border and header style from the theme. Options: `rows`, `columns` (integers 1..8); `cells` (list of strings, `rows * columns` long); `position` (`{ x, y }` in 0..1). |
+| FR-TOOL-187 | `icon` | 1 | One of the built-in vector icons (24 names, listed in the docs) drawn at a fixed CSS size with its centre on the anchor. Options: `icon` (one of the names in `DRAWING_ICONS`); `size` (8..64 CSS px, default 24). |
+| FR-TOOL-188 | `emoji` | 1 | One emoji grapheme drawn as text at `fontSize` with its centre on the anchor. Options: `emoji` (a string of exactly one grapheme, otherwise `KFT-E-OPTIONS`). |
+
+#### 19.3.7 Positions, forecast and volume tools (E18)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-200 | `long-position` | 3 | A box from anchor 1 (entry) to the time of anchor 2, with the target at the price of anchor 2 and the stop at the price of anchor 3; the profit zone and the loss zone are filled, and labels show the risk/reward ratio (\|target - entry\| / \|entry - stop\|) and the target and stop distances in price and percent; a stop above the entry is drawn as it is and the ratio keeps its sign. Options: `showLabels` (boolean, default true). |
+| FR-TOOL-201 | `short-position` | 3 | The mirror of the long position: the target lies below the entry and the stop above it, with the same labels and zones. Options: `showLabels` (boolean, default true). |
+| FR-TOOL-202 | `forecast` | 2 | An arrow from anchor 1 to anchor 2 with a box at the end showing the price change, the percent change and the number of bars, and a dashed vertical line from the end to the price of anchor 1. Options: `showLabels` (boolean, default true). Definition to be confirmed (D-13). |
+| FR-TOOL-203 | `projection` | 3 | The move from anchor 1 to anchor 2 repeated from anchor 3: a dashed segment from anchor 3 to anchor 3 plus (anchor 2 minus anchor 1) in time and price, dashed connectors between the two segments and a label with the projected price. Options: `showLabels` (boolean, default true). Definition to be confirmed (D-13). |
+| FR-TOOL-204 | `bars-pattern` | 2 | The bars between the two anchor times copied (as candles from rectangle and line shapes, or as a line) and drawn again from anchor 2, with the first copied close on the price of anchor 2. Options: `mode` (`candles` or `line`, default `candles`); `flip` (boolean, default false) mirrors the copy vertically. Needs the host capability `series`. |
+| FR-TOOL-205 | `ghost-feed` | 2 | The closes between the time of anchor 1 and the time of anchor 2 drawn as a faint dashed line that starts at anchor 2, scaled so that the first point lies on the price of anchor 2. Needs the host capability `series`. Definition to be confirmed (D-13). |
+| FR-TOOL-206 | `anchored-vwap` | 1 | The volume-weighted average price from the anchor bar to the last bar as a polyline through the bars, with optional bands at the given numbers of standard deviations. Options: `source` (`hlc3`, `close` or `ohlc4`, default `hlc3`); `bands` (list of positive numbers, default []). Needs the host capability `series with volume`. |
+| FR-TOOL-207 | `fixed-range-volume-profile` | 2 | A histogram of the volume per price row between the two anchor times: `rows` bars towards the `placement` edge of the range, the point of control highlighted and the value area shaded. Options: `rows` (integer 4..200, default 24); `valueAreaPercent` (1..100, default 70); `placement` (`left` or `right`, default `right`). Needs the host capability `series with volume`. |
+
+#### 19.3.8 Patterns and cycles (E19)
+
+| Requirement | Tool | Anchors | Definition and options |
+|---|---|---|---|
+| FR-TOOL-220 | `xabcd-pattern` | 5 | Legs X-A, A-B, B-C and C-D, dashed connectors X-B, A-C, B-D and X-D, the triangles X-A-B and B-C-D filled, and ratio labels AB/XA, BC/AB, CD/BC and AD/XA on the connectors. Options: `showLabels` (boolean, default true). |
+| FR-TOOL-221 | `cypher-pattern` | 5 | The geometry of the XABCD pattern with the labels B/XA, C/XA (as an extension of XA) and D/XC. Options: `showLabels` (boolean, default true). Definition to be confirmed (D-13). |
+| FR-TOOL-222 | `abcd-pattern` | 4 | Legs A-B, B-C and C-D, dashed connectors A-C and B-D, and labels BC/AB and CD/BC. Options: `showLabels` (boolean, default true). |
+| FR-TOOL-223 | `triangle-pattern` | 4 | A line through anchors 1 and 3 and a line through anchors 2 and 4, both extended to their intersection (the apex) when they converge to the right; the area between them is filled. |
+| FR-TOOL-224 | `three-drives-pattern` | 7 | A zigzag through the seven anchors with labels of the retracement ratio of each correction and the extension ratio of each drive. Options: `showLabels` (boolean, default true). Definition to be confirmed (D-13). |
+| FR-TOOL-225 | `head-and-shoulders` | 7 | A polyline through seven anchors (start, left shoulder, left neck, head, right neck, right shoulder, end), a neckline through the two neck points extended to the pane edge, and the left shoulder, head and right shoulder areas filled. |
+| FR-TOOL-226 | `elliott-impulse` | 6 | A polyline through the anchors with the wave labels 0, 1, 2, 3, 4 and 5 placed beyond each vertex, on the outside of the swing; the labels follow `labelStyle`. Options: `labelStyle` (`plain`, `circle` or `parenthesis`, default `plain`); `showLines` (boolean, default true) draws the lines between the waves. |
+| FR-TOOL-227 | `elliott-correction` | 4 | A polyline through the anchors with the wave labels 0, A, B and C placed beyond each vertex, on the outside of the swing; the labels follow `labelStyle`. Options: `labelStyle` (`plain`, `circle` or `parenthesis`, default `plain`); `showLines` (boolean, default true) draws the lines between the waves. |
+| FR-TOOL-228 | `elliott-triangle` | 6 | A polyline through the anchors with the wave labels 0, A, B, C, D and E placed beyond each vertex, on the outside of the swing; the labels follow `labelStyle`. Options: `labelStyle` (`plain`, `circle` or `parenthesis`, default `plain`); `showLines` (boolean, default true) draws the lines between the waves. |
+| FR-TOOL-229 | `elliott-double-combo` | 4 | A polyline through the anchors with the wave labels 0, W, X and Y placed beyond each vertex, on the outside of the swing; the labels follow `labelStyle`. Options: `labelStyle` (`plain`, `circle` or `parenthesis`, default `plain`); `showLines` (boolean, default true) draws the lines between the waves. |
+| FR-TOOL-230 | `elliott-triple-combo` | 6 | A polyline through the anchors with the wave labels 0, W, X, Y, X and Z placed beyond each vertex, on the outside of the swing; the labels follow `labelStyle`. Options: `labelStyle` (`plain`, `circle` or `parenthesis`, default `plain`); `showLines` (boolean, default true) draws the lines between the waves. |
+| FR-TOOL-231 | `cycle-lines` | 2 | Vertical lines at `t1 + n * (t2 - t1)` for n from 0 to `count`, over the full pane height; lines outside the pane are left out. Options: `count` (integer 1..200, default 50). |
+| FR-TOOL-232 | `time-cycles` | 2 | Half circles (arches) standing on the price of anchor 1, one per cycle of the length t2 - t1 (the width is the cycle in pixels and the height half of it), repeated `count` times. Options: `count` (integer 1..100, default 10). Definition to be confirmed (D-13). |
+| FR-TOOL-233 | `sine-line` | 2 | A sine wave whose half period is the time between the anchors and whose amplitude is the price difference, starting at anchor 1 and repeated to the right edge of the pane as a polyline with at least 16 points per half period. Definition to be confirmed (D-13). |
+
+### 19.4 Order of delivery
+
+1. E11-F04-S01 (host contract v3) and E12 (foundation) first: every other epic builds on them.
+2. E11 (first tranche), then E13 (lines and markers), E14 (channels and pitchforks), E16 (shapes) and E17 (annotations): the tools that most competing products have.
+3. E18 (positions, forecast, volume) and E15 (Fibonacci and Gann): the tools that need the series access or the Fibonacci parity work.
+4. E19 (patterns and cycles): the largest group, last.
+
+The new milestone is M6 Tool library (§16). Tiers are decided with the licensing (D-14).
