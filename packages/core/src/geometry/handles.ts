@@ -10,6 +10,41 @@ export function anchorHandles(points: readonly Point[]): HandlePoint[] {
   return points.map((p, index) => handle(index, p.x, p.y));
 }
 
+/**
+ * The corners of a bounding box as fractions of its width and height, in handle order: `handle:0` top left, `handle:1` top right,
+ * `handle:2` bottom right, `handle:3` bottom left. The opposite corner has both fractions turned around (`1 - fraction`).
+ */
+export const BOX_CORNERS: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+];
+
+/** The smallest rectangle that holds every point (the points are not empty). */
+export function boundsOf(points: readonly Point[]): Rect {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const { x, y } of points) {
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x);
+    bottom = Math.max(bottom, y);
+  }
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+/**
+ * Freehand drawings (FR-TOOL-035): four grab points at the corners of the box around all anchors, `handle:0` to `handle:3` as in
+ * `BOX_CORNERS`. A stroke has too many anchors for a handle each; dragging a corner scales the stroke about the opposite corner.
+ */
+export function boxHandles(points: readonly Point[]): HandlePoint[] {
+  const box = boundsOf(points);
+  return BOX_CORNERS.map(([fx, fy], index) => handle(index, box.x + fx * box.width, box.y + fy * box.height));
+}
+
 /** Horizontal line: its one handle at the horizontal centre of the pane. */
 export function horizontalLineHandles(points: readonly Point[], rect: Rect): HandlePoint[] {
   return [handle(0, rect.x + rect.width / 2, points[0].y)];

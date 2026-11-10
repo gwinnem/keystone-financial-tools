@@ -1,5 +1,6 @@
 import type { HitResult } from '../hit/hit-test';
 import type { DrawingCursor, DrawingHost } from '../host';
+import { isFreehandKind } from '../kinds';
 import { anchorToPoint } from '../projection';
 import type { Anchor, Drawing, DrawingKind } from '../types';
 
@@ -34,6 +35,7 @@ function rectangleHandleCursor(drawing: Drawing, handle: number, host: DrawingHo
  * - anything of a horizontal line that is not locked (body, label or handle): `ns-resize`, as dragging it changes only its price;
  * - a body, level or label: `pointer`;
  * - a handle of Fibonacci time zones (not locked): `ew-resize`, as dragging it changes only a time (D-5);
+ * - a handle of a freehand drawing (not locked): the resize cursor of its box corner, `nwse-resize` for `handle:0` and `handle:2`, `nesw-resize` for the others;
  * - a rectangle handle: the resize cursor of its corner or edge; any other handle: `move`.
  *
  * @example
@@ -50,6 +52,7 @@ export function cursorFor(tool: DrawingKind | null, hit: HitResult | null, drawi
   if (drawing?.kind === 'horizontal-line' && !hit.locked) return 'ns-resize';
   if (!isHandle) return 'pointer';
   if (drawing?.kind === 'fibonacci-time-zones') return 'ew-resize';
+  if (drawing !== undefined && isFreehandKind(drawing.kind)) return Number(hit.part.slice(HANDLE_PREFIX.length)) % 2 === 0 ? 'nwse-resize' : 'nesw-resize';
   if (drawing === undefined || drawing.kind !== 'rectangle') return 'move';
   return rectangleHandleCursor(drawing, Number(hit.part.slice(HANDLE_PREFIX.length)), host);
 }

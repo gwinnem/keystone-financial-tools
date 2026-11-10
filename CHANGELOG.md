@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Handles of drawings with many anchors (E12-F01-S06, FR-TOOL-035): a selected drawing of any anchor count (3, 5, 64) shows one handle per
+  anchor, and dragging one moves only that anchor, as one history entry; body drag and arrow keys move them all. A freehand kind shows four
+  bounding-box handles instead (`handle:0` top left, `1` top right, `2` bottom right, `3` bottom left): dragging one scales every point about the opposite corner, mirrors past it, leaves an axis alone where the box has no
+  size, never snaps and ignores Shift and the magnet. `cursorFor` gives `nwse-resize` or `nesw-resize` for them. A registry `handles`
+  function may add handles that are not anchors; they show and can be hit, but dragging them changes nothing.
 - Freehand placement (E12-F01-S05, FR-TOOL-034): a kind registered with `placement: 'freehand'` (new optional `KindDefinition` field,
   `isFreehandKind`; `registerKind` throws `RangeError` when its rule has `min` below two) is drawn by one pressed stroke. The pointer path is
   sampled every `FREEHAND_SAMPLE_PX` (3 px), simplified with Ramer–Douglas–Peucker at `FREEHAND_TOLERANCE_PX` (1 px) and kept to

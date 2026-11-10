@@ -1,4 +1,6 @@
+import { BOX_CORNERS, boundsOf } from '../geometry/handles';
 import type { DrawingHost, Point } from '../host';
+import { isFreehandKind } from '../kinds';
 import { barWidthPx, isPaneKind, paneShift } from '../pane-space';
 import { anchorToPoint, pointToAnchor } from '../projection';
 import type { Anchor, Drawing, DrawingKind, DrawingPatch, KindOptions } from '../types';
@@ -142,9 +144,31 @@ function dragAngleHandle(drawing: Drawing, handle: number, origin: Point, point:
   return { anchors: drawing.anchors.map((existing, index) => (index === handle ? anchor : existing)), snap: null };
 }
 
+/**
+ * A freehand drawing scaled by dragging a corner of its box (FR-TOOL-035): in pixels, every point keeps its place relative to the opposite
+ * corner, multiplied by how far the dragged corner moved relative to that corner, on each axis. A box with no width (or no height) cannot be
+ * scaled along that axis. Null when the handle is not one of the four corners or an anchor's y-axis has no pane.
+ */
+function scaleAnchors(drawing: Drawing, handle: number, origin: Point, point: Point, host: DrawingHost): readonly Anchor[] | null {
+  const corner = BOX_CORNERS[handle];
+  if (corner === undefined || drawing.anchors.some((anchor) => host.paneRect(anchor.yAxisId) === null)) return null;
+  const pixels = drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
+  const box = boundsOf(pixels);
+  const pivot = { x: box.x + (1 - corner[0]) * box.width, y: box.y + (1 - corner[1]) * box.height };
+  const grabbed = { x: box.x + corner[0] * box.width, y: box.y + corner[1] * box.height };
+  const scaleX = box.width === 0 ? 1 : (grabbed.x + point.x - origin.x - pivot.x) / (grabbed.x - pivot.x);
+  const scaleY = box.height === 0 ? 1 : (grabbed.y + point.y - origin.y - pivot.y) / (grabbed.y - pivot.y);
+  // Every pane exists (checked above), so no projection can be null.
+  return pixels.map((p, index) => pointToAnchor({ x: pivot.x + (p.x - pivot.x) * scaleX, y: pivot.y + (p.y - pivot.y) * scaleY }, (drawing.anchors[index] as Anchor).yAxisId, host) as Anchor);
+}
+
 function dragHandleResult(drawing: Drawing, handle: number, origin: Point, point: Point, shift: boolean, magnet: MagnetMode, host: DrawingHost): HandleDrag | null {
   // A pane-anchored drawing has no anchor to drag: see `dragPatch`.
   if (isPaneKind(drawing.kind)) return null;
+  if (isFreehandKind(drawing.kind)) {
+    const anchors = scaleAnchors(drawing, handle, origin, point, host);
+    return anchors === null ? null : { anchors, snap: null };
+  }
   if (shift && ANGLE_KINDS.has(drawing.kind)) return dragAngleHandle(drawing, handle, origin, point, host);
   const edits = editsOf(drawing, handle);
   if (edits === undefined) return null;
@@ -169,7 +193,8 @@ function dragHandleResult(drawing: Drawing, handle: number, origin: Point, point
  * off centre. A rectangle's corner handles move one or both corners and its edge handles one
  * coordinate; a horizontal line changes only its price and time zones only their times. With
  * `shift`, the anchors of a trend line and of fans keep to multiples of 45 degrees in pixel space
- * (FR-INT-031).
+ * (FR-INT-031). A freehand drawing (FR-TOOL-035) has four handles, the corners of the box around its points: dragging one scales all points
+ * about the opposite corner, without snapping.
  *
  * With a `magnet` other than `off` (pass `effectiveMagnet` for the Ctrl/Cmd inversion) a handle that
  * moves a whole anchor snaps it to the nearest bar's open, high, low or close (`snapAnchor`,

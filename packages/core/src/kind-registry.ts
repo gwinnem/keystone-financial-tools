@@ -65,7 +65,10 @@ export interface KindDefinition {
   readonly placement?: 'points' | 'freehand';
   /** The shapes of a drawing of the kind for the current frame. */
   readonly geometry: (context: KindGeometryContext) => Shape[];
-  /** The grab points of a drawing. Default: one `handle:<n>` at each anchor. */
+  /**
+   * The grab points of a drawing. Default: one `handle:<n>` at each anchor; for a freehand kind (`placement: 'freehand'`) four handles at the
+   * corners of the box around its anchors, which scale it (FR-TOOL-035). Dragging a handle that is not an anchor changes nothing.
+   */
   readonly handles?: (points: readonly Point[], rect: Rect) => HandlePoint[];
 }
 

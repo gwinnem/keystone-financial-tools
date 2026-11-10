@@ -4,7 +4,7 @@ import { resolveOptions } from '../options';
 import { panePoint, positionOf } from '../pane-space';
 import { anchorToPoint } from '../projection';
 import type { Drawing } from '../types';
-import { anchorHandles } from './handles';
+import { anchorHandles, boxHandles } from './handles';
 import type { DrawingGeometry, GeometryOptions } from './types';
 
 /**
@@ -41,10 +41,12 @@ export function geometryOf(drawing: Drawing, host: DrawingHost, options: Geometr
   // A pane-anchored kind (D-10) is placed from the pane: its anchor only names the pane, so time and price play no part.
   const points = definition.space === 'pane' ? [panePoint(rect, positionOf(drawing))] : drawing.anchors.map((anchor) => anchorToPoint(anchor, host));
   const kindOptions = resolveOptions(drawing.kind, drawing.options);
+  // A freehand stroke has too many anchors for a handle each: four handles on the box around it (FR-TOOL-035).
+  const handles = definition.handles ?? (definition.placement === 'freehand' ? boxHandles : anchorHandles);
   return {
     drawingId: drawing.id,
     kind: drawing.kind,
     shapes: definition.geometry({ drawing, points, rect, host, options, kindOptions }),
-    handles: (definition.handles ?? anchorHandles)(points, rect),
+    handles: handles(points, rect),
   };
 }
