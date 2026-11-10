@@ -7,12 +7,15 @@ const RSI = { yAxisId: 'rsi', top: 400, height: 100, min: 0, max: 100 };
 const LAST_BAR = 5_000_000; // x 833: beyond the 800 px plot, so the panes only see times before it
 
 const NAMES = {
-  version: 'declares api version 2 and every required member',
+  version: 'declares api version 2 or 3 and every required member',
   roundTrip: 'round-trips time and price within 0.5 px across every pane',
   future: 'extrapolates time linearly beyond the last bar',
   yAxisAt: 'finds each pane at its centre with yAxisAt and no pane outside the plot',
   listeners: 'calls pointer, key and viewport listeners until they unsubscribe',
   key: 'reports a key as handled only while a subscribed listener handles it',
+  panes: 'lists every listed pane once with paneIds, top to bottom',
+  bars: 'counts the bars between two times with barsBetween, signed and zero for equal times',
+  volume: 'gives a volume of zero or more, or null, with volumeBetween when the host has it',
 };
 
 function subject(change: (mock: MockHost) => Partial<DrawingHost> = () => ({}), overrides: Partial<ConformanceSubject> = {}): ConformanceSubject {
@@ -53,14 +56,14 @@ describe('runHostConformance', () => {
     const suites: string[] = [];
     const names: string[] = [];
     runHostConformance(() => subject(), { describe: (name, fn) => (suites.push(name), fn()), it: (name) => names.push(name), expect });
-    expect(suites).toEqual(['DrawingHost conformance (contract version 2)']);
+    expect(suites).toEqual(['DrawingHost conformance (contract version 2)', 'DrawingHost conformance (contract version 3 members)']);
     expect(names).toEqual(Object.values(NAMES));
   });
 
   it('passes for the mock host and makes a fresh subject per test', () => {
     const factory = vi.fn(() => subject());
     expect(failing(factory)).toEqual([]);
-    expect(factory).toHaveBeenCalledTimes(6);
+    expect(factory).toHaveBeenCalledTimes(9);
   });
 
   it('exports the events it sends and the tolerance', () => {
@@ -127,6 +130,53 @@ describe('runHostConformance: what it checks', () => {
   });
 });
 
+describe('runHostConformance: contract version 3 members', () => {
+  it('passes a version 2 host at once, whatever it lacks of version 3', () => {
+    const version2 = (): Partial<DrawingHost> => ({ apiVersion: 2, paneIds: undefined as never, barsBetween: undefined as never, volumeBetween: undefined as never });
+    expect(failing(() => subject(version2))).toEqual([]);
+  });
+
+  it('passes a version 3 host with or without volumeBetween', () => {
+    expect(failing(() => subject(() => ({ volumeBetween: undefined as never })))).toEqual([]);
+    expect(failing(() => subject(() => ({ volumeBetween: () => 0 })))).toEqual([]);
+    expect(failing(() => subject(() => ({ volumeBetween: () => null })))).toEqual([]);
+  });
+
+  it('fails paneIds that repeats a pane, omits a listed one or is not top to bottom', () => {
+    expect(failing(() => subject(() => ({ paneIds: () => ['price', 'price', 'rsi'] })))).toEqual([NAMES.panes]);
+    expect(failing(() => subject(() => ({ paneIds: () => ['price'] })))).toEqual([NAMES.panes]);
+    expect(failing(() => subject(() => ({ paneIds: () => ['rsi', 'price'] })))).toEqual([NAMES.panes]);
+  });
+
+  it('fails barsBetween that does not count intervals, ignores the direction or is not zero for equal times', () => {
+    expect(failing(() => subject(() => ({ barsBetween: (from, to) => (to - from) / 1000 })))).toEqual([NAMES.bars]);
+    expect(failing(() => subject(() => ({ barsBetween: (from, to) => Math.abs(to - from) / 60_000 })))).toEqual([NAMES.bars]);
+    expect(failing(() => subject(() => ({ barsBetween: (from, to) => (to - from) / 60_000 + 1 })))).toEqual([NAMES.bars]);
+  });
+
+  it('fails a volumeBetween that is negative or not a number', () => {
+    expect(failing(() => subject(() => ({ volumeBetween: () => -1 })))).toEqual([NAMES.volume]);
+    expect(failing(() => subject(() => ({ volumeBetween: () => Number.NaN })))).toEqual([NAMES.volume]);
+    expect(failing(() => subject(() => ({ volumeBetween: () => Infinity })))).toEqual([NAMES.volume]);
+  });
+
+  it('probes barsBetween with the last bar and five intervals beyond it, both ways', () => {
+    const barsBetween = vi.fn((from: number, to: number) => (to - from) / 60_000);
+    failing(() => subject(() => ({ barsBetween })));
+    expect(barsBetween.mock.calls).toEqual([
+      [LAST_BAR, LAST_BAR],
+      [LAST_BAR, LAST_BAR + 300_000],
+      [LAST_BAR + 300_000, LAST_BAR],
+    ]);
+  });
+
+  it('probes volumeBetween over the ten intervals before the last bar', () => {
+    const volumeBetween = vi.fn(() => 1);
+    failing(() => subject(() => ({ volumeBetween })));
+    expect(volumeBetween.mock.calls).toEqual([[LAST_BAR - 600_000, LAST_BAR]]);
+  });
+});
+
 describe('runHostConformance: broken hosts fail the right tests', () => {
   it('a wrong api version or a missing member', () => {
     expect(failing(() => subject(() => ({ apiVersion: 1 as never })))).toEqual([NAMES.version]);
@@ -144,7 +194,7 @@ describe('runHostConformance: broken hosts fail the right tests', () => {
 
   it('no panes to check, or a pane the host does not have', () => {
     expect(failing(() => subject(undefined, { yAxisIds: [] }))).toEqual([NAMES.roundTrip]);
-    expect(failing(() => subject(undefined, { yAxisIds: ['volume'] }))).toEqual([NAMES.roundTrip, NAMES.yAxisAt]);
+    expect(failing(() => subject(undefined, { yAxisIds: ['volume'] }))).toEqual([NAMES.roundTrip, NAMES.yAxisAt, NAMES.panes]);
   });
 
   it('a listed pane without a rectangle, even when its transforms work', () => {
@@ -152,7 +202,7 @@ describe('runHostConformance: broken hosts fail the right tests', () => {
   });
 
   it('no bar interval, or time that stops at the last bar', () => {
-    expect(failing(() => subject(() => ({ barInterval: () => 0 })))).toEqual([NAMES.future]);
+    expect(failing(() => subject(() => ({ barInterval: () => 0 })))).toEqual([NAMES.future, NAMES.bars]);
     expect(failing(() => subject((m) => ({ timeToX: (t) => m.timeToX(Math.min(t, LAST_BAR)) })))).toEqual([NAMES.future]);
   });
 
@@ -162,7 +212,7 @@ describe('runHostConformance: broken hosts fail the right tests', () => {
       timeToX: (t) => -m.timeToX(t),
       xToTime: (x) => m.xToTime(-x),
     });
-    expect(failing(() => subject(reversed))).toEqual([NAMES.future]);
+    expect(failing(() => subject(reversed))).toEqual([NAMES.future, NAMES.bars]);
   });
 
   it('time that speeds up after the first interval in future space', () => {

@@ -5,9 +5,38 @@ import { createMockHost, DEFAULT_MOCK_PANE } from '../src/testing/mock-host';
 const RSI = { yAxisId: 'rsi', top: 400, height: 100, min: 0, max: 100 };
 
 describe('createMockHost defaults', () => {
-  it('implements contract version 2', () => {
+  it('implements contract version 3', () => {
     expect(validateHost(createMockHost())).toEqual([]);
-    expect(createMockHost().apiVersion).toBe(2);
+    expect(createMockHost().apiVersion).toBe(3);
+  });
+
+  it('lists the panes top to bottom with paneIds, whatever the order they were given in', () => {
+    expect(createMockHost().paneIds?.()).toEqual(['price']);
+    expect(createMockHost({ panes: [RSI, DEFAULT_MOCK_PANE] }).paneIds?.()).toEqual(['price', 'rsi']);
+  });
+
+  it('counts whole bar intervals with barsBetween, signed, and beyond any data', () => {
+    const host = createMockHost({ barInterval: 60_000 });
+    expect(host.barsBetween?.(0, 600_000)).toBe(10);
+    expect(host.barsBetween?.(600_000, 0)).toBe(-10);
+    expect(host.barsBetween?.(90_000, 90_000)).toBe(0);
+    expect(host.barsBetween?.(0, 89_000)).toBe(1);
+  });
+
+  it('has volumeBetween only when it is given', () => {
+    expect(createMockHost().volumeBetween).toBeUndefined();
+    const volumeBetween = vi.fn(() => 42);
+    const host = createMockHost({ volumeBetween });
+    expect(host.volumeBetween?.(1, 2)).toBe(42);
+    expect(volumeBetween).toHaveBeenCalledWith(1, 2);
+    expect(validateHost(host)).toEqual([]);
+  });
+
+  it('is a version 2 host without the version 3 members with apiVersion 2', () => {
+    const host = createMockHost({ apiVersion: 2, volumeBetween: () => 1 });
+    expect(host.apiVersion).toBe(2);
+    expect(validateHost(host)).toEqual([]);
+    expect([host.paneIds, host.barsBetween, host.volumeBetween]).toEqual([undefined, undefined, undefined]);
   });
 
   it('has one 400 px price pane from 0 to 200 and an 800 px plot', () => {

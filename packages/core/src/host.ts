@@ -83,26 +83,42 @@ export interface TextEditRequest {
   readonly fontSize: number;
 }
 
-/** The host contract version this package implements. */
-export const HOST_API_VERSION = 2;
+/** The host contract version this package implements: the current one. */
+export const HOST_API_VERSION = 3;
+
+/** The oldest host contract version the tools still accept: a version 2 host keeps working, without the members that version 3 added. */
+export const MIN_HOST_API_VERSION = 2;
 
 /**
- * What a chart supplies for the drawing tools to work on it (contract version 2). keystone-charts-
- * financial implements it; the tools never depend on the chart package. Times are epoch
- * milliseconds; x, y and rectangles are CSS px in plot coordinates.
+ * What a host can do beyond the members every host has: the members that contract version 3 added. A tool
+ * that needs one of them is disabled on a host without it (`KFT-E-CAPABILITY`).
+ *
+ * - `panes`: `paneIds()`, the y-axes of the panes, top to bottom.
+ * - `bars`: `barsBetween(from, to)`, the bars between two times.
+ * - `volume`: `volumeBetween(from, to)`, the volume between two times.
+ */
+export type HostFeature = 'panes' | 'bars' | 'volume';
+
+/**
+ * What a chart supplies for the drawing tools to work on it (contract version 3; version 2 hosts are
+ * still accepted). keystone-charts-financial implements it; the tools never depend on the chart
+ * package. Times are epoch milliseconds; x, y and rectangles are CSS px in plot coordinates.
  *
  * @example
  * ```ts
  * const host: DrawingHost = {
- *   apiVersion: 2,
+ *   apiVersion: 3,
  *   timeToX: (time) => chart.timeScale.toPixel(time),
+ *   paneIds: () => chart.panes.map((pane) => pane.yAxisId),
+ *   barsBetween: (from, to) => chart.timeScale.barsBetween(from, to),
  *   // ...the other members
  * };
  * const tools = createDrawingTools(host);
  * ```
  */
 export interface DrawingHost {
-  readonly apiVersion: 2;
+  /** 3 for a host that has `paneIds` and `barsBetween`; 2 for a host written for contract version 2. */
+  readonly apiVersion: 2 | 3;
   /** Time (epoch ms) to x (CSS px). Extrapolates beyond the first and last bar (future space). */
   timeToX(time: number): number;
   /** x (CSS px) to time (epoch ms); the inverse of `timeToX`, also beyond the data. */
@@ -133,4 +149,49 @@ export interface DrawingHost {
   requestRender(): void;
   /** Optional in-place text editor: resolves with the new text, or null when cancelled. */
   editText?(request: TextEditRequest): Promise<string | null>;
+  /**
+   * Version 3, required when `apiVersion` is 3. The y-axis ids of the panes, top to bottom, every pane once:
+   * a tool that spans all panes (the vertical line) draws in each of them.
+   */
+  paneIds?(): readonly string[];
+  /**
+   * Version 3, required when `apiVersion` is 3. The number of bars from `from` to `to`, counted on the bar
+   * axis so that gaps in time (nights, weekends) do not count; negative when `to` is before `from`, 0 for
+   * equal times. Beyond the last bar every `barInterval()` counts as one bar (future space).
+   */
+  barsBetween?(from: number, to: number): number;
+  /**
+   * Version 3, optional. The total volume of the bars from `from` (inclusive) to `to` (exclusive), or null
+   * when the data has no volume. The order of the two times does not matter.
+   */
+  volumeBetween?(from: number, to: number): number | null;
+}
+
+/**
+ * The features a host has: `panes` when it has `paneIds`, `bars` when it has `barsBetween` and `volume`
+ * when it has `volumeBetween`. A version 2 host has none of them.
+ *
+ * @example
+ * ```ts
+ * hostFeatures(host).has('volume'); // true when the host can tell the volume between two times
+ * ```
+ */
+export function hostFeatures(host: DrawingHost): ReadonlySet<HostFeature> {
+  const features = new Set<HostFeature>();
+  if (typeof host.paneIds === 'function') features.add('panes');
+  if (typeof host.barsBetween === 'function') features.add('bars');
+  if (typeof host.volumeBetween === 'function') features.add('volume');
+  return features;
+}
+
+/**
+ * The features of `requires` that `features` lacks, in the order of `requires`.
+ *
+ * @example
+ * ```ts
+ * missingHostFeatures(['panes', 'volume'], new Set(['panes'])); // ['volume']
+ * ```
+ */
+export function missingHostFeatures(requires: readonly HostFeature[] | undefined, features: ReadonlySet<HostFeature>): readonly HostFeature[] {
+  return (requires ?? []).filter((feature) => !features.has(feature));
 }

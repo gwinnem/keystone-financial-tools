@@ -3,7 +3,7 @@ title: Implement a host
 description: What a chart supplies for the drawing tools to work on it, member by member, with a skeleton to start from.
 ---
 
-The tools never depend on a chart package. A chart takes part by implementing `DrawingHost` (contract version 2) from `keystone-financial-tools-core`, and passes it to `createDrawingTools`, or to the composable, hook or service of your framework.
+The tools never depend on a chart package. A chart takes part by implementing `DrawingHost` (contract version 3) from `keystone-financial-tools-core`, and passes it to `createDrawingTools`, or to the composable, hook or service of your framework.
 
 ## Conventions
 
@@ -15,7 +15,7 @@ The tools never depend on a chart package. A chart takes part by implementing `D
 
 | Member | What it does |
 | --- | --- |
-| `apiVersion` | Always `2`. |
+| `apiVersion` | `3`. A host written for contract version 2 declares `2` and is still accepted (see below). |
 | `timeToX(time)` | Time to x. It extrapolates beyond the first and last bar (future space). |
 | `xToTime(x)` | The inverse of `timeToX`, also beyond the data. |
 | `priceToY(price, yAxisId)` | Price to y on a y-axis. |
@@ -30,6 +30,9 @@ The tools never depend on a chart package. A chart takes part by implementing `D
 | `setCursor(cursor)` | Shows a cursor: `default`, `crosshair`, `pointer`, `move`, `grab`, `grabbing`, `ns-resize`, `ew-resize`, `nwse-resize`, `nesw-resize`, `text` or `not-allowed`. |
 | `requestRender()` | Asks the host to redraw its overlay layer. The host then paints `tools.getScene()`. |
 | `editText(request)` | Optional. Edits a text note in place and resolves with the new text, or `null` when cancelled. |
+| `paneIds()` | Version 3. The y-axis ids of the panes, top to bottom, each once. A tool that spans every pane draws in each of them. |
+| `barsBetween(from, to)` | Version 3. The number of bars from `from` to `to`, counted on the bar axis so that gaps in time (nights, weekends) do not count. It is negative when `to` is before `from` and 0 for equal times. Beyond the last bar every `barInterval()` counts as one bar. |
+| `volumeBetween(from, to)` | Version 3, optional. The total volume of the bars from `from` (inclusive) to `to` (exclusive), in either order, or `null` when the data has no volume. |
 
 A pointer event has a `phase` (`down`, `move`, `up`, `cancel` or `leave`), the position in plot coordinates, the `pointerType` (`mouse`, `touch` or `pen`), the `button` and the modifier keys. A key event has `key` (the value of `KeyboardEvent.key`), the modifier keys and, optionally, `code` (the value of `KeyboardEvent.code`): with it the tool shortcuts work on a Mac, where Option changes the character of a letter.
 
@@ -39,7 +42,7 @@ A pointer event has a `phase` (`down`, `move`, `up`, `cancel` or `leave`), the p
 import { createDrawingTools, type DrawingHost } from 'keystone-financial-tools-core';
 
 const host: DrawingHost = {
-  apiVersion: 2,
+  apiVersion: 3,
   timeToX: (time) => chart.timeScale.toPixel(time),
   xToTime: (x) => chart.timeScale.fromPixel(x),
   priceToY: (price, yAxisId) => chart.axis(yAxisId).toPixel(price),
@@ -48,6 +51,9 @@ const host: DrawingHost = {
   paneRect: (yAxisId) => chart.pane(yAxisId)?.rect ?? null,
   nearestBar: (time) => chart.nearestBar(time),
   barInterval: () => chart.barIntervalMs,
+  paneIds: () => chart.panes.map((pane) => pane.yAxisId),
+  barsBetween: (from, to) => chart.timeScale.barsBetween(from, to),
+  volumeBetween: (from, to) => chart.volumeBetween(from, to), // optional
   onPointer: (listener) => chart.onPointer(listener),
   onKey: (listener) => chart.onKey(listener),
   onViewportChange: (listener) => chart.onViewportChange(listener),
@@ -59,6 +65,12 @@ const tools = createDrawingTools(host);
 ```
 
 `chart` stands for your own chart. `createDrawingTools` checks the host and throws `KFT-E-HOST` when it does not satisfy the contract.
+
+## Version 2 hosts
+
+A host that declares `apiVersion: 2` and has none of `paneIds`, `barsBetween` and `volumeBetween` keeps working: the eight tools of 1.0 need none of them. A tool that needs one of these members is disabled on such a host: its toolbar entry has `enabled: false` and `missing` lists the features it lacks (`panes`, `bars` or `volume`), and `activate` throws `KFT-E-CAPABILITY` after emitting the `blocked` event `{ code: 'KFT-E-CAPABILITY', tool, missing }`. `hostFeatures(host)` tells which features a host has. To migrate, set `apiVersion: 3` and add `paneIds` and `barsBetween` (and `volumeBetween` when your data has volume); `createDrawingTools` throws `KFT-E-HOST` for a version 3 host without them.
+
+The conformance kit (`runHostConformance`) checks the version 3 members of a version 3 host: `paneIds` lists every listed pane once, top to bottom; `barsBetween` is 0 for equal times and counts five intervals beyond the last bar in both directions; `volumeBetween` is a number of at least 0, or `null`.
 
 ## Draw the scene
 

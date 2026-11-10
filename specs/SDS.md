@@ -240,6 +240,7 @@ interface DrawingDocument {
 | `KFT-E-JSON` | A document that is not valid JSON or has an unsupported version |
 | `KFT-E-SCOPE` | A loaded document belongs to another symbol or timeframe than the one it was loaded for (reported, not thrown) |
 | `KFT-E-HOST` | The host does not satisfy the contract (wrong `apiVersion`, missing member) |
+| `KFT-E-CAPABILITY` | A tool was activated that needs host features the host lacks (reported as a `blocked` event and thrown by `activate`) |
 | `KFT-E-LICENSE` | A tool or feature is not included in the active license tier (§12) |
 
 - FR-DM-040: Validation returns all issues in a stable order; `DrawingError` carries them.
@@ -287,11 +288,11 @@ interface DrawingDocument {
 
 ## 7. Host contract
 
-### 7.1 Interface (api version 2)
+### 7.1 Interface (api version 3; version 2 hosts are still accepted)
 
 ```ts
 interface DrawingHost {
-  readonly apiVersion: 2;
+  readonly apiVersion: 2 | 3;
   timeToX(time: number): number;               // extrapolates beyond the data (future space)
   xToTime(x: number): number;
   priceToY(price: number, yAxisId: string): number;
@@ -306,6 +307,10 @@ interface DrawingHost {
   setCursor(cursor: DrawingCursor): void;
   requestRender(): void;
   editText?(request: TextEditRequest): Promise<string | null>; // optional inline editor
+  // Version 3 (E11-F04-S01, D-11). paneIds and barsBetween are required when apiVersion is 3.
+  paneIds?(): readonly string[];                // y-axis ids of the panes, top to bottom, each once
+  barsBetween?(from: number, to: number): number; // bars on the bar axis, signed; future space counts at barInterval
+  volumeBetween?(from: number, to: number): number | null; // volume of the bars from <= t < to; null without volume
 }
 
 interface HostPointerEvent {
@@ -342,6 +347,12 @@ type DrawingCursor = 'default' | 'crosshair' | 'pointer' | 'move' | 'grab' | 'gr
   items above the series, clipped to `paneRect` (D-4).
 - FR-HOST-007: Contract version 1 (0.1 `DrawingHost`) is replaced; no compatibility shim (no host
   implemented version 1).
+- FR-HOST-008: Contract version 3 adds `paneIds`, `barsBetween` and the optional `volumeBetween`
+  (FR-TOOL-019). `HOST_API_VERSION` is 3 and `MIN_HOST_API_VERSION` is 2: a version 2 host is accepted and
+  keeps the eight tools of 1.0. `hostFeatures(host)` gives `panes`, `bars` and `volume` for the members the host has.
+  A catalog entry may `require` features; on a host without them the tool is disabled (`enabled` false, `missing`
+  names the features), `activate` emits `blocked` with `KFT-E-CAPABILITY` and throws it, and its shortcut is left to
+  the host. The conformance kit checks the version 3 members of a version 3 host.
 
 ### 7.2 Conformance kit
 

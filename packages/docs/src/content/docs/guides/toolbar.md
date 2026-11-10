@@ -19,8 +19,10 @@ An entry has these fields:
 | `icon` | The name of the icon, the kind. Map it to your own icons. |
 | `shortcut` | The key that chooses the tool, for example `Alt+T`, or `null` when it has none. |
 | `tier` | `community` or `professional`. |
+| `requires` | Only on a tool that needs host features (`panes`, `bars`, `volume`) of host contract version 3. The eight tools of 1.0 have none. |
 | `active` | `true` for the tool that places drawings now. |
-| `enabled` | `true` when the tool can be activated: it is in the `tools` option. |
+| `enabled` | `true` when the tool can be activated: it is in the `tools` option and the host has every feature the tool needs. |
+| `missing` | Only on an entry the host cannot serve: the host features (`panes`, `bars`, `volume`) the tool needs and the host lacks. Activating it emits `blocked` with `KFT-E-CAPABILITY`. The eight tools of 1.0 need none. |
 
 The static list without `active` and `enabled` is `TOOL_CATALOG`, exported by every package. It is useful for building a menu before the tools exist.
 

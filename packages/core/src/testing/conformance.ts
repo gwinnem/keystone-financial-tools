@@ -46,11 +46,12 @@ export const CONFORMANCE_KEY: HostKeyEvent = Object.freeze({ key: 'Escape', shif
 
 /**
  * Registers the host conformance tests (FR-HOST-010) with the given runner. `factory` makes a fresh
- * subject for every test. Checks: contract version 2 and every required member; time and price
+ * subject for every test. Checks: contract version 2 or 3 and every required member; time and price
  * round trips within 0.5 px across every pane; linear extrapolation beyond the last bar (future
  * space); `yAxisAt` agreeing with `paneRect` and returning null outside the plot; pointer, key and
  * viewport listeners called until they unsubscribe (unsubscribing twice is harmless); a key reported
- * as handled only while a subscribed listener handles it.
+ * as handled only while a subscribed listener handles it. A second suite checks the members of contract
+ * version 3 (`paneIds`, `barsBetween` and, when present, `volumeBetween`) and passes at once for a version 2 host.
  *
  * @example
  * ```ts
@@ -83,7 +84,7 @@ export function runHostConformance(factory: () => ConformanceSubject, runner: Co
   };
 
   describe('DrawingHost conformance (contract version 2)', () => {
-    it('declares api version 2 and every required member', () => {
+    it('declares api version 2 or 3 and every required member', () => {
       expect(validateHost(factory().host)).toEqual([]);
     });
 
@@ -159,6 +160,39 @@ export function runHostConformance(factory: () => ConformanceSubject, runner: Co
       handled = true;
       stop();
       expect(subject.fireKey(CONFORMANCE_KEY)).toBe(false);
+    });
+  });
+
+  describe('DrawingHost conformance (contract version 3 members)', () => {
+    it('lists every listed pane once with paneIds, top to bottom', () => {
+      const { host, yAxisIds } = factory();
+      if (host.apiVersion !== 3) return;
+      const ids = (host.paneIds as () => readonly string[])();
+      expect(new Set(ids).size).toBe(ids.length);
+      for (const yAxisId of yAxisIds) expect(ids.includes(yAxisId)).toBe(true);
+      // A pane without a rectangle is reported by the round trip test; here it only has no place in the order.
+      const tops = ids.flatMap((id) => {
+        const rect = host.paneRect(id);
+        return rect === null ? [] : [rect.y];
+      });
+      expect(tops).toEqual([...tops].sort((a, b) => a - b));
+    });
+
+    it('counts the bars between two times with barsBetween, signed and zero for equal times', () => {
+      const { host, lastBarTime } = factory();
+      if (host.apiVersion !== 3) return;
+      const barsBetween = host.barsBetween as (from: number, to: number) => number;
+      const interval = host.barInterval();
+      expect(barsBetween(lastBarTime, lastBarTime)).toBe(0);
+      expect(barsBetween(lastBarTime, lastBarTime + 5 * interval)).toBe(5);
+      expect(barsBetween(lastBarTime + 5 * interval, lastBarTime)).toBe(-5);
+    });
+
+    it('gives a volume of zero or more, or null, with volumeBetween when the host has it', () => {
+      const { host, lastBarTime } = factory();
+      if (host.apiVersion !== 3 || host.volumeBetween === undefined) return;
+      const volume = host.volumeBetween(lastBarTime - 10 * host.barInterval(), lastBarTime);
+      expect(volume === null || (Number.isFinite(volume) && volume >= 0)).toBe(true);
     });
   });
 }

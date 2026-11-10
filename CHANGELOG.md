@@ -2,6 +2,16 @@
 
 ## 0.1.0 (unreleased)
 
+- Host contract version 3 (E11-F04-S01, FR-TOOL-019, FR-HOST-008, D-11): `HOST_API_VERSION` is 3 and the host adds `paneIds()`
+  (the y-axes of the panes, top to bottom), `barsBetween(from, to)` (bars on the bar axis, signed) and the optional
+  `volumeBetween(from, to)`. Migration: a host written for version 2 keeps working (`MIN_HOST_API_VERSION` is 2) and
+  keeps the eight tools; to use the tools that come later set `apiVersion: 3` and add the members (`createDrawingTools` throws
+  `KFT-E-HOST` for a version 3 host without `paneIds` or `barsBetween`). New: `hostFeatures`, `missingHostFeatures`,
+  `missingToolFeatures`, `REQUIRED_HOST_MEMBERS_V3`, the type `HostFeature`, the optional `requires` of a catalog entry and
+  `missing` of a toolbar entry. A tool whose host features are missing is disabled; `activate` emits `blocked` with the new
+  code `KFT-E-CAPABILITY` (`DrawingToolsBlocked` is now `DrawingToolsLocked | DrawingToolsUnsupported`) and throws it.
+  The mock host (`apiVersion` and `volumeBetween` options), the conformance kit (a second suite for the version 3 members),
+  the playground host and the host guide are updated.
 - Tier split (E10-F01-S01, FR-LIC-002, OD-2, DOC-004): the drawing tools follow the five tiers of keystone-license.
   Community has the trend line, horizontal line and selection (move/resize, delete) and the memory
   repository; Professional adds the rectangle, the text note, magnet snapping, undo/redo and the four Fibonacci tools; Professional Plus adds

@@ -18,9 +18,9 @@ export type {
   StoreChange,
   StoreOperation,
 } from './types';
-export type { DrawingCursor, DrawingHost, HostKeyEvent, HostPointerEvent, Modifiers, NearestBar, Ohlc, Point, PointerPhase, PointerType, Rect, TextEditRequest } from './host';
-export { HOST_API_VERSION } from './host';
-export { assertHost, REQUIRED_HOST_MEMBERS, validateHost } from './host-check';
+export type { DrawingCursor, DrawingHost, HostFeature, HostKeyEvent, HostPointerEvent, Modifiers, NearestBar, Ohlc, Point, PointerPhase, PointerType, Rect, TextEditRequest } from './host';
+export { HOST_API_VERSION, hostFeatures, MIN_HOST_API_VERSION, missingHostFeatures } from './host';
+export { assertHost, REQUIRED_HOST_MEMBERS, REQUIRED_HOST_MEMBERS_V3, validateHost } from './host-check';
 export { Disposables } from './disposables';
 export type { HostHandlers } from './host-connection';
 export { connectHost } from './host-connection';
@@ -69,14 +69,16 @@ export type {
   DrawingToolsErrorSource,
   DrawingToolsEventName,
   DrawingToolsEvents,
+  DrawingToolsLocked,
   DrawingToolsOptions,
   DrawingToolsRuntimeOptions,
   DrawingToolsState,
+  DrawingToolsUnsupported,
 } from './controller';
 export { createDrawingTools } from './controller';
 export { ANCHOR_COUNT, DRAWING_KINDS, isDrawingKind } from './kinds';
 export type { ToolbarEntry, ToolCatalogEntry, ToolGroup, ToolTier } from './catalog';
-export { IDLE_TOOLBAR, TOOL_CATALOG, toolbarEntries } from './catalog';
+export { IDLE_TOOLBAR, missingToolFeatures, TOOL_CATALOG, toolbarEntries } from './catalog';
 export type { MessageKey, MessageOverrides, Messages } from './messages';
 export { DEFAULT_MESSAGES, formatMessage, resolveMessages } from './messages';
 export { LIVE_REGION_ATTRIBUTES, liveRegionText, VISUALLY_HIDDEN_STYLE } from './live-region';

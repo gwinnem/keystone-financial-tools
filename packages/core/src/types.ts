@@ -161,7 +161,8 @@ export type DrawingIssueCode =
   | 'KFT-E-MISSING'
   | 'KFT-E-JSON'
   | 'KFT-E-SCOPE'
-  | 'KFT-E-HOST';
+  | 'KFT-E-HOST'
+  | 'KFT-E-CAPABILITY';
 
 export interface DrawingIssue {
   readonly code: DrawingIssueCode;

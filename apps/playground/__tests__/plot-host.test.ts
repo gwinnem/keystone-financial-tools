@@ -37,10 +37,44 @@ runHostConformance(
   { describe, it, expect }
 );
 
+describe('createPlotHost: contract version 3 members (E11-F04-S01)', () => {
+  it('lists the panes top to bottom', () => {
+    expect(createPlotHost(OPTIONS).paneIds?.()).toStrictEqual([PRICE_AXIS, VOLUME_AXIS]);
+  });
+
+  it('counts bar intervals between two times, signed, in the data and in the future space', () => {
+    const host = createPlotHost(FLAT);
+    expect(host.barsBetween?.(0, 10 * BAR_INTERVAL_MS)).toBe(10);
+    expect(host.barsBetween?.(10 * BAR_INTERVAL_MS, 0)).toBe(-10);
+    expect(host.barsBetween?.(99 * BAR_INTERVAL_MS, 130 * BAR_INTERVAL_MS)).toBe(31);
+    expect(host.barsBetween?.(7 * BAR_INTERVAL_MS, 7 * BAR_INTERVAL_MS)).toBe(0);
+  });
+
+  it('adds the volume of the bars from the first time (inclusive) to the second (exclusive), in either order', () => {
+    const host = createPlotHost(FLAT);
+    expect(host.volumeBetween?.(0, 3 * BAR_INTERVAL_MS)).toBe(3000);
+    expect(host.volumeBetween?.(3 * BAR_INTERVAL_MS, 0)).toBe(3000);
+    expect(host.volumeBetween?.(0.5 * BAR_INTERVAL_MS, 2.5 * BAR_INTERVAL_MS)).toBe(2000);
+    expect(host.volumeBetween?.(5 * BAR_INTERVAL_MS, 5 * BAR_INTERVAL_MS)).toBe(0);
+  });
+
+  it('clamps the volume range to the data', () => {
+    const host = createPlotHost(FLAT);
+    expect(host.volumeBetween?.(-5 * BAR_INTERVAL_MS, 1000 * BAR_INTERVAL_MS)).toBe(99 * 1000 + 5000);
+    expect(host.volumeBetween?.(99 * BAR_INTERVAL_MS, 100 * BAR_INTERVAL_MS)).toBe(5000);
+    expect(host.volumeBetween?.(100 * BAR_INTERVAL_MS, 120 * BAR_INTERVAL_MS)).toBe(0);
+    expect(host.volumeBetween?.(-20 * BAR_INTERVAL_MS, -1 * BAR_INTERVAL_MS)).toBe(0);
+  });
+
+  it('has no volume without bars', () => {
+    expect(createPlotHost({ ...OPTIONS, bars: [] }).volumeBetween?.(0, 10 * BAR_INTERVAL_MS)).toBeNull();
+  });
+});
+
 describe('createPlotHost: panes', () => {
   it('has a price pane above a volume pane, and the contract version', () => {
     const host = createPlotHost(OPTIONS);
-    expect(host.apiVersion).toBe(2);
+    expect(host.apiVersion).toBe(3);
     expect([PRICE_AXIS, VOLUME_AXIS]).toStrictEqual(['price', 'volume']);
     expect(VOLUME_PANE_RATIO).toBe(0.25);
     expect(host.paneRect('price')).toStrictEqual({ x: 0, y: 0, width: 800, height: 300 });

@@ -13,12 +13,12 @@ describe('the toolbar guide (FR-FW-040, FR-FW-041)', () => {
   it('has a row for every field of an entry, in the order of the type', () => {
     const table = page.slice(page.indexOf('| Field |'), page.indexOf('## The tools')).split('\n');
     const fields = table.filter((line) => line.startsWith('| `')).map((line) => /^\| `(\w+)`/.exec(line)?.[1]);
-    expect(fields).toStrictEqual(['id', 'labelKey', 'group', 'icon', 'shortcut', 'tier', 'active', 'enabled']);
+    expect(fields).toStrictEqual(['id', 'labelKey', 'group', 'icon', 'shortcut', 'tier', 'requires', 'active', 'enabled', 'missing']);
   });
 
   it('has no row that is not a field, a tool, a key or a table head', () => {
-    // Heads and their lines (4 tables), 8 fields, the tools, the messages and 2 keys.
-    expect(rows).toHaveLength(8 + 8 + TOOL_CATALOG.length + Object.keys(DEFAULT_MESSAGES).length + 2);
+    // Heads and their lines (4 tables), 10 fields, the tools, the messages and 2 keys.
+    expect(rows).toHaveLength(8 + 10 + TOOL_CATALOG.length + Object.keys(DEFAULT_MESSAGES).length + 2);
   });
 
   it('has a row for every message, with its English text (NFR-I18N-001)', () => {

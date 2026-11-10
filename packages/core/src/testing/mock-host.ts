@@ -28,6 +28,10 @@ export interface MockHostOptions {
   readonly pxPerBar?: number;
   /** When given, the host has this `editText`; otherwise it has none. */
   readonly editText?: (request: TextEditRequest) => Promise<string | null>;
+  /** The contract version the host declares. Default 3; 2 gives a host without `paneIds`, `barsBetween` and `volumeBetween`. */
+  readonly apiVersion?: 2 | 3;
+  /** Version 3 only. When given, the host has this `volumeBetween`; otherwise it has none. */
+  readonly volumeBetween?: (from: number, to: number) => number | null;
 }
 
 /** Overrides for a scripted pointer event; everything else defaults to a plain primary mouse event. */
@@ -60,9 +64,10 @@ export interface MockHost extends DrawingHost {
 export const DEFAULT_MOCK_PANE: MockPane = Object.freeze({ yAxisId: 'price', top: 0, height: 400, min: 0, max: 200 });
 
 /**
- * A deterministic in-memory host (contract version 2) with linear scales: time runs left to right
+ * A deterministic in-memory host (contract version 3, or 2 with the option `apiVersion`) with linear scales: time runs left to right
  * at `pxPerBar` per `barInterval` from `startTime` at x = 0 and extrapolates in both directions;
- * every pane maps its price range linearly onto its band. Scripted input (`pointer`, `key`,
+ * every pane maps its price range linearly onto its band. `paneIds` lists the panes top to bottom, `barsBetween`
+ * counts whole bar intervals (the mock has no gaps in time) and `volumeBetween` exists only when given. Scripted input (`pointer`, `key`,
  * `zoom`, `scroll`) drives the listeners; `cursors` and `renderRequests` record what the tools
  * asked for.
  *
@@ -106,8 +111,9 @@ export function createMockHost(options: MockHostOptions = {}): MockHost {
     for (const listener of [...viewportListeners]) listener();
   };
 
+  const version = options.apiVersion ?? 3;
   const host: MockHost = {
-    apiVersion: 2,
+    apiVersion: version,
     timeToX: (time) => (time - timeAtZero) / msPerPx,
     xToTime: (x) => timeAtZero + x * msPerPx,
     priceToY: (price, yAxisId) => {
@@ -174,5 +180,10 @@ export function createMockHost(options: MockHostOptions = {}): MockHost {
     listenerCount: (kind) => (kind === 'pointer' ? pointerListeners : kind === 'key' ? keyListeners : viewportListeners).size,
   };
   if (options.editText !== undefined) host.editText = options.editText;
+  if (version === 3) {
+    host.paneIds = () => [...panes].sort((a, b) => a.top - b.top).map((pane) => pane.yAxisId);
+    host.barsBetween = (from, to) => Math.round((to - from) / interval);
+    if (options.volumeBetween !== undefined) host.volumeBetween = options.volumeBetween;
+  }
   return host;
 }

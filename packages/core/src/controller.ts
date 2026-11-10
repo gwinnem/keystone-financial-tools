@@ -1,4 +1,4 @@
-import { toolbarEntries, type ToolbarEntry } from './catalog';
+import { missingToolFeatures, TOOL_CATALOG, toolbarEntries, type ToolbarEntry } from './catalog';
 import { Disposables } from './disposables';
 import { DrawingError } from './errors';
 import { assertHost } from './host-check';
@@ -6,7 +6,7 @@ import { connectHost } from './host-connection';
 import type { PriceFormatter } from './geometry/types';
 import { GeometryCache } from './hit/geometry-cache';
 import { hitTest, type HitResult } from './hit/hit-test';
-import type { DrawingHost, HostKeyEvent, HostPointerEvent, Point, PointerType, TextEditRequest } from './host';
+import { hostFeatures, type DrawingHost, type HostFeature, type HostKeyEvent, type HostPointerEvent, type Point, type PointerType, type TextEditRequest } from './host';
 import { History, type HistoryOptions, type HistoryTransaction } from './history';
 import { cursorFor, CursorSync } from './interaction/cursor';
 import { duplicateDrawing } from './interaction/duplicate';
@@ -107,11 +107,21 @@ export interface DrawingToolsState {
   readonly toolbar: readonly ToolbarEntry[];
 }
 
-/** The payload of the `blocked` event: locked drawings were asked to change (`KFT-E-LOCKED`). */
-export interface DrawingToolsBlocked {
+/** The payload of the `blocked` event when locked drawings were asked to change (`KFT-E-LOCKED`). */
+export interface DrawingToolsLocked {
   readonly code: 'KFT-E-LOCKED';
   readonly ids: readonly string[];
 }
+
+/** The payload of the `blocked` event when a tool was activated that the host cannot serve (`KFT-E-CAPABILITY`): the tool and the host features it lacks. */
+export interface DrawingToolsUnsupported {
+  readonly code: 'KFT-E-CAPABILITY';
+  readonly tool: DrawingKind;
+  readonly missing: readonly HostFeature[];
+}
+
+/** The payload of the `blocked` event: locked drawings were asked to change, or a tool needs host features the host lacks. */
+export type DrawingToolsBlocked = DrawingToolsLocked | DrawingToolsUnsupported;
 
 /** Where a caught error came from. */
 export type DrawingToolsErrorSource = 'pointer' | 'key' | 'viewport' | 'store' | 'history' | 'action' | 'scene' | 'text-editor' | 'listener';
@@ -137,7 +147,7 @@ export interface DrawingToolsEvents {
   /** Any value of the state changed. */
   state: DrawingToolsState;
   /**
-   * Locked drawings were asked to change (see `DrawingToolsBlocked`).
+   * Locked drawings were asked to change, or a tool was activated that the host cannot serve (see `DrawingToolsBlocked`).
    */
   blocked: DrawingToolsBlocked;
   /**
@@ -162,7 +172,8 @@ export interface DrawingTools {
   /** Every user-visible text: `DEFAULT_MESSAGES` with the `messages` option on top (NFR-I18N-001). Use `messages[entry.labelKey]` for the label of a toolbar entry. */
   readonly messages: Messages;
   /**
-   * Starts placing drawings of `kind`. Throws `KFT-E-KIND` for a kind that is unknown or not in the `tools` option.
+   * Starts placing drawings of `kind`. Throws `KFT-E-KIND` for a kind that is unknown or not in the `tools` option, and
+   * `KFT-E-CAPABILITY` (after a `blocked` event that names the missing host features) for a tool the host cannot serve.
    */
   activate(kind: DrawingKind): void;
   /** Stops placing; a drawing in progress is dropped. */
@@ -294,6 +305,7 @@ class DrawingToolsController implements DrawingTools {
   private magnet: MagnetMode;
   private stayInTool: boolean;
   private allowed: ReadonlySet<DrawingKind>;
+  private readonly features: ReadonlySet<HostFeature>;
   private readonly shortcuts: ToolShortcuts;
   private readonly bindings: readonly ShortcutBinding[];
   private toolbar: readonly ToolbarEntry[];
@@ -328,7 +340,8 @@ class DrawingToolsController implements DrawingTools {
     this.shortcuts = resolved.shortcuts;
     this.bindings = resolved.bindings;
     this.messages = resolveMessages(options.messages);
-    this.toolbar = toolbarEntries(null, this.allowed, this.shortcuts);
+    this.features = hostFeatures(host);
+    this.toolbar = toolbarEntries(null, this.allowed, this.shortcuts, this.features, TOOL_CATALOG);
     this.stayInTool = options.stayInTool === true;
     this.theme = options.theme;
     this.priceFormatter = options.priceFormatter;
@@ -369,6 +382,11 @@ class DrawingToolsController implements DrawingTools {
   activate(kind: DrawingKind): void {
     if (this.destroyed) return;
     if (!this.allowed.has(kind)) throw new DrawingError([{ code: 'KFT-E-KIND', message: `The tool ${String(kind)} is not available.` }]);
+    const missing = missingToolFeatures(kind, this.features, TOOL_CATALOG);
+    if (missing.length > 0) {
+      this.emit('blocked', { code: 'KFT-E-CAPABILITY', tool: kind, missing });
+      throw new DrawingError([{ code: 'KFT-E-CAPABILITY', message: `The tool ${String(kind)} needs a host with: ${missing.join(', ')}.` }]);
+    }
     this.run('action', () => this.feed({ type: 'activate', tool: kind }), undefined);
   }
 
@@ -674,9 +692,14 @@ class DrawingToolsController implements DrawingTools {
    * The toolbar for the tool placing drawings now and the tools allowed now: the one the state has while no entry changed.
    */
   private toolbarFor(activeTool: DrawingKind | null): readonly ToolbarEntry[] {
-    const stale = this.toolbar.some((entry) => entry.active !== (entry.id === activeTool) || entry.enabled !== this.allowed.has(entry.id));
-    if (stale) this.toolbar = toolbarEntries(activeTool, this.allowed, this.shortcuts);
+    const stale = this.toolbar.some((entry) => entry.active !== (entry.id === activeTool) || entry.enabled !== this.usable(entry.id));
+    if (stale) this.toolbar = toolbarEntries(activeTool, this.allowed, this.shortcuts, this.features, TOOL_CATALOG);
     return this.toolbar;
+  }
+
+  /** A tool is usable when the `tools` option has it and the host has every feature it needs. */
+  private usable(kind: DrawingKind): boolean {
+    return this.allowed.has(kind) && missingToolFeatures(kind, this.features, TOOL_CATALOG).length === 0;
   }
 
   private onStoreChange(change: StoreChange): void {
@@ -783,7 +806,7 @@ class DrawingToolsController implements DrawingTools {
       case 'redo':
         return this.redoStep();
       case 'tool':
-        return this.allowed.has(action.tool) && this.activateByShortcut(action.tool);
+        return this.usable(action.tool) && this.activateByShortcut(action.tool);
     }
   }
 

@@ -1,3 +1,4 @@
+import { missingHostFeatures, type HostFeature } from './host';
 import type { MessageKey } from './messages';
 import { deepFreeze } from './object';
 import type { ToolShortcuts } from './shortcuts';
@@ -29,6 +30,11 @@ export interface ToolCatalogEntry {
   /** The default shortcut, for example `Alt+T`, or null when the tool has none. */
   readonly shortcut: string | null;
   readonly tier: ToolTier;
+  /**
+   * The host features the tool needs (`paneIds`, `barsBetween`, `volumeBetween` of host contract version 3). The
+   * tool is disabled on a host without them. None of the eight tools of 1.0 needs one, so they work on a version 2 host.
+   */
+  readonly requires?: readonly HostFeature[];
 }
 
 /**
@@ -67,14 +73,20 @@ export interface ToolbarEntry extends ToolCatalogEntry {
   /** The tool is the one placing drawings now. */
   readonly active: boolean;
   /**
-   * The tool can be activated: it is in the `tools` option.
+   * The tool can be activated: it is in the `tools` option and the host has every feature it `requires`.
    */
   readonly enabled: boolean;
+  /**
+   * Only on an entry that the host cannot serve: the features the tool `requires` and the host lacks. Show it as the
+   * reason the button is disabled; activating the tool emits `blocked` with `KFT-E-CAPABILITY`.
+   */
+  readonly missing?: readonly HostFeature[];
 }
 
 /**
  * The toolbar for a chart: every catalog entry with `active` (it is `activeTool`), `enabled` (it is in
- * `allowed`) and the shortcut in use.
+ * `allowed` and `features` has everything it `requires`) and the shortcut in use. An entry whose required
+ * features are missing also has `missing`. Without `features` the host is taken to have every feature.
  * `DrawingToolsState.toolbar` is this, kept up to date.
  *
  * @example
@@ -82,8 +94,30 @@ export interface ToolbarEntry extends ToolCatalogEntry {
  * toolbarEntries('rectangle', new Set(['rectangle', 'trend-line']), resolveShortcuts().shortcuts);
  * ```
  */
-export function toolbarEntries(activeTool: DrawingKind | null, allowed: ReadonlySet<DrawingKind>, shortcuts: ToolShortcuts): readonly ToolbarEntry[] {
-  return TOOL_CATALOG.map((entry) => ({ ...entry, shortcut: shortcuts[entry.id], active: entry.id === activeTool, enabled: allowed.has(entry.id) }));
+export function toolbarEntries(
+  activeTool: DrawingKind | null,
+  allowed: ReadonlySet<DrawingKind>,
+  shortcuts: ToolShortcuts,
+  features?: ReadonlySet<HostFeature>,
+  catalog: readonly ToolCatalogEntry[] = TOOL_CATALOG
+): readonly ToolbarEntry[] {
+  return catalog.map((entry) => {
+    const missing = features === undefined ? [] : missingHostFeatures(entry.requires, features);
+    const base = { ...entry, shortcut: shortcuts[entry.id], active: entry.id === activeTool, enabled: allowed.has(entry.id) && missing.length === 0 };
+    return missing.length === 0 ? base : { ...base, missing };
+  });
+}
+
+/**
+ * The host features that `kind` needs and `features` lacks (empty when the tool works on the host).
+ *
+ * @example
+ * ```ts
+ * missingToolFeatures('trend-line', hostFeatures(host)); // [] on every host
+ * ```
+ */
+export function missingToolFeatures(kind: DrawingKind, features: ReadonlySet<HostFeature>, catalog: readonly ToolCatalogEntry[] = TOOL_CATALOG): readonly HostFeature[] {
+  return missingHostFeatures(catalog.find((entry) => entry.id === kind)?.requires, features);
 }
 
 /**

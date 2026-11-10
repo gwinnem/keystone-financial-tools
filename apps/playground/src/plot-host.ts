@@ -80,7 +80,7 @@ interface Scale {
 }
 
 /**
- * The playground's chart as a `DrawingHost` (contract version 2): two panes, `price` above `volume`, with linear
+ * The playground's chart as a `DrawingHost` (contract version 3): two panes, `price` above `volume`, with linear
  * scales. It starts showing every bar and `futureBars` empty slots after the last one; `zoom` and `scroll` (and
  * unhandled keys, see `viewportKeyAction`) change that and tell the viewport listeners. The price scale follows the
  * bars that are shown. Bar `i` is centred at `(i + 0.5 - offset) * pxPerBar`; time extrapolates linearly beyond the data.
@@ -173,7 +173,7 @@ export function createPlotHost(options: PlotHostOptions): PlotHost {
   };
 
   return {
-    apiVersion: 2,
+    apiVersion: 3,
     width,
     height,
     priceHeight,
@@ -216,6 +216,16 @@ export function createPlotHost(options: PlotHostOptions): PlotHost {
       return { time: bar.time, ohlc: { open: bar.open, high: bar.high, low: bar.low, close: bar.close } };
     },
     barInterval: () => barInterval,
+    paneIds: () => [PRICE_AXIS, VOLUME_AXIS],
+    barsBetween: (from, to) => Math.round((to - from) / barInterval),
+    volumeBetween: (from, to) => {
+      if (bars.length === 0) return null;
+      const low = Math.max(0, Math.ceil((Math.min(from, to) - first) / barInterval));
+      const high = Math.min(bars.length, Math.ceil((Math.max(from, to) - first) / barInterval));
+      let sum = 0;
+      for (let i = low; i < high; i++) sum += bars[i].volume;
+      return sum;
+    },
     onPointer: (listener) => subscribe(pointerListeners, listener),
     onKey: (listener) => subscribe(keyListeners, listener),
     onViewportChange: (listener) => subscribe(viewportListeners, listener),

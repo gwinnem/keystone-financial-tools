@@ -1,6 +1,6 @@
 # keystone-financial-tools-playground
 
-A minimal canvas chart that implements the `DrawingHost` contract (version 2). It is the reference
+A minimal canvas chart that implements the `DrawingHost` contract (version 3). It is the reference
 host for the drawing tools and the page the Playwright tests in [`e2e/`](../../e2e) run against, so
 the tests do not depend on the release cycle of keystone-charts-financial (FR-INTG-004, QA-006,
 QA-008). It is private and not published.
